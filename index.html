@@ -193,7 +193,7 @@ var ME=null,MONTH=new Date(),selDay=null,selShift=null;
 var ALL_P={},ALL_S={},ALL_ST={},ALL_D={},RT=null;
 var LANG=localStorage.getItem('nf-lang')||'ar';
 MONTH.setDate(1);
-
+ 
 var REST={official:6,morning:6,evening:6,night:6,long_day:14,long_night:14,off:0,oncall:0,disaster:0,annual_leave:0,hajj:0,fitr:0,sick:0,exceptional:0,compensation:0,extra:0};
 var SCLS={official:'pof',morning:'pm',evening:'pe',night:'pn',long_day:'pl',long_night:'pl',off:'po',oncall:'poc',disaster:'pds',annual_leave:'pav',hajj:'pav',fitr:'pav',sick:'pav',exceptional:'pav',compensation:'pav',extra:'pav'};
 var SCAT={official:'work',morning:'work',evening:'work',night:'work',long_day:'work',long_night:'work',off:'off',oncall:'extra',disaster:'extra',annual_leave:'leave',hajj:'leave',fitr:'leave',sick:'leave',exceptional:'leave',compensation:'leave',extra:'extra'};
@@ -202,19 +202,19 @@ var SLBL_AR={official:'رسمي',morning:'صباح',evening:'مساء',night:'ل
 var SLBL_EN={official:'Official',morning:'Morning',evening:'Evening',night:'Night',long_day:'12h Day',long_night:'12h Night',off:'Off',oncall:'On-Call',disaster:'Disaster',annual_leave:'Annual',hajj:'Hajj',fitr:'Eid',sick:'Sick',exceptional:'Exception',compensation:'Comp',extra:'Extra'};
 var SICO={official:'🏢',morning:'☀️',evening:'🌆',night:'🌙',long_day:'🌅',long_night:'🌃',off:'✅',oncall:'📞',disaster:'🚨',annual_leave:'🏖️',hajj:'🕌',fitr:'🌙',sick:'🏥',exceptional:'⭐',compensation:'🔄',extra:'➕'};
 var SCOLOR={official:'#06b6d4',morning:'#f59e0b',evening:'#a855f7',night:'#388bfd',long_day:'#f97316',long_night:'#60a5fa',off:'#3fb950',oncall:'#fbbf24',disaster:'#f85149',annual_leave:'#10b981',hajj:'#eab308',fitr:'#a855f7',sick:'#06b6d4',exceptional:'#f43f5e',compensation:'#6366f1',extra:'#6366f1'};
-
+ 
 function SL(k){return LANG==='ar'?(SLBL_AR[k]||k):(SLBL_EN[k]||k);}
 function p2(n){return String(n).padStart(2,'0');}
 function mN(d){return d.toLocaleDateString('ar-SA',{month:'long',year:'numeric'});}
-
+ 
 (function(){var t=localStorage.getItem('nf-theme');if(t==='light')document.documentElement.setAttribute('data-theme','light');})();
-
+ 
 sb.auth.onAuthStateChange(function(ev,ses){if(ev==='SIGNED_OUT'){ME=null;document.getElementById('login').style.display='flex';document.getElementById('app').style.display='none';if(RT){sb.removeChannel(RT);RT=null;}}});
-
+ 
 (async function(){var r=await sb.auth.getSession();if(r.data&&r.data.session&&r.data.session.user)await loadMe(r.data.session.user.id);})();
-
+ 
 async function loadMe(uid){var r=await sb.from('user_profiles').select('*').eq('id',uid).maybeSingle();if(!r.data){toast('البروفايل غير موجود','td');return;}ME=Object.assign({id:uid},r.data);await loadAll();showApp();}
-
+ 
 window.doLogin=async function(){
   var em=document.getElementById('li-em').value.trim().toLowerCase();
   var pw=document.getElementById('li-pw').value;
@@ -226,7 +226,7 @@ window.doLogin=async function(){
   if(r.error){toast(LANG==='ar'?'بيانات خاطئة':'Invalid credentials','td');return;}
   if(r.data&&r.data.user)await loadMe(r.data.user.id);
 };
-
+ 
 window.doLogout=function(){sb.auth.signOut();};
 window.forgotPass=async function(){
   var em=document.getElementById('li-em').value.trim().toLowerCase();
@@ -234,7 +234,7 @@ window.forgotPass=async function(){
   await sb.auth.resetPasswordForEmail(em,{redirectTo:window.location.origin});
   toast(LANG==='ar'?'تم الإرسال ✓':'Sent ✓','ts');
 };
-
+ 
 async function loadAll(){
   var p=await sb.from('user_profiles').select('*');
   var s=await sb.from('schedules').select('*');
@@ -259,7 +259,7 @@ async function loadAll(){
       .subscribe();
   }
 }
-
+ 
 function showApp(){
   document.getElementById('login').style.display='none';
   document.getElementById('app').style.display='block';
@@ -268,7 +268,7 @@ function showApp(){
   document.getElementById('u-rl').textContent=ME.role;
   buildNav();
 }
-
+ 
 function buildNav(){
   var nav=document.getElementById('nav');
   var T=LANG==='ar';
@@ -284,14 +284,14 @@ function buildNav(){
   }).join('');
   if(list.length)switchPg(list[0][1]);
 }
-
+ 
 function switchPg(id){
   document.querySelectorAll('.pg').forEach(function(p){p.classList.remove('on');});
   document.querySelectorAll('.ntab').forEach(function(t){t.classList.toggle('on',t.dataset.pg===id);});
   var pg=document.getElementById(id);if(pg)pg.classList.add('on');
   render();
 }
-
+ 
 function render(){
   var a=document.querySelector('.pg.on');if(!a)return;
   var id=a.id;
@@ -303,9 +303,9 @@ function render(){
   else if(id==='pg-admin')renderAdmin();
   updateBadges();
 }
-
+ 
 window.chMonth=function(d){MONTH.setMonth(MONTH.getMonth()+d);render();};
-
+ 
 function getStats(uid,y,m){
   var data=ALL_S[uid]||{},counts={},work=0,rest=0,filled=0;
   Object.keys(data).forEach(function(ds){
@@ -315,22 +315,22 @@ function getStats(uid,y,m){
   });
   return{counts:counts,work:work,rest:rest,filled:filled,days:new Date(y,m+1,0).getDate()};
 }
-
+ 
 function getReqRest(uid,y,m){
   var data=ALL_S[uid]||{},req=0;
   Object.keys(data).forEach(function(ds){var d2=new Date(ds);if(d2.getFullYear()!==y||d2.getMonth()!==m)return;var sh=data[ds].shift;if(sh&&REST[sh])req=Math.max(req,REST[sh]);});
   return req;
 }
-
+ 
 function shiftCount(dept,date,shift){
   return Object.values(ALL_P).filter(function(p){return p.role==='nurse'&&p.dept===dept&&(ALL_S[p.id]||{})[date]&&(ALL_S[p.id]||{})[date].shift===shift;}).length;
 }
-
+ 
 function shiftCap(dept,shift){
   var d=ALL_D[dept];if(!d)return 99;
   var m2={morning:'m',evening:'e',night:'n',long_day:'ld',long_night:'ld'};return d[m2[shift]]||99;
 }
-
+ 
 function renderMy(){
   var pg=document.getElementById('pg-my');
   var uid=ME.id,y=MONTH.getFullYear(),m=MONTH.getMonth();
@@ -357,7 +357,9 @@ function renderMy(){
   h+='</div>';
   h+='<div class="shdr"><div><div class="stitle">'+(T?'جدولي - ':'My Schedule - ')+mN(MONTH)+'</div></div>';
   h+='<div style="display:flex;gap:8px;align-items:center"><div class="mctrl"><button onclick="chMonth(-1)">&#x203A;</button><div class="mlbl">'+mN(MONTH)+'</div><button onclick="chMonth(1)">&#x2039;</button></div>';
-  if(canEdit)h+='<button class="btn-sub" onclick="submitSched()">📤 '+(T?'إرسال للمراجعة':'Submit for Review')+'</button>';
+  var daysInMonth=new Date(y,m+1,0).getDate();
+  var allFilled=stats.filled>=daysInMonth;
+  if(canEdit)h+='<button class="btn-sub" '+(allFilled?'':'disabled title="'+(T?'يجب تعبئة كل أيام الشهر':'Fill all days first')+'"')+' onclick="submitSched()">📤 '+(T?'إرسال للمراجعة':'Submit for Review')+(allFilled?'':' ('+(T?stats.filled+'/'+daysInMonth+' يوم':stats.filled+'/'+daysInMonth+' days')+')')+'</button>';
   h+='</div></div>';
   h+='<div class="calwrap"><div class="calhead">';
   (T?['أحد','اثنين','ثلاثاء','أربعاء','خميس','جمعة','سبت']:['Sun','Mon','Tue','Wed','Thu','Fri','Sat']).forEach(function(d2){h+='<div class="calh">'+d2+'</div>';});
@@ -365,7 +367,7 @@ function renderMy(){
   pg.innerHTML=h;
   buildCal('cg',uid,canEdit,y,m);
 }
-
+ 
 function buildCal(gridId,uid,editable,y,m){
   var grid=document.getElementById(gridId);if(!grid)return;
   var first=new Date(y,m,1).getDay(),days=new Date(y,m+1,0).getDate();
@@ -381,7 +383,7 @@ function buildCal(gridId,uid,editable,y,m){
   }
   grid.innerHTML=h;
 }
-
+ 
 window.submitSched=async function(){
   var r=await sb.from('schedule_status').upsert({nurse_id:ME.id,status:'submitted',submitted_at:new Date().toISOString(),reviewed_by:null,approved_by:null},{onConflict:'nurse_id'});
   if(r.error)return toast(r.error.message,'td');
@@ -389,7 +391,7 @@ window.submitSched=async function(){
   ALL_ST={};(st2.data||[]).forEach(function(x){ALL_ST[x.nurse_id]=x;});
   render();toast(LANG==='ar'?'تم الإرسال ✓':'Submitted ✓','ts');
 };
-
+ 
 window.openModal=function(ds){
   selDay=ds;selShift=null;
   var e=(ALL_S[ME.id]||{})[ds];if(e)selShift=e.shift;
@@ -398,7 +400,7 @@ window.openModal=function(ds){
   buildShiftOpts(ds);
   document.getElementById('smodal').style.display='flex';
 };
-
+ 
 function buildShiftOpts(ds){
   var dept=ME.dept||'';
   var order=['official','morning','evening','night','long_day','long_night','off','oncall','disaster','annual_leave','hajj','fitr','sick','exceptional','compensation','extra'];
@@ -413,7 +415,7 @@ function buildShiftOpts(ds){
   });
   document.getElementById('shift-opts').innerHTML=h;
 }
-
+ 
 window.closeModal=function(){document.getElementById('smodal').style.display='none';};
 window.pickShift=function(k){
   selShift=k;
@@ -422,7 +424,7 @@ window.pickShift=function(k){
   var idx=['official','morning','evening','night','long_day','long_night','off','oncall','disaster','annual_leave','hajj','fitr','sick','exceptional','compensation','extra'].indexOf(k);
   var opts=document.querySelectorAll('.sopt');if(opts[idx])opts[idx].classList.add('picked');
 };
-
+ 
 window.saveShift=async function(){
   if(!selShift){toast(LANG==='ar'?'اختر الشفت':'Select shift','tw');return;}
   var dept=ME.dept||'',cap=shiftCap(dept,selShift),cur=shiftCount(dept,selDay,selShift);
@@ -436,7 +438,7 @@ window.saveShift=async function(){
   if(curSt&&curSt!=='draft'){await sb.from('schedule_status').update({status:'draft'}).eq('nurse_id',ME.id);var st2=await sb.from('schedule_status').select('*');ALL_ST={};(st2.data||[]).forEach(function(x){ALL_ST[x.nurse_id]=x;});}
   closeModal();render();toast(LANG==='ar'?'تم الحفظ ✓':'Saved ✓','ts');
 };
-
+ 
 function nurseCard(p,role,y,m){
   var uid=p.id,st=(ALL_ST[uid]&&ALL_ST[uid].status)||'draft';
   var stats=getStats(uid,y,m),req=getReqRest(uid,y,m),T=LANG==='ar';
@@ -455,7 +457,7 @@ function nurseCard(p,role,y,m){
     +'<div class="nbi"><div class="nbl">'+(T?'الراحة':'Rest')+'</div><div class="nbv '+(stats.rest>=req&&req>0?'bok':'berr')+'">'+stats.rest+'/'+(req||'?')+'</div></div></div>'
     +'<div class="nacts">'+actions+'</div></div>';
 }
-
+ 
 function renderReview(){
   var pg=document.getElementById('pg-review'),T=LANG==='ar';
   var dept=ME.dept;
@@ -467,7 +469,7 @@ function renderReview(){
   h+='<div class="cgrid">'+nurses.map(function(n){return nurseCard(n,'head_nurse',y,m);}).join('')+'</div>';
   pg.innerHTML=h;
 }
-
+ 
 function renderApprove(){
   var pg=document.getElementById('pg-approve'),T=LANG==='ar';
   var nurses=Object.values(ALL_P).filter(function(p){return p.role==='nurse';});
@@ -480,12 +482,12 @@ function renderApprove(){
   });
   pg.innerHTML=h;
 }
-
+ 
 window.hnOk=async function(uid){await sb.from('schedule_status').update({status:'reviewed',reviewed_by:ME.id,reviewed_at:new Date().toISOString()}).eq('nurse_id',uid);var r=await sb.from('schedule_status').select('*');ALL_ST={};(r.data||[]).forEach(function(x){ALL_ST[x.nurse_id]=x;});render();toast(LANG==='ar'?'أرسل للمدير ✓':'Sent to Manager ✓','ts');};
 window.hnNo=async function(uid){await sb.from('schedule_status').update({status:'rejected',reviewed_by:ME.id}).eq('nurse_id',uid);var r=await sb.from('schedule_status').select('*');ALL_ST={};(r.data||[]).forEach(function(x){ALL_ST[x.nurse_id]=x;});render();toast(LANG==='ar'?'رجع للممرضة':'Returned','ti');};
 window.mgOk=async function(uid){await sb.from('schedule_status').update({status:'approved',approved_by:ME.id,approved_at:new Date().toISOString()}).eq('nurse_id',uid);var r=await sb.from('schedule_status').select('*');ALL_ST={};(r.data||[]).forEach(function(x){ALL_ST[x.nurse_id]=x;});render();toast('✅ '+(LANG==='ar'?'تمت الموافقة':'Approved'),'ts');};
 window.mgNo=async function(uid){await sb.from('schedule_status').update({status:'rejected',approved_by:ME.id}).eq('nurse_id',uid);var r=await sb.from('schedule_status').select('*');ALL_ST={};(r.data||[]).forEach(function(x){ALL_ST[x.nurse_id]=x;});render();toast(LANG==='ar'?'تم الرفض':'Rejected','ti');};
-
+ 
 function getAlerts(dept,y,m){
   var days=new Date(y,m+1,0).getDate(),out=[];
   for(var d=1;d<=days&&out.length<8;d++){
@@ -497,7 +499,7 @@ function getAlerts(dept,y,m){
   }
   return out;
 }
-
+ 
 function renderOverview(){
   var pg=document.getElementById('pg-overview'),T=LANG==='ar';
   var y=MONTH.getFullYear(),m=MONTH.getMonth();
@@ -523,7 +525,7 @@ function renderOverview(){
   });
   pg.innerHTML=h;
 }
-
+ 
 function renderTable(){
   var pg=document.getElementById('pg-team'),T=LANG==='ar';
   var y=MONTH.getFullYear(),m=MONTH.getMonth(),days=new Date(y,m+1,0).getDate();
@@ -540,7 +542,7 @@ function renderTable(){
   });
   pg.innerHTML='<div class="shdr"><div class="stitle">'+(T?'الجدول الكامل':'Full Schedule')+'</div><div class="mctrl"><button onclick="chMonth(-1)">&#x203A;</button><div class="mlbl">'+mN(MONTH)+'</div><button onclick="chMonth(1)">&#x2039;</button></div></div><div class="calwrap twrap"><table><thead>'+th+'</thead><tbody>'+tb+'</tbody></table></div>';
 }
-
+ 
 function renderAdmin(){
   var pg=document.getElementById('pg-admin'),T=LANG==='ar';
   var users=Object.values(ALL_P),depts=Object.keys(ALL_D);
@@ -560,7 +562,7 @@ function renderAdmin(){
   usersH+='</tbody></table></div>';
   pg.innerHTML='<div class="shdr"><div class="stitle">🔑 '+(T?'لوحة الإدارة':'Admin Panel')+'</div></div>'+addH+deptsH+usersH;
 }
-
+ 
 window.addDept=async function(){
   var name=document.getElementById('d-n').value.trim();
   var m2=parseInt(document.getElementById('d-m').value)||0;
@@ -573,13 +575,13 @@ window.addDept=async function(){
   ALL_D[name]={m:m2,e:e2,n:n2,ld:l2};
   render();toast(LANG==='ar'?'تم الإضافة ✓':'Added ✓','ts');
 };
-
+ 
 window.delDept=async function(name){
   if(!confirm((LANG==='ar'?'حذف قسم ':'Delete dept ')+name+'?'))return;
   await sb.from('departments').delete().eq('name',name);
   delete ALL_D[name];render();toast(LANG==='ar'?'تم الحذف':'Deleted','ti');
 };
-
+ 
 function updateBadges(){
   var nurses=Object.values(ALL_P).filter(function(p){return p.role==='nurse';});
   var rb=document.getElementById('b-pg-review');
@@ -587,13 +589,13 @@ function updateBadges(){
   if(rb){var n=nurses.filter(function(n2){return n2.dept===ME.dept&&ALL_ST[n2.id]&&ALL_ST[n2.id].status==='submitted';}).length;rb.textContent=n;rb.style.display=n?'inline-flex':'none';}
   if(ab){var n2=nurses.filter(function(n3){return ALL_ST[n3.id]&&ALL_ST[n3.id].status==='reviewed';}).length;ab.textContent=n2;ab.style.display=n2?'inline-flex':'none';}
 }
-
+ 
 window.toggleTheme=function(){
   var isL=document.documentElement.getAttribute('data-theme')==='light';
   if(isL){document.documentElement.removeAttribute('data-theme');localStorage.setItem('nf-theme','dark');document.getElementById('theme-btn').textContent='🌙';}
   else{document.documentElement.setAttribute('data-theme','light');localStorage.setItem('nf-theme','light');document.getElementById('theme-btn').textContent='☀️';}
 };
-
+ 
 window.toggleLang=function(){
   LANG=LANG==='ar'?'en':'ar';
   localStorage.setItem('nf-lang',LANG);
@@ -603,7 +605,7 @@ window.toggleLang=function(){
   document.getElementById('l-sub').textContent=LANG==='ar'?'نظام إدارة جداول التمريض':'Professional Nursing Schedule System';
   if(ME)render();else buildNav&&buildNav();
 };
-
+ 
 window.toast=function(msg,type){
   type=type||'ti';
   var t=document.getElementById('toast');
