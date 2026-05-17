@@ -132,13 +132,24 @@ tbody td:first-child{text-align:right;padding-right:12px}
 .loader{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 @media(max-width:640px){.wrap{padding:14px 10px}.sgrid{grid-template-columns:1fr 1fr}.mbox{width:95vw;padding:18px 14px}.sgm{grid-template-columns:1fr 1fr}}
- 
+
 .rep-ok{color:var(--green)}.rep-warn{color:var(--morning)}.rep-err{color:var(--red)}
 .edit-bal{margin-right:4px;padding:2px 6px;background:rgba(47,129,247,.12);border:none;border-radius:4px;color:var(--blue);cursor:pointer;font-size:10px}
 .upload-area{border:2px dashed var(--b1);border-radius:12px;padding:32px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:16px}
 .upload-area:hover{border-color:var(--blue);background:rgba(47,129,247,.04)}
 .prog-wrap{height:6px;background:var(--s3);border-radius:3px;overflow:hidden;margin:8px 0}
 .prog-fill{height:100%;background:var(--blue);border-radius:3px;transition:width .3s}
+
+@media print {
+  .topbar,.navbar,.btn-sub,.btn-ok,.btn-no,.tbtn,.edit-bal,.nacts,.shdr button,.mctrl button { display:none!important; }
+  body { background:white!important; color:black!important; }
+  .calwrap,.ncard,.balcard,.scard { border:1px solid #ccc!important; background:white!important; }
+  .pg { display:block!important; }
+  #app { display:block!important; }
+  .pm,.pe,.pn,.po,.pof,.pl,.poc,.pds,.pav { color:black!important; background:#eee!important; }
+  .print-btn { display:none!important; }
+}
+.print-btn { padding:8px 16px;border:none;border-radius:7px;background:var(--off);color:white;font-family:Tajawal,sans-serif;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px; }
 </style>
 </head>
 <body>
@@ -204,7 +215,7 @@ var ME=null,MONTH=new Date(),selDay=null,selShift=null;
 var ALL_P={},ALL_S={},ALL_ST={},ALL_D={},ALL_LB={},RT=null;
 var LANG=localStorage.getItem('nf-lang')||'ar';
 MONTH.setDate(1);
- 
+
 var REST={official:6,morning:6,evening:6,night:6,long_day:14,long_night:14,off:0,oncall:0,disaster:0,annual_leave:0,hajj:0,fitr:0,sick:0,exceptional:0,compensation:0};
 var SCLS={official:'pof',morning:'pm',evening:'pe',night:'pn',long_day:'pl',long_night:'pl',off:'po',oncall:'poc',disaster:'pds',annual_leave:'pav',hajj:'pav',fitr:'pav',sick:'pav',exceptional:'pav',compensation:'pav'};
 var SCAT={official:'work',morning:'work',evening:'work',night:'work',long_day:'work',long_night:'work',off:'off',oncall:'flag',disaster:'flag',annual_leave:'leave',hajj:'leave',fitr:'leave',sick:'leave',exceptional:'leave',compensation:'leave'};
@@ -213,13 +224,13 @@ var SLBL_AR={official:'رسمي',morning:'صباح',evening:'مساء',night:'ل
 var SLBL_EN={official:'Official',morning:'Morning',evening:'Evening',night:'Night',long_day:'12h Day',long_night:'12h Night',off:'Off',oncall:'Floater',disaster:'Disaster',annual_leave:'Annual',hajj:'Hajj',fitr:'Eid Al-Fitr',sick:'Sick',exceptional:'Exception',compensation:'Comp'};
 var SICO={official:'🏢',morning:'☀️',evening:'🌆',night:'🌙',long_day:'🌅',long_night:'🌃',off:'✅',oncall:'🔵',disaster:'🚨',annual_leave:'🏖️',hajj:'🕌',fitr:'🌙',sick:'🏥',exceptional:'⭐',compensation:'🔄'};
 var SCOLOR={official:'#06b6d4',morning:'#f59e0b',evening:'#a855f7',night:'#388bfd',long_day:'#f97316',long_night:'#60a5fa',off:'#3fb950',oncall:'#3b82f6',disaster:'#f85149',annual_leave:'#10b981',hajj:'#eab308',fitr:'#a855f7',sick:'#06b6d4',exceptional:'#f43f5e',compensation:'#6366f1'};
- 
+
 function SL(k){return LANG==='ar'?(SLBL_AR[k]||k):(SLBL_EN[k]||k);}
 function p2(n){return String(n).padStart(2,'0');}
 function mN(d){return d.toLocaleDateString('ar-SA',{month:'long',year:'numeric'});}
- 
+
 (function(){var t=localStorage.getItem('nf-theme');if(t==='light')document.documentElement.setAttribute('data-theme','light');})();
- 
+
 sb.auth.onAuthStateChange(function(ev,ses){
   if(ev==='SIGNED_OUT'){
     ME=null;
@@ -228,13 +239,13 @@ sb.auth.onAuthStateChange(function(ev,ses){
     if(RT){sb.removeChannel(RT);RT=null;}
   }
 });
- 
+
 (function(){
   sb.auth.getSession().then(function(r){
     if(r.data&&r.data.session&&r.data.session.user)loadMe(r.data.session.user.id);
   });
 })();
- 
+
 function loadMe(uid){
   sb.from('user_profiles').select('*').eq('id',uid).maybeSingle().then(function(r){
     if(!r.data){toast('البروفايل غير موجود','td');return;}
@@ -242,7 +253,7 @@ function loadMe(uid){
     loadAll().then(function(){showApp();});
   });
 }
- 
+
 window.doLogin=function(){
   var em=document.getElementById('li-em').value.trim().toLowerCase();
   var pw=document.getElementById('li-pw').value;
@@ -255,9 +266,9 @@ window.doLogin=function(){
     if(r.data&&r.data.user)loadMe(r.data.user.id);
   });
 };
- 
+
 window.doLogout=function(){sb.auth.signOut();};
- 
+
 window.forgotPass=function(){
   var em=document.getElementById('li-em').value.trim().toLowerCase();
   if(!em){toast(LANG==='ar'?'أدخلي الإيميل أولاً':'Enter your email first','tw');return;}
@@ -265,7 +276,7 @@ window.forgotPass=function(){
     toast(LANG==='ar'?'تم الإرسال ✓':'Sent ✓','ts');
   });
 };
- 
+
 function loadAll(){
   return Promise.all([
     sb.from('user_profiles').select('*'),
@@ -295,7 +306,7 @@ function loadAll(){
     }
   });
 }
- 
+
 function showApp(){
   document.getElementById('login').style.display='none';
   document.getElementById('app').style.display='block';
@@ -304,7 +315,7 @@ function showApp(){
   document.getElementById('u-rl').textContent=ME.role;
   buildNav();
 }
- 
+
 function buildNav(){
   var nav=document.getElementById('nav');
   var T=LANG==='ar';
@@ -320,14 +331,14 @@ function buildNav(){
   }).join('');
   if(list.length)switchPg(list[0][1]);
 }
- 
+
 function switchPg(id){
   document.querySelectorAll('.pg').forEach(function(p){p.classList.remove('on');});
   document.querySelectorAll('.ntab').forEach(function(t){t.classList.toggle('on',t.dataset.pg===id);});
   var pg=document.getElementById(id);if(pg)pg.classList.add('on');
   render();
 }
- 
+
 function render(){
   var a=document.querySelector('.pg.on');if(!a)return;
   var id=a.id;
@@ -341,7 +352,7 @@ function render(){
   else if(id==='pg-admin')renderAdmin();
   updateBadges();
 }
- 
+
 window.chMonth=function(d){
   var next=new Date(MONTH);
   next.setMonth(next.getMonth()+d);
@@ -352,7 +363,7 @@ window.chMonth=function(d){
     else toast(LANG==='ar'?'يمكنك تعبئة الشهر القادم فقط':'Next month only','tw');
   } else {MONTH=next;render();}
 };
- 
+
 function getStats(uid,y,m){
   var data=ALL_S[uid]||{},counts={},work=0,rest=0,filled=0,floater=0,disaster=0;
   Object.keys(SCLS).forEach(function(k){counts[k]=0;});
@@ -367,7 +378,7 @@ function getStats(uid,y,m){
   });
   return{counts:counts,work:work,rest:rest,filled:filled,days:new Date(y,m+1,0).getDate(),floater:floater,disaster:disaster};
 }
- 
+
 function getReqRest(uid,y,m){
   var data=ALL_S[uid]||{},req=0;
   Object.keys(data).forEach(function(ds){
@@ -376,16 +387,16 @@ function getReqRest(uid,y,m){
   });
   return req;
 }
- 
+
 function shiftCount(dept,date,shift){
   return Object.values(ALL_P).filter(function(p){return p.role==='nurse'&&p.dept===dept&&(ALL_S[p.id]||{})[date]&&(ALL_S[p.id]||{})[date].shift===shift;}).length;
 }
- 
+
 function shiftCap(dept,shift){
   var d=ALL_D[dept];if(!d)return 99;
   var m2={morning:'m',evening:'e',night:'n',long_day:'ld',long_night:'ld'};return d[m2[shift]]||99;
 }
- 
+
 function renderMy(){
   var pg=document.getElementById('pg-my');
   if(ME.role==='nurse'){
@@ -425,7 +436,7 @@ function renderMy(){
   pg.innerHTML=h;
   buildCal('cg',uid,canEdit,y,m);
 }
- 
+
 function buildCal(gridId,uid,editable,y,m){
   var grid=document.getElementById(gridId);if(!grid)return;
   var first=new Date(y,m,1).getDay(),days=new Date(y,m+1,0).getDate();
@@ -446,7 +457,7 @@ function buildCal(gridId,uid,editable,y,m){
   }
   grid.innerHTML=h;
 }
- 
+
 window.submitSched=function(){
   sb.from('schedule_status').upsert({nurse_id:ME.id,status:'submitted',submitted_at:new Date().toISOString(),reviewed_by:null,approved_by:null},{onConflict:'nurse_id'}).then(function(r){
     if(r.error)return toast(r.error.message,'td');
@@ -454,7 +465,7 @@ window.submitSched=function(){
     toast(LANG==='ar'?'تم الإرسال ✓':'Submitted ✓','ts');
   });
 };
- 
+
 window.openModal=function(ds){
   selDay=ds;selShift=null;
   var e=(ALL_S[ME.id]||{})[ds];if(e)selShift=e.shift;
@@ -463,7 +474,7 @@ window.openModal=function(ds){
   buildShiftOpts(ds);
   document.getElementById('smodal').style.display='flex';
 };
- 
+
 function buildShiftOpts(ds){
   var dept=ME.dept||'';
   var myEntry=(ALL_S[ME.id]||{})[ds];
@@ -484,7 +495,7 @@ function buildShiftOpts(ds){
   });
   document.getElementById('shift-opts').innerHTML=h;
 }
- 
+
 window.closeModal=function(){document.getElementById('smodal').style.display='none';};
 window.pickShift=function(k){
   selShift=k;
@@ -494,7 +505,7 @@ window.pickShift=function(k){
   var idx=order.indexOf(k);
   var opts=document.querySelectorAll('.sopt');if(opts[idx])opts[idx].classList.add('picked');
 };
- 
+
 window.saveShift=function(){
   if(!selShift){toast(LANG==='ar'?'اختر الشفت':'Select shift','tw');return;}
   var dept=ME.dept||'',cap=shiftCap(dept,selShift),cur=shiftCount(dept,selDay,selShift);
@@ -517,7 +528,7 @@ window.saveShift=function(){
     closeModal();render();toast(LANG==='ar'?'تم الحفظ ✓':'Saved ✓','ts');
   });
 };
- 
+
 function nurseCard(p,role,y,m){
   var uid=p.id,st=(ALL_ST[uid]&&ALL_ST[uid].status)||'draft';
   var stats=getStats(uid,y,m),req=getReqRest(uid,y,m),T=LANG==='ar';
@@ -536,7 +547,7 @@ function nurseCard(p,role,y,m){
     +'<div class="nbi"><div class="nbl">'+(T?'الراحة':'Rest')+'</div><div class="nbv '+(stats.rest>=req&&req>0?'bok':'berr')+'">'+stats.rest+'/'+(req||'?')+'</div></div></div>'
     +'<div class="nacts">'+actions+'</div></div>';
 }
- 
+
 function renderReview(){
   var pg=document.getElementById('pg-review'),T=LANG==='ar';
   var dept=ME.dept;
@@ -548,7 +559,7 @@ function renderReview(){
   h+='<div class="cgrid">'+nurses.map(function(n){return nurseCard(n,'head_nurse',y,m);}).join('')+'</div>';
   pg.innerHTML=h;
 }
- 
+
 function renderApprove(){
   var pg=document.getElementById('pg-approve'),T=LANG==='ar';
   var nurses=Object.values(ALL_P).filter(function(p){return p.role==='nurse';});
@@ -561,12 +572,12 @@ function renderApprove(){
   });
   pg.innerHTML=h;
 }
- 
+
 window.hnOk=function(uid){sb.from('schedule_status').update({status:'reviewed',reviewed_by:ME.id,reviewed_at:new Date().toISOString()}).eq('nurse_id',uid).then(function(){sb.from('schedule_status').select('*').then(function(r){ALL_ST={};(r.data||[]).forEach(function(x){ALL_ST[x.nurse_id]=x;});render();});toast(LANG==='ar'?'أرسل للمدير ✓':'Sent to Manager ✓','ts');});};
 window.hnNo=function(uid){sb.from('schedule_status').update({status:'rejected',reviewed_by:ME.id}).eq('nurse_id',uid).then(function(){sb.from('schedule_status').select('*').then(function(r){ALL_ST={};(r.data||[]).forEach(function(x){ALL_ST[x.nurse_id]=x;});render();});toast(LANG==='ar'?'رجع للممرضة':'Returned','ti');});};
 window.mgOk=function(uid){sb.from('schedule_status').update({status:'approved',approved_by:ME.id,approved_at:new Date().toISOString()}).eq('nurse_id',uid).then(function(){sb.from('schedule_status').select('*').then(function(r){ALL_ST={};(r.data||[]).forEach(function(x){ALL_ST[x.nurse_id]=x;});render();});toast('✅ '+(LANG==='ar'?'تمت الموافقة':'Approved'),'ts');});};
 window.mgNo=function(uid){sb.from('schedule_status').update({status:'rejected',approved_by:ME.id}).eq('nurse_id',uid).then(function(){sb.from('schedule_status').select('*').then(function(r){ALL_ST={};(r.data||[]).forEach(function(x){ALL_ST[x.nurse_id]=x;});render();});toast(LANG==='ar'?'تم الرفض':'Rejected','ti');});};
- 
+
 function getAlerts(dept,y,m){
   var days=new Date(y,m+1,0).getDate(),out=[];
   for(var d=1;d<=days&&out.length<8;d++){
@@ -578,7 +589,7 @@ function getAlerts(dept,y,m){
   }
   return out;
 }
- 
+
 function renderReport(){
   var pg=document.getElementById('pg-report'),T=LANG==='ar';
   var nurses=Object.values(ALL_P).filter(function(p){return p.role==='nurse';});
@@ -619,11 +630,11 @@ function renderReport(){
       +'<td>'+counts.disaster+'</td>'
       +'</tr>';
   });
-  pg.innerHTML='<div class="shdr"><div class="stitle">📋 '+(T?'تقرير الإجازات':'Leave Report')+'</div>'
+  pg.innerHTML='<div class="shdr"><div class="stitle">📋 '+(T?'تقرير الإجازات':'Leave Report')+'</div><button class="print-btn" onclick="printReport()">🖨️ '+(T?'طباعة PDF':'Print PDF')+'</button></div>'
     +(canEdit?'<span style="font-size:11px;color:var(--muted)">✏️ '+(T?'اضغط لتعديل الرصيد':'Click to edit balance')+'</span>':'')+'</div>'
     +'<div class="calwrap twrap"><table><thead>'+th+'</thead><tbody>'+tb+'</tbody></table></div>';
 }
- 
+
 window.editBal=function(uid,type,current){
   var T=LANG==='ar';
   var labels={fitr:T?'أيام عيد الفطر':'Eid Al-Fitr days',adha:T?'أيام عيد الأضحى':'Eid Al-Adha days',comp:T?'أيام التعويض':'Comp days'};
@@ -640,7 +651,7 @@ window.editBal=function(uid,type,current){
     toast(T?'تم الحفظ ✓':'Saved ✓','ts');
   });
 };
- 
+
 function renderUpload(){
   var pg=document.getElementById('pg-upload'),T=LANG==='ar';
   pg.innerHTML='<div class="shdr"><div><div class="stitle">📤 '+(T?'رفع موظفين من Excel':'Upload Staff from Excel')+'</div>'
@@ -674,11 +685,11 @@ function renderUpload(){
         +'<td><button class="btn-ok" style="padding:5px 10px;font-size:11px" onclick="saveUserEdit(\''+u.id+'\')">'+(T?'حفظ':'Save')+'</button></td></tr>';
     }).join('')+'</tbody></table></div></div>';
 }
- 
+
 function editableField(uid,field,val){
   return '<input id="ef-'+uid+'-'+field+'" value="'+(val||'')+'" style="padding:5px 8px;background:var(--s2);border:1px solid var(--b1);border-radius:5px;color:var(--text);font-family:Tajawal,sans-serif;font-size:12px;outline:none;width:100px">';
 }
- 
+
 function roleSelect(uid,current){
   var roles=['nurse','head_nurse','manager','admin'];
   var T=LANG==='ar';
@@ -686,7 +697,7 @@ function roleSelect(uid,current){
   return '<select id="rs-'+uid+'" style="padding:5px 8px;background:var(--s2);border:1px solid var(--b1);border-radius:5px;color:var(--text);font-family:Tajawal,sans-serif;font-size:12px;outline:none">'
     +roles.map(function(r){return '<option value="'+r+'"'+(r===current?' selected':'')+'>'+labels[r]+'</option>';}).join('')+'</select>';
 }
- 
+
 window.saveUserEdit=function(uid){
   var deptEl=document.getElementById('ef-'+uid+'-dept');
   var roleEl=document.getElementById('rs-'+uid);
@@ -698,14 +709,14 @@ window.saveUserEdit=function(uid){
     toast(LANG==='ar'?'تم التعديل ✓':'Updated ✓','ts');
   });
 };
- 
+
 window.downloadTemplate=function(){
   var T=LANG==='ar';
   var ws=XLSX.utils.aoa_to_sheet([[T?'الاسم':'Name',T?'الإيميل':'Email',T?'كلمة السر':'Password',T?'الدور':'Role',T?'القسم':'Department'],['نعيمة أحمد','naima@hospital.com','1234','nurse',T?'طوارئ':'Emergency'],['هيا محمد','haya@hospital.com','1234','head_nurse',T?'طوارئ':'Emergency']]);
   var wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Staff');
   XLSX.writeFile(wb,'nurseflow_template.xlsx');
 };
- 
+
 window.handleUpload=function(input){
   var file=input.files[0];if(!file)return;
   var reader=new FileReader();
@@ -719,7 +730,7 @@ window.handleUpload=function(input){
   };
   reader.readAsArrayBuffer(file);
 };
- 
+
 function processRows(rows){
   var T=LANG==='ar';
   var valid=rows.filter(function(r){return r[0]&&r[1]&&r[2];});
@@ -750,7 +761,7 @@ function processRows(rows){
   }
   processNext(0);
 }
- 
+
 function showResults(results){
   var T=LANG==='ar';
   var ok=results.filter(function(r){return r.ok;}).length;
@@ -766,7 +777,7 @@ function showResults(results){
   document.getElementById('upload-progress').style.display='none';
   toast((T?'تمت المعالجة: ':'Done: ')+ok+' '+(T?'تمت إضافتهم':'added'),'ts');
 }
- 
+
 function renderOverview(){
   var pg=document.getElementById('pg-overview'),T=LANG==='ar';
   var y=MONTH.getFullYear(),m=MONTH.getMonth();
@@ -792,7 +803,7 @@ function renderOverview(){
   });
   pg.innerHTML=h;
 }
- 
+
 function renderTable(){
   var pg=document.getElementById('pg-team'),T=LANG==='ar';
   var y=MONTH.getFullYear(),m=MONTH.getMonth(),days=new Date(y,m+1,0).getDate();
@@ -811,9 +822,9 @@ function renderTable(){
     }
     tb+='</tr>';
   });
-  pg.innerHTML='<div class="shdr"><div class="stitle">'+(T?'الجدول الكامل':'Full Schedule')+'</div><div class="mctrl"><button onclick="chMonth(-1)">&#x203A;</button><div class="mlbl">'+mN(MONTH)+'</div><button onclick="chMonth(1)">&#x2039;</button></div></div><div class="calwrap twrap"><table><thead>'+th+'</thead><tbody>'+tb+'</tbody></table></div>';
+  pg.innerHTML='<div class="shdr"><div class="stitle">'+(T?'الجدول الكامل':'Full Schedule')+'</div><div style="display:flex;align-items:center;gap:8px"><div class="mctrl"><button onclick="chMonth(-1)">&#x203A;</button><div class="mlbl">'+mN(MONTH)+'</div><button onclick="chMonth(1)">&#x2039;</button></div><button class="print-btn" onclick="printTable()">🖨️ '+(T?'طباعة':'Print')+'</button></div></div><div class="calwrap twrap" id="print-table"><table><thead>'+th+'</thead><tbody>'+tb+'</tbody></table></div>';
 }
- 
+
 function renderAdmin(){
   var pg=document.getElementById('pg-admin'),T=LANG==='ar';
   var depts=Object.keys(ALL_D);
@@ -830,7 +841,7 @@ function renderAdmin(){
     +'<button onclick="addDept()" class="btn-sub">'+(T?'حفظ':'Save')+'</button></div></div>';
   pg.innerHTML='<div class="shdr"><div class="stitle">🔑 '+(T?'لوحة الإدارة':'Admin Panel')+'</div></div>'+addH+deptsH;
 }
- 
+
 window.addDept=function(){
   var name=document.getElementById('d-n').value.trim();
   var m2=parseInt(document.getElementById('d-m').value)||0;
@@ -843,12 +854,12 @@ window.addDept=function(){
     ALL_D[name]={m:m2,e:e2,n:n2,ld:l2};render();toast(LANG==='ar'?'تم الإضافة ✓':'Added ✓','ts');
   });
 };
- 
+
 window.delDept=function(name){
   if(!confirm((LANG==='ar'?'حذف قسم ':'Delete dept ')+name+'?'))return;
   sb.from('departments').delete().eq('name',name).then(function(){delete ALL_D[name];render();toast(LANG==='ar'?'تم الحذف':'Deleted','ti');});
 };
- 
+
 function updateBadges(){
   var nurses=Object.values(ALL_P).filter(function(p){return p.role==='nurse';});
   var rb=document.getElementById('b-pg-review');
@@ -856,13 +867,13 @@ function updateBadges(){
   if(rb){var n=nurses.filter(function(n2){return n2.dept===ME.dept&&ALL_ST[n2.id]&&ALL_ST[n2.id].status==='submitted';}).length;rb.textContent=n;rb.style.display=n?'inline-flex':'none';}
   if(ab){var n2=nurses.filter(function(n3){return ALL_ST[n3.id]&&ALL_ST[n3.id].status==='reviewed';}).length;ab.textContent=n2;ab.style.display=n2?'inline-flex':'none';}
 }
- 
+
 window.toggleTheme=function(){
   var isL=document.documentElement.getAttribute('data-theme')==='light';
   if(isL){document.documentElement.removeAttribute('data-theme');localStorage.setItem('nf-theme','dark');document.getElementById('theme-btn').textContent='🌙';}
   else{document.documentElement.setAttribute('data-theme','light');localStorage.setItem('nf-theme','light');document.getElementById('theme-btn').textContent='☀️';}
 };
- 
+
 window.toggleLang=function(){
   LANG=LANG==='ar'?'en':'ar';
   localStorage.setItem('nf-lang',LANG);
@@ -871,7 +882,52 @@ window.toggleLang=function(){
   document.getElementById('btn-out').textContent=LANG==='ar'?'خروج':'Sign Out';
   if(ME)render();
 };
- 
+
+window.printReport=function(){
+  var T=LANG==='ar';
+  var title=(T?'تقرير الإجازات - ':'Leave Report - ')+new Date().toLocaleDateString('ar-SA');
+  var content=document.querySelector('#pg-report .calwrap');
+  if(!content)return toast(T?'لا يوجد تقرير':'No report','tw');
+  var win=window.open('','_blank');
+  win.document.write('<html dir="'+(T?'rtl':'ltr')+'"><head><meta charset="UTF-8"><title>'+title+'</title>');
+  win.document.write('<style>body{font-family:Tajawal,sans-serif;padding:20px;direction:'+(T?'rtl':'ltr')+'}');
+  win.document.write('table{width:100%;border-collapse:collapse;font-size:11px}');
+  win.document.write('th,td{border:1px solid #ccc;padding:6px 8px;text-align:center}');
+  win.document.write('th{background:#f0f0f0;font-weight:700}');
+  win.document.write('td:first-child{text-align:'+(T?'right':'left')+'}');
+  win.document.write('h2{margin-bottom:16px;font-size:16px}');
+  win.document.write('.rep-ok{color:green}.rep-err{color:red}.edit-bal{display:none}');
+  win.document.write('@media print{button{display:none}}');
+  win.document.write('</style></head><body>');
+  win.document.write('<h2>'+title+'</h2>');
+  win.document.write(content.outerHTML);
+  win.document.write('</body></html>');
+  win.document.close();
+  setTimeout(function(){win.print();},500);
+};
+
+window.printTable=function(){
+  var T=LANG==='ar';
+  var title=(T?'جدول الشفتات - ':'Shift Schedule - ')+mN(MONTH);
+  var content=document.getElementById('print-table');
+  if(!content)return toast(T?'لا يوجد جدول':'No table','tw');
+  var win=window.open('','_blank');
+  win.document.write('<html dir="'+(T?'rtl':'ltr')+'"><head><meta charset="UTF-8"><title>'+title+'</title>');
+  win.document.write('<style>body{font-family:Tajawal,sans-serif;padding:20px;direction:'+(T?'rtl':'ltr')+'}');
+  win.document.write('table{width:100%;border-collapse:collapse;font-size:10px}');
+  win.document.write('th,td{border:1px solid #ccc;padding:4px 3px;text-align:center}');
+  win.document.write('th{background:#f0f0f0;font-weight:700}');
+  win.document.write('th:first-child,td:first-child{text-align:'+(T?'right':'left')+';min-width:100px}');
+  win.document.write('h2{margin-bottom:12px;font-size:14px}');
+  win.document.write('span{font-size:9px;padding:1px 3px;border-radius:2px;background:#eee}');
+  win.document.write('</style></head><body>');
+  win.document.write('<h2>'+title+'</h2>');
+  win.document.write(content.outerHTML);
+  win.document.write('</body></html>');
+  win.document.close();
+  setTimeout(function(){win.print();},500);
+};
+
 window.toast=function(msg,type){
   type=type||'ti';
   var t=document.getElementById('toast');
