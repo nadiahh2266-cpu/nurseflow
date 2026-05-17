@@ -213,7 +213,7 @@ var SB_URL='https://roapezlytybnculruflm.supabase.co';
 var SB_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJvYXBlemx5dHlibmN1bHJ1ZmxtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxNjg3NzksImV4cCI6MjA5Mzc0NDc3OX0.L-UHviYrc4kVoh13tJmzk6f8wvCQRWoWo7tHZvs0XsQ';
 var sb=supabase.createClient(SB_URL,SB_ANON);
 var ME=null,MONTH=new Date(),selDay=null,selShift=null;
-var ALL_P={},ALL_S={},ALL_ST={},ALL_D={},ALL_LB={},RT=null;
+var ALL_P={},ALL_S={},ALL_ST={},ALL_D={},ALL_LB={},ALL_MGR_DEPTS={},RT=null;
 var LANG=localStorage.getItem('nf-lang')||'ar';
 MONTH.setDate(1);
 
@@ -284,9 +284,11 @@ function loadAll(){
     sb.from('schedules').select('*'),
     sb.from('departments').select('*'),
     sb.from('schedule_status').select('*'),
-    sb.from('leave_balance').select('*')
+    sb.from('leave_balance').select('*'),
+    sb.from('manager_departments').select('*')
   ]).then(function(results){
-    var p=results[0],s=results[1],d=results[2],st=results[3],lb=results[4];
+    var p=results[0],s=results[1],d=results[2],st=results[3],lb=results[4],md=results[5];
+    ALL_MGR_DEPTS={};(md.data||[]).forEach(function(x){if(!ALL_MGR_DEPTS[x.manager_id])ALL_MGR_DEPTS[x.manager_id]=[];ALL_MGR_DEPTS[x.manager_id].push(x.dept_name);});
     ALL_P={};(p.data||[]).forEach(function(x){ALL_P[x.id]=x;});
     ALL_S={};(s.data||[]).forEach(function(x){if(!ALL_S[x.nurse_id])ALL_S[x.nurse_id]={};ALL_S[x.nurse_id][x.date]={shift:x.shift,flag:x.flag};});
     ALL_D={};(d.data||[]).forEach(function(x){ALL_D[x.name]={m:x.cap_morning||99,e:x.cap_evening||99,n:x.cap_night||99,ld:x.cap_long_day||99};});
@@ -564,7 +566,8 @@ function renderReview(){
 
 function renderApprove(){
   var pg=document.getElementById('pg-approve'),T=LANG==='ar';
-  var nurses=Object.values(ALL_P).filter(function(p){return p.role==='nurse';});
+  var myDepts2=ME.role==='manager'?(ALL_MD[ME.id]||[]):null;
+  var nurses=Object.values(ALL_P).filter(function(p){return p.role==='nurse'&&(!myDepts2||myDepts2.indexOf(p.dept)>=0);});
   var y=MONTH.getFullYear(),m=MONTH.getMonth();
   var byDept={};nurses.forEach(function(n){if(!byDept[n.dept])byDept[n.dept]=[];byDept[n.dept].push(n);});
   var h='<div class="shdr"><div class="stitle">'+(T?'الموافقة النهائية':'Final Approval')+'</div></div>';
@@ -594,7 +597,11 @@ function getAlerts(dept,y,m){
 
 function renderReport(){
   var pg=document.getElementById('pg-report'),T=LANG==='ar';
-  var nurses=Object.values(ALL_P).filter(function(p){return p.role==='nurse';});
+  var allRpNurses=Object.values(ALL_P).filter(function(p){return p.role==='nurse';});
+  var nurses;
+  if(ME.role==='head_nurse'){nurses=allRpNurses.filter(function(p){return p.dept===ME.dept;});}
+  else if(ME.role==='manager'){nurses=allRpNurses.filter(function(p){return (ALL_MGR_DEPTS[ME.id]||[]).indexOf(p.dept)>=0;});}
+  else{nurses=allRpNurses;}
   var canEdit=ME.role==='head_nurse';
   var th='<tr><th>'+(T?'الموظفة':'Nurse')+'</th><th>'+(T?'القسم':'Dept')+'</th>'
     +'<th>'+(T?'سنوية':'Annual')+'</th><th>'+(T?'استثنائية':'Exception')+'</th>'
@@ -784,8 +791,12 @@ function renderOverview(){
   var pg=document.getElementById('pg-overview'),T=LANG==='ar';
   var y=MONTH.getFullYear(),m=MONTH.getMonth();
   var days=new Date(y,m+1,0).getDate();
-  var depts=Object.keys(ALL_D);
-  if(!depts.length)depts=Array.from(new Set(Object.values(ALL_P).filter(function(p){return p.role==='nurse';}).map(function(p){return p.dept;})));
+  var allDepts=Object.keys(ALL_D);
+  if(!allDepts.length)allDepts=Array.from(new Set(Object.values(ALL_P).filter(function(p){return p.role==='nurse';}).map(function(p){return p.dept;})));
+  var depts;
+  if(ME.role==='head_nurse'){depts=[ME.dept];}
+  else if(ME.role==='manager'){depts=ALL_MGR_DEPTS[ME.id]||[];}
+  else{depts=allDepts;}
   var h='<div class="shdr"><div class="stitle">'+(T?'تغطية الشفتات':'Coverage')+'</div><div class="mctrl"><button onclick="chMonth(-1)">&#x203A;</button><div class="mlbl">'+mN(MONTH)+'</div><button onclick="chMonth(1)">&#x2039;</button></div></div>';
   depts.forEach(function(dept){
     h+='<div style="margin-bottom:24px"><div style="font-size:13px;font-weight:700;color:var(--muted);margin-bottom:10px">'+dept+'</div><div class="ovgrid">';
@@ -809,7 +820,12 @@ function renderOverview(){
 function renderTable(){
   var pg=document.getElementById('pg-team'),T=LANG==='ar';
   var y=MONTH.getFullYear(),m=MONTH.getMonth(),days=new Date(y,m+1,0).getDate();
-  var nurses=Object.values(ALL_P).filter(function(p){return p.role==='nurse';});
+  var allNurses=Object.values(ALL_P).filter(function(p){return p.role==='nurse';});
+  var nurses;
+  if(ME.role==='nurse'){nurses=[ALL_P[ME.id]].filter(Boolean);}
+  else if(ME.role==='head_nurse'){nurses=allNurses.filter(function(p){return p.dept===ME.dept;});}
+  else if(ME.role==='manager'){nurses=allNurses.filter(function(p){return (ALL_MGR_DEPTS[ME.id]||[]).indexOf(p.dept)>=0;});}
+  else{nurses=allNurses;}
   var th='<tr><th>'+(T?'الممرضة':'Nurse')+'</th>';
   for(var d=1;d<=days;d++){var dt2=new Date(y,m,d),dw=dt2.getDay();th+='<th style="'+(dw===5||dw===6?'background:rgba(47,129,247,.06)':'')+'">'+d+'</th>';}
   th+='</tr>';
@@ -1098,3 +1114,255 @@ window.toggleAnnual=function(){
   showAnnual=!showAnnual;render();
 };
 </script>
+<script>
+// ══════════════════════════════════════
+// DEADLINE ALERT BANNER
+// ══════════════════════════════════════
+function checkDeadline(){
+  if(!ME||ME.role!=='nurse')return;
+  var st=(ALL_ST[ME.id]&&ALL_ST[ME.id].status)||'draft';
+  if(st!=='draft'&&st!=='rejected')return;
+  var now=new Date();
+  var deadline=new Date(now.getFullYear(),now.getMonth(),20);
+  var daysLeft=Math.ceil((deadline-now)/(1000*60*60*24));
+  if(daysLeft<=0||daysLeft>10)return;
+  var T=LANG==='ar';
+  var existing=document.getElementById('deadline-banner');
+  if(existing)return;
+  var banner=document.createElement('div');
+  banner.id='deadline-banner';
+  banner.style.cssText='position:fixed;top:54px;left:0;right:0;z-index:99;padding:10px 20px;background:linear-gradient(135deg,#f59e0b,#f97316);color:white;font-family:Tajawal,sans-serif;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:space-between';
+  banner.innerHTML='<span>⏰ '+(T?'تذكير: موعد رفع الجدول بعد '+daysLeft+(daysLeft===1?' يوم':' أيام')+' (يوم 20)':'Reminder: Schedule deadline in '+daysLeft+(daysLeft===1?' day':' days')+' (20th)')+'</span>'
+    +'<button onclick="document.getElementById(\'deadline-banner\').remove()" style="background:rgba(255,255,255,.2);border:none;border-radius:5px;color:white;padding:3px 10px;cursor:pointer;font-family:Tajawal,sans-serif">✕</button>';
+  document.getElementById('app').insertAdjacentElement('afterbegin',banner);
+}
+
+// ══════════════════════════════════════
+// SWAP REQUESTS
+// ══════════════════════════════════════
+function renderSwap(){
+  var pg=document.getElementById('pg-swap');if(!pg)return;
+  var T=LANG==='ar';
+  var mySwaps=ALL_SW.filter(function(s){return s.requester_id===ME.id||s.target_id===ME.id;});
+  var pendingForMe=ALL_SW.filter(function(s){return s.target_id===ME.id&&s.status==='pending';});
+
+  var h='<div class="shdr"><div class="stitle">🔄 '+(T?'تبادل الشفتات':'Shift Swap')+'</div></div>';
+
+  // New swap request
+  h+='<div class="balcard"><div class="baltitle">➕ '+(T?'طلب تبديل شفت':'Request Shift Swap')+'</div>';
+  h+='<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">';
+  h+='<div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">'+(T?'اليوم':'Date')+'</label><input type="date" id="sw-date" style="padding:8px;background:var(--s2);border:1px solid var(--b1);border-radius:7px;color:var(--text);font-family:Tajawal,sans-serif;font-size:13px;outline:none"></div>';
+  var myDeptNurses=Object.values(ALL_P).filter(function(p){return p.role==='nurse'&&p.dept===ME.dept&&p.id!==ME.id;});
+  h+='<div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">'+(T?'مع ممرضة':'With Nurse')+'</label><select id="sw-nurse" style="padding:8px;background:var(--s2);border:1px solid var(--b1);border-radius:7px;color:var(--text);font-family:Tajawal,sans-serif;font-size:13px;outline:none"><option value="">'+(T?'اختر...':'Select...')+'</option>'+myDeptNurses.map(function(n){return '<option value="'+n.id+'">'+n.name+'</option>';}).join('')+'</select></div>';
+  h+='<button class="btn-sub" onclick="requestSwap()">'+(T?'إرسال الطلب':'Send Request')+'</button></div></div>';
+
+  // Pending requests for me
+  if(pendingForMe.length){
+    h+='<div class="balcard"><div class="baltitle" style="color:var(--morning)">⏳ '+(T?'طلبات تبديل واردة':'Incoming Swap Requests')+'</div>';
+    pendingForMe.forEach(function(s){
+      var req=ALL_P[s.requester_id];
+      h+='<div class="brow"><span class="bl">'+(req?req.name:'?')+' — '+s.swap_date+'</span>'
+        +'<div style="display:flex;gap:6px">'
+        +'<button class="btn-ok" style="padding:5px 12px;font-size:11px" onclick="respondSwap(\''+s.id+'\',\'approved\')">'+(T?'موافق':'Accept')+'</button>'
+        +'<button class="btn-no" style="padding:5px 12px;font-size:11px" onclick="respondSwap(\''+s.id+'\',\'rejected\')">'+(T?'رفض':'Reject')+'</button>'
+        +'</div></div>';
+    });
+    h+='</div>';
+  }
+
+  // My swap history
+  if(mySwaps.length){
+    h+='<div class="balcard"><div class="baltitle">📋 '+(T?'طلباتي':'My Requests')+'</div>';
+    mySwaps.forEach(function(s){
+      var other=ALL_P[s.requester_id===ME.id?s.target_id:s.requester_id];
+      var stColors={pending:'var(--morning)',approved:'var(--green)',rejected:'var(--red)'};
+      var stLabels={pending:T?'بانتظار الموافقة':'Pending',approved:T?'موافق':'Approved',rejected:T?'مرفوض':'Rejected'};
+      h+='<div class="brow"><span class="bl">'+(other?other.name:'?')+' — '+s.swap_date+'</span>'
+        +'<span style="color:'+stColors[s.status]+';font-weight:700;font-size:12px">'+stLabels[s.status]+'</span></div>';
+    });
+    h+='</div>';
+  }
+  pg.innerHTML=h;
+}
+
+window.requestSwap=function(){
+  var T=LANG==='ar';
+  var date=document.getElementById('sw-date').value;
+  var targetId=document.getElementById('sw-nurse').value;
+  if(!date||!targetId){toast(T?'اختر التاريخ والممرضة':'Select date and nurse','tw');return;}
+  sb.from('swap_requests').insert({requester_id:ME.id,target_id:targetId,swap_date:date,status:'pending'}).then(function(r){
+    if(r.error)return toast(r.error.message,'td');
+    toast(T?'تم إرسال الطلب ✓':'Request sent ✓','ts');
+    loadAll().then(render);
+  });
+};
+
+window.respondSwap=function(id,status){
+  var T=LANG==='ar';
+  sb.from('swap_requests').update({status:status}).eq('id',id).then(function(r){
+    if(r.error)return toast(r.error.message,'td');
+    if(status==='approved'){
+      // Actually swap the shifts
+      var swap=ALL_SW.find(function(s){return s.id==id;});
+      if(swap){
+        var myShift=(ALL_S[ME.id]||{})[swap.swap_date];
+        var theirShift=(ALL_S[swap.requester_id]||{})[swap.swap_date];
+        var ops=[];
+        if(myShift)ops.push(sb.from('schedules').upsert({nurse_id:swap.requester_id,date:swap.swap_date,shift:myShift.shift,flag:myShift.flag||null},{onConflict:'nurse_id,date'}));
+        if(theirShift)ops.push(sb.from('schedules').upsert({nurse_id:ME.id,date:swap.swap_date,shift:theirShift.shift,flag:theirShift.flag||null},{onConflict:'nurse_id,date'}));
+        Promise.all(ops).then(function(){loadAll().then(render);});
+      }
+    }
+    toast(status==='approved'?(T?'تم التبديل ✓':'Swapped ✓'):(T?'تم الرفض':'Rejected'),'ts');
+    loadAll().then(render);
+  });
+};
+
+// ══════════════════════════════════════
+// GOOGLE CALENDAR EXPORT
+// ══════════════════════════════════════
+window.exportToCalendar=function(){
+  var T=LANG==='ar';
+  var uid=ME.id;
+  var data=ALL_S[uid]||{};
+  var lines=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//NurseFlow//EN','CALSCALE:GREGORIAN'];
+  
+  Object.keys(data).forEach(function(ds){
+    var e=data[ds];if(!e||!e.shift||e.shift==='off')return;
+    var sh=SLBL_AR[e.shift]||e.shift;
+    var times={official:'073000',morning:'070000',evening:'150000',night:'230000',long_day:'070000',long_night:'190000'};
+    var endTimes={official:'163000',morning:'163000',evening:'003000',night:'073000',long_day:'190000',long_night:'070000'};
+    var st=times[e.shift]||'070000';
+    var et=endTimes[e.shift]||'150000';
+    var dateStr=ds.replace(/-/g,'');
+    var endDate=e.shift==='night'||e.shift==='long_night'?
+      new Date(new Date(ds).getTime()+86400000).toISOString().slice(0,10).replace(/-/g,''):dateStr;
+    lines.push('BEGIN:VEVENT');
+    lines.push('DTSTART:'+dateStr+'T'+st+'00');
+    lines.push('DTEND:'+endDate+'T'+et+'00');
+    lines.push('SUMMARY:'+(T?'شفت: ':' Shift: ')+sh+(e.flag==='floater'?' 🔵':e.flag==='disaster'?' 🚨':''));
+    lines.push('DESCRIPTION:NurseFlow - '+ME.name);
+    lines.push('END:VEVENT');
+  });
+  
+  lines.push('END:VCALENDAR');
+  var blob=new Blob([lines.join('\r\n')],{type:'text/calendar;charset=utf-8'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');a.href=url;a.download='nurseflow-schedule.ics';a.click();
+  URL.revokeObjectURL(url);
+  toast(T?'تم تصدير الجدول ✓':'Schedule exported ✓','ts');
+};
+
+// ══════════════════════════════════════
+// PWA SETUP
+// ══════════════════════════════════════
+if('serviceWorker' in navigator){
+  window.addEventListener('load',function(){
+    var swCode='self.addEventListener(\'install\',e=>{e.waitUntil(caches.open(\'nf-v1\').then(c=>c.addAll([\'./\'])))});'
+      +'self.addEventListener(\'fetch\',e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)))});';
+    var blob=new Blob([swCode],{type:'application/javascript'});
+    navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(function(){});
+  });
+}
+
+// ══════════════════════════════════════
+// MANAGER DEPT ASSIGNMENT (in Admin)
+// ══════════════════════════════════════
+window.renderMgrDepts=function(){
+  var T=LANG==='ar';
+  var managers=Object.values(ALL_P).filter(function(p){return p.role==='manager';});
+  var depts=Object.keys(ALL_D);
+  var h='<div class="balcard" style="margin-top:16px"><div class="baltitle">👔 '+(T?'تعيين أقسام المنجرز':'Assign Manager Departments')+'</div>';
+  managers.forEach(function(mgr){
+    var myDepts=ALL_MD[mgr.id]||[];
+    h+='<div style="margin-bottom:12px;padding:12px;background:var(--s2);border-radius:8px">';
+    h+='<div style="font-size:13px;font-weight:700;margin-bottom:8px">'+mgr.name+'</div>';
+    h+='<div style="display:flex;flex-wrap:wrap;gap:6px">';
+    depts.forEach(function(dept){
+      var has=myDepts.indexOf(dept)>=0;
+      h+='<button onclick="toggleMgrDept(\''+mgr.id+'\',\''+dept+'\')" style="padding:5px 12px;border-radius:20px;border:1.5px solid '+(has?'var(--blue)':'var(--b1)')+';background:'+(has?'rgba(47,129,247,.12)':'transparent')+';color:'+(has?'var(--blue)':'var(--muted)')+';font-family:Tajawal,sans-serif;font-size:12px;cursor:pointer">'+dept+'</button>';
+    });
+    h+='</div></div>';
+  });
+  h+='</div>';
+  return h;
+};
+
+window.toggleMgrDept=function(mgrId,dept){
+  var myDepts=ALL_MD[mgrId]||[];
+  var has=myDepts.indexOf(dept)>=0;
+  if(has){
+    sb.from('manager_departments').delete().eq('manager_id',mgrId).eq('dept_name',dept).then(function(r){
+      if(r.error)return toast(r.error.message,'td');
+      ALL_MD[mgrId]=myDepts.filter(function(d){return d!==dept;});
+      render();toast(LANG==='ar'?'تم الحذف':'Removed','ti');
+    });
+  } else {
+    sb.from('manager_departments').insert({manager_id:mgrId,dept_name:dept}).then(function(r){
+      if(r.error)return toast(r.error.message,'td');
+      if(!ALL_MD[mgrId])ALL_MD[mgrId]=[];
+      ALL_MD[mgrId].push(dept);
+      render();toast(LANG==='ar'?'تم الإضافة ✓':'Added ✓','ts');
+    });
+  }
+};
+
+// Hook into showApp to check deadline
+var _origShowApp=window.showApp||function(){};
+window.showApp=function(){
+  _origShowApp();
+  setTimeout(checkDeadline,1000);
+};
+
+// Add export button to my schedule and swap to nav
+var _origRenderMy=window.renderMy||function(){};
+var _origBuildNav=window.buildNav||function(){};
+window.buildNav=function(){
+  _origBuildNav();
+  // Add swap tab for nurses
+  if(ME&&ME.role==='nurse'){
+    if(!document.getElementById('pg-swap')){
+      var div=document.createElement('div');div.id='pg-swap';div.className='pg';
+      document.querySelector('.wrap').appendChild(div);
+    }
+    var nav=document.getElementById('nav');
+    if(nav&&!document.querySelector('[data-pg="pg-swap"]')){
+      var btn=document.createElement('button');
+      btn.className='ntab';btn.dataset.pg='pg-swap';
+      btn.textContent='🔄 '+(LANG==='ar'?'تبادل الشفت':'Swap Shift');
+      btn.onclick=function(){switchPg('pg-swap');};
+      nav.appendChild(btn);
+    }
+  }
+  // Add export calendar button to top bar
+  if(ME&&ME.role==='nurse'){
+    var tright=document.querySelector('.tright');
+    if(tright&&!document.getElementById('cal-export-btn')){
+      var calBtn=document.createElement('button');
+      calBtn.className='tbtn';calBtn.id='cal-export-btn';
+      calBtn.innerHTML='🗓️';
+      calBtn.title=LANG==='ar'?'تصدير للتقويم':'Export to Calendar';
+      calBtn.onclick=exportToCalendar;
+      tright.insertBefore(calBtn,tright.firstChild);
+    }
+  }
+};
+
+// Patch renderAdmin to include mgr dept assignment
+var _origRenderAdmin=window.renderAdmin||function(){};
+window.renderAdmin=function(){
+  _origRenderAdmin();
+  var pg=document.getElementById('pg-admin');
+  if(pg)pg.innerHTML+=renderMgrDepts();
+};
+
+// Patch render to handle swap page
+var _origRender=window.render||function(){};
+window.render=function(){
+  _origRender();
+  var a=document.querySelector('.pg.on');
+  if(a&&a.id==='pg-swap')renderSwap();
+};
+</script>
+</body>
+</html>
