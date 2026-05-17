@@ -183,6 +183,7 @@ tbody td:first-child{text-align:right;padding-right:12px}
   </div>
   <nav class="navbar" id="nav"></nav>
   <div class="wrap">
+    <div id="pg-dash" class="pg"></div>
     <div id="pg-my" class="pg"></div>
     <div id="pg-team" class="pg"></div>
     <div id="pg-review" class="pg"></div>
@@ -320,10 +321,10 @@ function buildNav(){
   var nav=document.getElementById('nav');
   var T=LANG==='ar';
   var tabs={
-    nurse:[[T?'📅 جدولي':'📅 My Schedule','pg-my'],[T?'👥 الفريق':'👥 Team','pg-team']],
-    head_nurse:[[T?'🔍 المراجعة':'🔍 Review','pg-review',1],[T?'📋 التقرير':'📋 Report','pg-report'],[T?'📅 الجدول':'📅 Schedule','pg-team'],[T?'📊 التغطية':'📊 Coverage','pg-overview']],
-    manager:[[T?'✅ الموافقة':'✅ Approval','pg-approve',1],[T?'📋 التقرير':'📋 Report','pg-report'],[T?'📊 التغطية':'📊 Coverage','pg-overview'],[T?'📅 الجدول':'📅 Schedule','pg-team']],
-    admin:[[T?'🔑 الإدارة':'🔑 Admin','pg-admin'],[T?'📤 رفع موظفين':'📤 Upload','pg-upload'],[T?'✅ الموافقة':'✅ Approval','pg-approve',1],[T?'📋 التقرير':'📋 Report','pg-report'],[T?'📊 التغطية':'📊 Coverage','pg-overview'],[T?'📅 الجدول':'📅 Schedule','pg-team']]
+    nurse:[[T?'🏠 الرئيسية':'🏠 Dashboard','pg-dash'],[T?'📅 جدولي':'📅 My Schedule','pg-my'],[T?'👥 الفريق':'👥 Team','pg-team']],
+    head_nurse:[[T?'🏠 الرئيسية':'🏠 Dashboard','pg-dash'],[T?'🔍 المراجعة':'🔍 Review','pg-review',1],[T?'📋 التقرير':'📋 Report','pg-report'],[T?'📅 الجدول':'📅 Schedule','pg-team'],[T?'📊 التغطية':'📊 Coverage','pg-overview']],
+    manager:[[T?'🏠 الرئيسية':'🏠 Dashboard','pg-dash'],[T?'✅ الموافقة':'✅ Approval','pg-approve',1],[T?'📋 التقرير':'📋 Report','pg-report'],[T?'📊 التغطية':'📊 Coverage','pg-overview'],[T?'📅 الجدول':'📅 Schedule','pg-team']],
+    admin:[[T?'🏠 الرئيسية':'🏠 Dashboard','pg-dash'],[T?'🔑 الإدارة':'🔑 Admin','pg-admin'],[T?'📤 رفع موظفين':'📤 Upload','pg-upload'],[T?'✅ الموافقة':'✅ Approval','pg-approve',1],[T?'📋 التقرير':'📋 Report','pg-report'],[T?'📊 التغطية':'📊 Coverage','pg-overview'],[T?'📅 الجدول':'📅 Schedule','pg-team']]
   };
   var list=tabs[ME.role]||[];
   nav.innerHTML=list.map(function(t){
@@ -342,7 +343,8 @@ function switchPg(id){
 function render(){
   var a=document.querySelector('.pg.on');if(!a)return;
   var id=a.id;
-  if(id==='pg-my')renderMy();
+  if(id==='pg-dash')renderDash();
+  else if(id==='pg-my')renderMy();
   else if(id==='pg-team')renderTable();
   else if(id==='pg-review')renderReview();
   else if(id==='pg-approve')renderApprove();
@@ -409,7 +411,7 @@ function renderMy(){
   var stats=getStats(uid,y,m),req=getReqRest(uid,y,m);
   var canEdit=st==='draft'||st==='rejected';
   var T=LANG==='ar';
-  var sbars={draft:['sb-d','📝 '+(T?'مسودة':'Draft')],submitted:['sb-s','⏳ '+(T?'بانتظار Head Nurse':'Awaiting Head Nurse')],reviewed:['sb-rv','🔍 '+(T?'تمت المراجعة':'Reviewed')],approved:['sb-a','✅ '+(T?'موافق عليه':'Approved')],rejected:['sb-rj','✗ '+(T?'مرفوض':'Rejected')]};
+  var note=ALL_ST[uid]&&ALL_ST[uid].notes?(' — '+ALL_ST[uid].notes):'';var sbars={draft:['sb-d','📝 '+(T?'مسودة':'Draft')],submitted:['sb-s','⏳ '+(T?'بانتظار Head Nurse':'Awaiting Head Nurse')],reviewed:['sb-rv','🔍 '+(T?'تمت المراجعة':'Reviewed')],approved:['sb-a','✅ '+(T?'موافق عليه':'Approved')],rejected:['sb-rj','✗ '+(T?'مرفوض':'Rejected')+note]};
   var sb2=sbars[st]||sbars.draft;
   var daysInMonth=new Date(y,m+1,0).getDate();
   var allFilled=stats.filled>=daysInMonth;
@@ -574,9 +576,9 @@ function renderApprove(){
 }
 
 window.hnOk=function(uid){sb.from('schedule_status').update({status:'reviewed',reviewed_by:ME.id,reviewed_at:new Date().toISOString()}).eq('nurse_id',uid).then(function(){sb.from('schedule_status').select('*').then(function(r){ALL_ST={};(r.data||[]).forEach(function(x){ALL_ST[x.nurse_id]=x;});render();});toast(LANG==='ar'?'أرسل للمدير ✓':'Sent to Manager ✓','ts');});};
-window.hnNo=function(uid){sb.from('schedule_status').update({status:'rejected',reviewed_by:ME.id}).eq('nurse_id',uid).then(function(){sb.from('schedule_status').select('*').then(function(r){ALL_ST={};(r.data||[]).forEach(function(x){ALL_ST[x.nurse_id]=x;});render();});toast(LANG==='ar'?'رجع للممرضة':'Returned','ti');});};
+window.hnNo=function(uid){var note=prompt(LANG==='ar'?'سبب الرفض (اختياري):':'Rejection reason (optional):','');sb.from('schedule_status').update({status:'rejected',reviewed_by:ME.id,notes:note||null}).eq('nurse_id',uid).then(function(){sb.from('schedule_status').select('*').then(function(r){ALL_ST={};(r.data||[]).forEach(function(x){ALL_ST[x.nurse_id]=x;});render();});toast(LANG==='ar'?'رجع للممرضة':'Returned','ti');});};
 window.mgOk=function(uid){sb.from('schedule_status').update({status:'approved',approved_by:ME.id,approved_at:new Date().toISOString()}).eq('nurse_id',uid).then(function(){sb.from('schedule_status').select('*').then(function(r){ALL_ST={};(r.data||[]).forEach(function(x){ALL_ST[x.nurse_id]=x;});render();});toast('✅ '+(LANG==='ar'?'تمت الموافقة':'Approved'),'ts');});};
-window.mgNo=function(uid){sb.from('schedule_status').update({status:'rejected',approved_by:ME.id}).eq('nurse_id',uid).then(function(){sb.from('schedule_status').select('*').then(function(r){ALL_ST={};(r.data||[]).forEach(function(x){ALL_ST[x.nurse_id]=x;});render();});toast(LANG==='ar'?'تم الرفض':'Rejected','ti');});};
+window.mgNo=function(uid){var note=prompt(LANG==='ar'?'سبب الرفض (اختياري):':'Rejection reason (optional):','');sb.from('schedule_status').update({status:'rejected',approved_by:ME.id,notes:note||null}).eq('nurse_id',uid).then(function(){sb.from('schedule_status').select('*').then(function(r){ALL_ST={};(r.data||[]).forEach(function(x){ALL_ST[x.nurse_id]=x;});render();});toast(LANG==='ar'?'تم الرفض':'Rejected','ti');});};
 
 function getAlerts(dept,y,m){
   var days=new Date(y,m+1,0).getDate(),out=[];
@@ -937,3 +939,162 @@ window.toast=function(msg,type){
 </script>
 </body>
 </html>
+<!-- INJECTED FEATURES -->
+<script>
+// ══════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════
+function renderDash(){
+  var pg=document.getElementById('pg-dash'),T=LANG==='ar';
+  var role=ME.role;
+  var now=new Date(),y=now.getFullYear(),m=now.getMonth();
+  var nurses=Object.values(ALL_P).filter(function(p){return p.role==='nurse';});
+  var myDeptNurses=nurses.filter(function(p){return p.dept===ME.dept;});
+  
+  // Counts
+  var submitted=nurses.filter(function(n){return ALL_ST[n.id]&&ALL_ST[n.id].status==='submitted';}).length;
+  var reviewed=nurses.filter(function(n){return ALL_ST[n.id]&&ALL_ST[n.id].status==='reviewed';}).length;
+  var approved=nurses.filter(function(n){return ALL_ST[n.id]&&ALL_ST[n.id].status==='approved';}).length;
+  var total=nurses.length;
+
+  var h='<div class="stitle" style="margin-bottom:20px">👋 '+(T?'مرحباً، ':'Welcome, ')+ME.name+'</div>';
+
+  // Role-specific dashboard
+  if(role==='nurse'){
+    var st=(ALL_ST[ME.id]&&ALL_ST[ME.id].status)||'draft';
+    var stats=getStats(ME.id,y,m+1); // next month
+    var req=getReqRest(ME.id,y,m+1);
+    var nextMonth=new Date(y,m+1,1);
+    var daysInNext=new Date(y,m+2,0).getDate();
+    
+    h+='<div class="sgrid">';
+    h+='<div class="scard"><div class="sico" style="background:rgba(47,129,247,.12)">📅</div><div><div class="slbl">'+(T?'جدول الشهر القادم':'Next Month Schedule')+'</div><div class="sval">'+stats.filled+'/'+daysInNext+'</div></div></div>';
+    h+='<div class="scard"><div class="sico" style="background:'+(st==='approved'?'rgba(63,185,80,.12)':st==='rejected'?'rgba(248,81,73,.12)':'rgba(245,158,11,.12)')+'">'+( st==='approved'?'✅':st==='rejected'?'✗':'⏳')+'</div><div><div class="slbl">'+(T?'حالة الجدول':'Schedule Status')+'</div><div class="sval" style="font-size:14px;color:'+(st==='approved'?'var(--green)':st==='rejected'?'var(--red)':'var(--morning)')+'">'+({draft:T?'مسودة':'Draft',submitted:T?'مُرسل':'Submitted',reviewed:T?'راجعت':'Reviewed',approved:T?'موافق':'Approved',rejected:T?'مرفوض':'Rejected'}[st]||st)+'</div></div></div>';
+    h+='<div class="scard"><div class="sico" style="background:rgba(63,185,80,.12)">✅</div><div><div class="slbl">'+(T?'أيام الراحة':'Rest Days')+'</div><div class="sval '+(stats.rest>=req&&req>0?'bok':'berr')+'">'+stats.rest+'/'+(req||'?')+'</div></div></div>';
+    h+='</div>';
+
+    // Copy last month button
+    var prevFilled=Object.keys(ALL_S[ME.id]||{}).filter(function(ds){var d=new Date(ds);return d.getFullYear()===y&&d.getMonth()===m;}).length;
+    if(prevFilled>0&&st==='draft'){
+      h+='<div class="balcard"><div class="baltitle">🔄 '+(T?'نسخ جدول الشهر الحالي':'Copy Current Month Schedule')+'</div>';
+      h+='<div style="font-size:12px;color:var(--muted);margin-bottom:10px">'+(T?'يمكنك نسخ جدولك الحالي للشهر القادم كنقطة بداية':'Copy your current schedule to next month as a starting point')+'</div>';
+      h+='<button class="btn-sub" onclick="copySchedule()">'+(T?'📋 نسخ الجدول':'📋 Copy Schedule')+'</button></div>';
+    }
+
+    // Deadline alert
+    var deadline=new Date(y,m+1,20); // deadline: 20th of current month
+    var daysLeft=Math.ceil((deadline-now)/(1000*60*60*24));
+    if(daysLeft>0&&daysLeft<=10&&st==='draft'){
+      h+='<div class="alert ae">⚠️ '+(T?'تذكير: موعد رفع الجدول بعد '+daysLeft+' يوم':'Reminder: Schedule deadline in '+daysLeft+' days')+'</div>';
+    }
+
+  } else if(role==='head_nurse'){
+    var myNurses=myDeptNurses;
+    var mySub=myNurses.filter(function(n){return ALL_ST[n.id]&&ALL_ST[n.id].status==='submitted';}).length;
+    var myApp=myNurses.filter(function(n){return ALL_ST[n.id]&&ALL_ST[n.id].status==='approved';}).length;
+    var myDraft=myNurses.filter(function(n){return !ALL_ST[n.id]||ALL_ST[n.id].status==='draft';}).length;
+
+    h+='<div class="sgrid">';
+    h+='<div class="scard"><div class="sico" style="background:rgba(47,129,247,.12)">👩‍⚕️</div><div><div class="slbl">'+(T?'ممرضات القسم':'Dept Nurses')+'</div><div class="sval">'+myNurses.length+'</div></div></div>';
+    h+='<div class="scard"><div class="sico" style="background:rgba(245,158,11,.12)">⏳</div><div><div class="slbl">'+(T?'بانتظار مراجعتك':'Awaiting Review')+'</div><div class="sval" style="color:var(--morning)">'+mySub+'</div></div></div>';
+    h+='<div class="scard"><div class="sico" style="background:rgba(63,185,80,.12)">✅</div><div><div class="slbl">'+(T?'موافق عليها':'Approved')+'</div><div class="sval" style="color:var(--green)">'+myApp+'</div></div></div>';
+    h+='<div class="scard"><div class="sico" style="background:rgba(125,133,144,.1)">📝</div><div><div class="slbl">'+(T?'لم يُرسل':'Not submitted')+'</div><div class="sval" style="color:var(--muted)">'+myDraft+'</div></div></div>';
+    h+='</div>';
+
+    // Chart
+    h+='<div class="balcard"><div class="baltitle">📊 '+(T?'حالة الجداول':'Schedule Status')+'</div><canvas id="dash-chart" height="120"></canvas></div>';
+    
+    // Coverage alerts
+    var covAlerts=getAlerts(ME.dept,y,m+1);
+    if(covAlerts.length){
+      h+='<div class="balcard"><div class="baltitle" style="color:var(--red)">⚠️ '+(T?'تنبيهات نقص التغطية':'Coverage Alerts')+'</div>';
+      covAlerts.slice(0,5).forEach(function(a){h+='<div class="brow"><span class="bl">'+a.msg+'</span></div>';});
+      h+='</div>';
+    }
+
+  } else if(role==='manager'||role==='admin'){
+    h+='<div class="sgrid">';
+    h+='<div class="scard"><div class="sico" style="background:rgba(47,129,247,.12)">👩‍⚕️</div><div><div class="slbl">'+(T?'إجمالي الممرضات':'Total Nurses')+'</div><div class="sval">'+total+'</div></div></div>';
+    h+='<div class="scard"><div class="sico" style="background:rgba(245,158,11,.12)">📋</div><div><div class="slbl">'+(T?'بانتظار الموافقة':'Awaiting Approval')+'</div><div class="sval" style="color:var(--morning)">'+reviewed+'</div></div></div>';
+    h+='<div class="scard"><div class="sico" style="background:rgba(56,139,253,.12)">🔍</div><div><div class="slbl">'+(T?'بانتظار المراجعة':'Awaiting Review')+'</div><div class="sval" style="color:var(--night)">'+submitted+'</div></div></div>';
+    h+='<div class="scard"><div class="sico" style="background:rgba(63,185,80,.12)">✅</div><div><div class="slbl">'+(T?'موافق عليها':'Approved')+'</div><div class="sval" style="color:var(--green)">'+approved+'</div></div></div>';
+    h+='</div>';
+
+    // Dept comparison chart
+    h+='<div class="balcard"><div class="baltitle">📊 '+(T?'نسبة إنجاز الجداول بالأقسام':'Schedule Completion by Dept')+'</div><canvas id="dash-chart" height="150"></canvas></div>';
+
+    // Global coverage alerts
+    var depts=Object.keys(ALL_D);
+    var allAlerts=[];
+    depts.forEach(function(dept){allAlerts=allAlerts.concat(getAlerts(dept,y,m+1).map(function(a){return {dept:dept,msg:a.msg,w:a.w};}));});
+    if(allAlerts.length){
+      h+='<div class="balcard"><div class="baltitle" style="color:var(--red)">⚠️ '+(T?'تنبيهات نقص التغطية':'Coverage Alerts')+'</div>';
+      allAlerts.slice(0,8).forEach(function(a){h+='<div class="brow"><span class="bl" style="color:var(--muted);font-size:11px">['+a.dept+']</span> <span class="bl">'+a.msg+'</span></div>';});
+      h+='</div>';
+    }
+  }
+
+  pg.innerHTML=h;
+
+  // Draw charts
+  setTimeout(function(){
+    var canvas=document.getElementById('dash-chart');
+    if(!canvas)return;
+    var ctx=canvas.getContext('2d');
+    
+    if(role==='head_nurse'){
+      var myNurses2=myDeptNurses;
+      var statuses={draft:0,submitted:0,reviewed:0,approved:0,rejected:0};
+      myNurses2.forEach(function(n){var s=(ALL_ST[n.id]&&ALL_ST[n.id].status)||'draft';statuses[s]++;});
+      new Chart(ctx,{type:'doughnut',data:{labels:[T?'مسودة':'Draft',T?'مُرسل':'Submitted',T?'راجعت':'Reviewed',T?'موافق':'Approved',T?'مرفوض':'Rejected'],datasets:[{data:[statuses.draft,statuses.submitted,statuses.reviewed,statuses.approved,statuses.rejected],backgroundColor:['#7d8590','#f59e0b','#388bfd','#3fb950','#f85149']}]},options:{plugins:{legend:{position:'right'}},responsive:true}});
+    } else {
+      var depts2=Object.keys(ALL_D);if(!depts2.length)return;
+      var labels2=[],vals=[];
+      depts2.forEach(function(dept){
+        var dNurses=nurses.filter(function(n){return n.dept===dept;});
+        var appCount=dNurses.filter(function(n){return ALL_ST[n.id]&&ALL_ST[n.id].status==='approved';}).length;
+        labels2.push(dept);vals.push(dNurses.length?Math.round(appCount/dNurses.length*100):0);
+      });
+      new Chart(ctx,{type:'bar',data:{labels:labels2,datasets:[{label:T?'% الموافقة':'% Approved',data:vals,backgroundColor:'#2f81f7',borderRadius:6}]},options:{scales:{y:{beginAtZero:true,max:100,ticks:{callback:function(v){return v+'%';}}}},plugins:{legend:{display:false}},responsive:true}});
+    }
+  },100);
+}
+
+// ══════════════════════════════════════
+// COPY SCHEDULE
+// ══════════════════════════════════════
+window.copySchedule=function(){
+  var T=LANG==='ar';
+  if(!confirm(T?'نسخ جدول الشهر الحالي للشهر القادم؟':'Copy current month schedule to next month?'))return;
+  var now=new Date(),y=now.getFullYear(),m=now.getMonth();
+  var nextY=m===11?y+1:y,nextM=m===11?0:m+1;
+  var data=ALL_S[ME.id]||{};
+  var toInsert=[];
+  Object.keys(data).forEach(function(ds){
+    var d=new Date(ds);
+    if(d.getFullYear()===y&&d.getMonth()===m){
+      var newDs=nextY+'-'+p2(nextM+1)+'-'+p2(d.getDate());
+      var e=data[ds];
+      toInsert.push({nurse_id:ME.id,date:newDs,shift:e.shift,flag:e.flag||null});
+    }
+  });
+  if(!toInsert.length){toast(T?'لا يوجد جدول للنسخ':'No schedule to copy','tw');return;}
+  sb.from('schedules').upsert(toInsert,{onConflict:'nurse_id,date'}).then(function(r){
+    if(r.error)return toast(r.error.message,'td');
+    toInsert.forEach(function(x){if(!ALL_S[ME.id])ALL_S[ME.id]={};ALL_S[ME.id][x.date]={shift:x.shift,flag:x.flag};});
+    toast((T?'تم النسخ: ':'Copied: ')+toInsert.length+(T?' يوم':' days'),'ts');
+    render();
+  });
+};
+
+// ══════════════════════════════════════
+// ANNUAL CALENDAR VIEW
+// ══════════════════════════════════════
+// Add to renderTable - annual toggle
+var showAnnual=false;
+var origRenderTable=window.renderTable||null;
+
+window.toggleAnnual=function(){
+  showAnnual=!showAnnual;render();
+};
+</script>
