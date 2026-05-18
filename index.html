@@ -465,9 +465,9 @@ var SLBL_EN={official:'Official',morning:'Morning',evening:'Evening',night:'Nigh
 var SICO={official:'\uD83C\uDFE2',morning:'\u2600\uFE0F',evening:'\uD83C\uDF06',night:'\uD83C\uDF19',long_day:'\uD83C\uDF05',long_night:'\uD83C\uDF03',off:'\u2705',oncall:'\uD83D\uDD35',disaster:'\uD83D\uDEA8',annual_leave:'\uD83C\uDFD6\uFE0F',hajj:'\uD83D\uDD4C',fitr:'\uD83C\uDF19',sick:'\uD83C\uDFE5',exceptional:'\u2B50',compensation:'\uD83D\uDD04'};
 var SCOLOR={official:'#06b6d4',morning:'#f59e0b',evening:'#a855f7',night:'#388bfd',long_day:'#f97316',long_night:'#60a5fa',off:'#3fb950',oncall:'#3b82f6',disaster:'#f85149',annual_leave:'#10b981',hajj:'#eab308',fitr:'#a855f7',sick:'#06b6d4',exceptional:'#f43f5e',compensation:'#6366f1'};
 
-var SL=function(k){return LANG==='ar'?(SLBL_AR[k]||k):(SLBL_EN[k]||k);}
-var p2=function(n){return String(n).padStart(2,'0');}
-var mN=function(d){return d.toLocaleDateString('ar-SA',{month:'long',year:'numeric'});}
+function SL(k){return LANG==='ar'?(SLBL_AR[k]||k):(SLBL_EN[k]||k);}
+function p2(n){return String(n).padStart(2,'0');}
+function mN(d){if(!(d instanceof Date)||isNaN(d))return '';return d.toLocaleDateString('ar-SA',{month:'long',year:'numeric'});}
 
 (function(){var t=localStorage.getItem('nf-theme');if(t==='light')document.documentElement.setAttribute('data-theme','light');})();
 
@@ -482,7 +482,7 @@ sb.auth.onAuthStateChange(function(ev,ses){
 
 /* getSession moved */
 
-var loadMe=function(uid){
+function loadMe(uid){
   sb.from('user_profiles').select('*').eq('id',uid).maybeSingle().then(function(r){
     if(!r.data){toast('\u0627\u0644\u0628\u0631\u0648\u0641\u0627\u064A\u0644 \u063A\u064A\u0631 \u0645\u0648\u062C\u0648\u062F','td');return;}
     ME=Object.assign({id:uid},r.data);
@@ -513,7 +513,7 @@ function forgotPass(){
   });
 };
 
-var loadAll=function(){
+function loadAll(){
   return Promise.all([
     sb.from('user_profiles').select('*'),
     sb.from('schedules').select('*'),
@@ -545,7 +545,7 @@ var loadAll=function(){
   });
 };
 
-var checkDeadline=function(){
+function checkDeadline(){
   if(!ME||ME.role!=='nurse')return;
   var st=(ALL_ST[ME.id]&&ALL_ST[ME.id].status)||'draft';
   if(st!=='draft'&&st!=='rejected')return;
@@ -561,7 +561,7 @@ var checkDeadline=function(){
   var wrap=document.querySelector('.wrap');
   if(wrap)wrap.insertAdjacentElement('afterbegin',b);
 }
-var showApp=function(){
+function showApp(){
   document.getElementById('login').style.display='none';
   document.getElementById('app').style.display='block';
   document.getElementById('u-av').textContent=ME.name.slice(0,2);
@@ -571,7 +571,7 @@ var showApp=function(){
   setTimeout(checkDeadline,800);
 };
 
-var buildNav=function(){
+function buildNav(){
   var nav=document.getElementById('nav');
   var T=LANG==='ar';
   var tabs={
@@ -599,8 +599,8 @@ var PG_TITLES_EN={
   'pg-swap':'Shift Swap','pg-review':'Review','pg-approve':'Approval',
   'pg-overview':'Coverage','pg-report':'Report','pg-upload':'Upload Staff','pg-admin':'Admin'
 };
-var getSbIcon=function(id){var icons={'pg-dash':'\uD83C\uDFE0','pg-my':'\uD83D\uDCC5','pg-team':'\uD83D\uDC65','pg-swap':'\uD83D\uDD04','pg-review':'\uD83D\uDD0D','pg-approve':'\u2705','pg-overview':'\uD83D\uDCCA','pg-report':'\uD83D\uDCCB','pg-upload':'\uD83D\uDCE4','pg-admin':'\uD83D\uDD11'};return '\u003Cspan class="ico">'+(icons[id]||'\uD83D\uDCC4')+'<\/span>';}
-var switchPg=function(id){
+function getSbIcon(id){var icons={'pg-dash':'\uD83C\uDFE0','pg-my':'\uD83D\uDCC5','pg-team':'\uD83D\uDC65','pg-swap':'\uD83D\uDD04','pg-review':'\uD83D\uDD0D','pg-approve':'\u2705','pg-overview':'\uD83D\uDCCA','pg-report':'\uD83D\uDCCB','pg-upload':'\uD83D\uDCE4','pg-admin':'\uD83D\uDD11'};return '\u003Cspan class="ico">'+(icons[id]||'\uD83D\uDCC4')+'<\/span>';}
+function switchPg(id){
   document.querySelectorAll('.pg').forEach(function(p){p.classList.remove('on');});
   document.querySelectorAll('.sb-item').forEach(function(t){t.classList.toggle('on',t.dataset.pg===id);});
   var titleEl=document.getElementById('tb-title');
@@ -614,7 +614,7 @@ var switchPg=function(id){
   render();
 };
 
-var render=function(){
+function render(){
   var a=document.querySelector('.pg.on');if(!a)return;
   var id=a.id;
   if(id==='pg-dash')renderDash();
@@ -640,7 +640,7 @@ function chMonth(d){
   } else {MONTH=next;render();}
 };
 
-var getStats=function(uid,y,m){
+function getStats(uid,y,m){
   var data=ALL_S[uid]||{},counts={},work=0,rest=0,filled=0,floater=0,disaster=0;
   Object.keys(SCLS).forEach(function(k){counts[k]=0;});
   Object.keys(data).forEach(function(ds){
@@ -655,7 +655,7 @@ var getStats=function(uid,y,m){
   return{counts:counts,work:work,rest:rest,filled:filled,days:new Date(y,m+1,0).getDate(),floater:floater,disaster:disaster};
 };
 
-var getReqRest=function(uid,y,m){
+function getReqRest(uid,y,m){
   var data=ALL_S[uid]||{},req=0;
   Object.keys(data).forEach(function(ds){
     var d2=new Date(ds);if(d2.getFullYear()!==y||d2.getMonth()!==m)return;
@@ -664,16 +664,16 @@ var getReqRest=function(uid,y,m){
   return req;
 };
 
-var shiftCount=function(dept,date,shift){
+function shiftCount(dept,date,shift){
   return Object.values(ALL_P).filter(function(p){return p.role==='nurse'&&p.dept===dept&&(ALL_S[p.id]||{})[date]&&(ALL_S[p.id]||{})[date].shift===shift;}).length;
 };
 
-var shiftCap=function(dept,shift){
+function shiftCap(dept,shift){
   var d=ALL_D[dept];if(!d)return 99;
   var m2={morning:'m',evening:'e',night:'n',long_day:'ld',long_night:'ld'};return d[m2[shift]]||99;
 };
 
-var renderMy=function(){
+function renderMy(){
   var pg=document.getElementById('pg-my');
   if(ME.role==='nurse'){
     var now=new Date();
@@ -713,7 +713,7 @@ var renderMy=function(){
   buildCal('cg',uid,canEdit,y,m);
 };
 
-var buildCal=function(gridId,uid,editable,y,m){
+function buildCal(gridId,uid,editable,y,m){
   var grid=document.getElementById(gridId);if(!grid)return;
   var first=new Date(y,m,1).getDay(),days=new Date(y,m+1,0).getDate();
   var today=new Date(),data=ALL_S[uid]||{},h='';
@@ -751,7 +751,7 @@ function openModal(ds){
   document.getElementById('smodal').style.display='flex';
 };
 
-var buildShiftOpts=function(ds){
+function buildShiftOpts(ds){
   var dept=ME.dept||'';
   var myEntry=(ALL_S[ME.id]||{})[ds];
   var myShiftType=myEntry?myEntry.shift:null;
@@ -805,7 +805,7 @@ function saveShift(){
   });
 };
 
-var nurseCard=function(p,role,y,m){
+function nurseCard(p,role,y,m){
   var uid=p.id,st=(ALL_ST[uid]&&ALL_ST[uid].status)||'draft';
   var stats=getStats(uid,y,m),req=getReqRest(uid,y,m),T=LANG==='ar';
   var stMap={draft:{cls:'st-d',lbl:T?'\u0645\u0633\u0648\u062F\u0629':'Draft'},submitted:{cls:'st-s',lbl:'\u23F3 '+(T?'\u0645\u0631\u0627\u062C\u0639\u0629':'Review')},reviewed:{cls:'st-rv',lbl:'\uD83D\uDD0D '+(T?'\u0631\u0627\u062C\u0639\u062A':'Reviewed')},approved:{cls:'st-a',lbl:'\u2705 '+(T?'\u0645\u0648\u0627\u0641\u0642':'Approved')},rejected:{cls:'st-rj',lbl:'\u2717 '+(T?'\u0645\u0631\u0641\u0648\u0636':'Rejected')}};
@@ -824,7 +824,7 @@ var nurseCard=function(p,role,y,m){
     +'\u003Cdiv class="nacts">'+actions+'<\/div><\/div>';
 };
 
-var renderReview=function(){
+function renderReview(){
   var pg=document.getElementById('pg-review'),T=LANG==='ar';
   var dept=ME.dept;
   var nurses=Object.values(ALL_P).filter(function(p){return p.role==='nurse'&&p.dept===dept;});
@@ -836,7 +836,7 @@ var renderReview=function(){
   pg.innerHTML=h;
 };
 
-var renderApprove=function(){
+function renderApprove(){
   var pg=document.getElementById('pg-approve'),T=LANG==='ar';
   var myDepts2=ME.role==='manager'?(ALL_MD[ME.id]||[]):null;
   var nurses=Object.values(ALL_P).filter(function(p){return p.role==='nurse'&&(!myDepts2||myDepts2.indexOf(p.dept)>=0);});
@@ -855,7 +855,7 @@ function hnNo(uid){var note=prompt(LANG==='ar'?'\u0633\u0628\u0628 \u0627\u0644\
 function mgOk(uid){sb.from('schedule_status').update({status:'approved',approved_by:ME.id,approved_at:new Date().toISOString()}).eq('nurse_id',uid).then(function(){sb.from('schedule_status').select('*').then(function(r){ALL_ST={};(r.data||[]).forEach(function(x){ALL_ST[x.nurse_id]=x;});render();});toast('\u2705 '+(LANG==='ar'?'\u062A\u0645\u062A \u0627\u0644\u0645\u0648\u0627\u0641\u0642\u0629':'Approved'),'ts');});};
 function mgNo(uid){var note=prompt(LANG==='ar'?'\u0633\u0628\u0628 \u0627\u0644\u0631\u0641\u0636 (\u0627\u062E\u062A\u064A\u0627\u0631\u064A):':'Rejection reason (optional):','');sb.from('schedule_status').update({status:'rejected',approved_by:ME.id,notes:note||null}).eq('nurse_id',uid).then(function(){sb.from('schedule_status').select('*').then(function(r){ALL_ST={};(r.data||[]).forEach(function(x){ALL_ST[x.nurse_id]=x;});render();});toast(LANG==='ar'?'\u062A\u0645 \u0627\u0644\u0631\u0641\u0636':'Rejected','ti');});};
 
-var getAlerts=function(dept,y,m){
+function getAlerts(dept,y,m){
   var days=new Date(y,m+1,0).getDate(),out=[];
   for(var d=1;d<=days&&out.length<8;d++){
     var ds=y+'-'+p2(m+1)+'-'+p2(d);
@@ -867,7 +867,7 @@ var getAlerts=function(dept,y,m){
   return out;
 };
 
-var renderReport=function(){
+function renderReport(){
   var pg=document.getElementById('pg-report'),T=LANG==='ar';
   var allRpNurses=Object.values(ALL_P).filter(function(p){return p.role==='nurse';});
   var nurses;
@@ -933,7 +933,7 @@ function editBal(uid,type,current){
   });
 };
 
-var renderUpload=function(){
+function renderUpload(){
   var pg=document.getElementById('pg-upload'),T=LANG==='ar';
   pg.innerHTML='\u003Cdiv class="shdr">\u003Cdiv>\u003Cdiv class="stitle">\uD83D\uDCE4 '+(T?'\u0631\u0641\u0639 \u0645\u0648\u0638\u0641\u064A\u0646 \u0645\u0646 Excel':'Upload Staff from Excel')+'<\/div>'
     +'\u003Cdiv class="ssub">'+(T?'\u0631\u0641\u0639 \u0645\u0644\u0641 Excel \u064A\u062D\u062A\u0648\u064A \u0639\u0644\u0649: \u0627\u0644\u0627\u0633\u0645\u060C \u0627\u0644\u0625\u064A\u0645\u064A\u0644\u060C \u0643\u0644\u0645\u0629 \u0627\u0644\u0633\u0631\u060C \u0627\u0644\u062F\u0648\u0631\u060C \u0627\u0644\u0642\u0633\u0645':'Upload Excel with: Name, Email, Password, Role, Department')+'<\/div><\/div><\/div>'
@@ -967,7 +967,7 @@ var renderUpload=function(){
     }).join('')+'<\/tbody><\/table><\/div><\/div>';
 };
 
-var editableField=function(uid,field,val){
+function editableField(uid,field,val){
   var inp=document.createElement('input');
   inp.id='ef-'+uid+'-'+field;
   inp.value=val||'';
@@ -975,7 +975,7 @@ var editableField=function(uid,field,val){
   return inp.outerHTML;
 };
 
-var roleSelect=function(uid,current){
+function roleSelect(uid,current){
   var roles=['nurse','head_nurse','manager','admin'];
   var T=LANG==='ar';
   var labels={nurse:T?'\u0645\u0645\u0631\u0636\u0629':'Nurse',head_nurse:'Head Nurse',manager:'Manager',admin:'Admin'};
@@ -1016,7 +1016,7 @@ function handleUpload(input){
   reader.readAsArrayBuffer(file);
 };
 
-var processRows=function(rows){
+function processRows(rows){
   var T=LANG==='ar';
   var valid=rows.filter(function(r){return r[0]&&r[1]&&r[2];});
   if(!valid.length){toast(T?'\u0644\u0627 \u062A\u0648\u062C\u062F \u0628\u064A\u0627\u0646\u0627\u062A \u0635\u0627\u0644\u062D\u0629':'No valid data','tw');return;}
@@ -1047,7 +1047,7 @@ var processRows=function(rows){
   processNext(0);
 };
 
-var showResults=function(results){
+function showResults(results){
   var T=LANG==='ar';
   var ok=results.filter(function(r){return r.ok;}).length;
   var fail=results.filter(function(r){return !r.ok;});
@@ -1063,7 +1063,7 @@ var showResults=function(results){
   toast((T?'\u062A\u0645\u062A \u0627\u0644\u0645\u0639\u0627\u0644\u062C\u0629: ':'Done: ')+ok+' '+(T?'\u062A\u0645\u062A \u0625\u0636\u0627\u0641\u062A\u0647\u0645':'added'),'ts');
 };
 
-var renderOverview=function(){
+function renderOverview(){
   var pg=document.getElementById('pg-overview'),T=LANG==='ar';
   var y=MONTH.getFullYear(),m=MONTH.getMonth();
   var days=new Date(y,m+1,0).getDate();
@@ -1093,7 +1093,7 @@ var renderOverview=function(){
   pg.innerHTML=h;
 };
 
-var renderTable=function(){
+function renderTable(){
   var pg=document.getElementById('pg-team'),T=LANG==='ar';
   var y=MONTH.getFullYear(),m=MONTH.getMonth(),days=new Date(y,m+1,0).getDate();
   var allNurses=Object.values(ALL_P).filter(function(p){return p.role==='nurse';});
@@ -1119,7 +1119,7 @@ var renderTable=function(){
   pg.innerHTML='\u003Cdiv class="shdr">\u003Cdiv class="stitle">'+(T?'\u0627\u0644\u062C\u062F\u0648\u0644 \u0627\u0644\u0643\u0627\u0645\u0644':'Full Schedule')+'<\/div>\u003Cdiv style="display:flex;align-items:center;gap:8px">\u003Cdiv class="mctrl">\u003Cbutton onclick="chMonth(-1)">&#x203A;<\/button>\u003Cdiv class="mlbl">'+mN(MONTH)+'<\/div>\u003Cbutton onclick="chMonth(1)">&#x2039;<\/button><\/div>\u003Cbutton class="print-btn" onclick="printTable()">\uD83D\uDDA8\uFE0F '+(T?'\u0637\u0628\u0627\u0639\u0629':'Print')+'<\/button><\/div><\/div>\u003Cdiv class="calwrap twrap" id="print-table">\u003Ctable>\u003Cthead>'+th+'<\/thead>\u003Ctbody>'+tb+'<\/tbody><\/table><\/div>';
 };
 
-var renderAdmin=function(){
+function renderAdmin(){
   var pg=document.getElementById('pg-admin'),T=LANG==='ar';
   var depts=Object.keys(ALL_D);
   var deptsRows='';
@@ -1162,7 +1162,7 @@ function delDept(name){
   sb.from('departments').delete().eq('name',name).then(function(){delete ALL_D[name];render();toast(LANG==='ar'?'\u062A\u0645 \u0627\u0644\u062D\u0630\u0641':'Deleted','ti');});
 };
 
-var updateBadges=function(){
+function updateBadges(){
   var nurses=Object.values(ALL_P).filter(function(p){return p.role==='nurse';});
   var rb=document.getElementById('b-pg-review');
   var ab=document.getElementById('b-pg-approve');
@@ -1240,7 +1240,7 @@ function toast(msg,type){
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 // DASHBOARD
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
-var renderDash=function(){
+function renderDash(){
   var pg=document.getElementById('pg-dash'),T=LANG==='ar';
   var role=ME.role;
   var now=new Date(),y=now.getFullYear(),m=now.getMonth();
@@ -1397,7 +1397,7 @@ window.toggleAnnual=function(){
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 // DEADLINE ALERT BANNER
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
-var checkDeadline=function(){
+function checkDeadline(){
   if(!ME||ME.role!=='nurse')return;
   var st=(ALL_ST[ME.id]&&ALL_ST[ME.id].status)||'draft';
   if(st!=='draft'&&st!=='rejected')return;
@@ -1419,7 +1419,7 @@ var checkDeadline=function(){
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 // SWAP REQUESTS
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
-var renderSwap=function(){
+function renderSwap(){
   var pg=document.getElementById('pg-swap');if(!pg)return;
   var T=LANG==='ar';
   var mySwaps=ALL_SW.filter(function(s){return s.requester_id===ME.id||s.target_id===ME.id;});
