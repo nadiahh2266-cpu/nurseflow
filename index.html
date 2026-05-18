@@ -480,11 +480,7 @@ sb.auth.onAuthStateChange(function(ev,ses){
   }
 });
 
-(function(){
-  sb.auth.getSession().then(function(r){
-    if(r.data&&r.data.session&&r.data.session.user)loadMe(r.data.session.user.id);
-  });
-})();
+/* getSession moved */
 
 var loadMe=function(uid){
   sb.from('user_profiles').select('*').eq('id',uid).maybeSingle().then(function(r){
@@ -575,7 +571,7 @@ var showApp=function(){
   setTimeout(checkDeadline,800);
 };
 
-var buildNav=function(){var T=LANG==='ar';
+var buildNav=function(){
   var nav=document.getElementById('nav');
   var T=LANG==='ar';
   var tabs={
@@ -1647,6 +1643,11 @@ window.render=function(){
   if(a&&a.id==='pg-swap')renderSwap();
 };
 
+(function(){
+  sb.auth.getSession().then(function(r){
+    if(r.data&&r.data.session&&r.data.session.user)loadMe(r.data.session.user.id);
+  });
+})();
 </script>
 </body>
 </html>
