@@ -421,6 +421,8 @@ tbody td:first-child{text-align:right;padding-right:14px}
         <div id="pg-report" class="pg"></div>
         <div id="pg-upload" class="pg"></div>
         <div id="pg-admin" class="pg"></div>
+    <div id="pg-leave" class="pg"></div>
+    <div id="pg-ai" class="pg"></div>
       </div>
     </div>
   </div>
@@ -455,7 +457,7 @@ var sb=supabase.createClient(SB_URL,SB_ANON);
 
 // ── STATE ──
 var ME=null,MONTH=new Date(),selDay=null,selShift=null;
-var ALL_P={},ALL_S={},ALL_ST={},ALL_D={},ALL_LB={},ALL_MD={},ALL_SW=[],RT=null;
+var ALL_P={},ALL_S={},ALL_ST={},ALL_D={},ALL_LB={},ALL_MD={},ALL_SW=[],ALL_LP={},RT=null;
 var LANG=localStorage.getItem('nf-lang')||'ar';
 MONTH.setDate(1);
 
@@ -543,7 +545,8 @@ function loadAll(){
     sb.from('schedule_status').select('*'),
     sb.from('leave_balance').select('*'),
     sb.from('manager_departments').select('*'),
-    sb.from('swap_requests').select('*')
+    sb.from('swap_requests').select('*'),
+    sb.from('leave_plan').select('*')
   ]).then(function(res){
     ALL_P={};(res[0].data||[]).forEach(function(x){ALL_P[x.id]=x;});
     ALL_S={};(res[1].data||[]).forEach(function(x){if(!ALL_S[x.nurse_id])ALL_S[x.nurse_id]={};ALL_S[x.nurse_id][x.date]={shift:x.shift,flag:x.flag};});
@@ -552,6 +555,7 @@ function loadAll(){
     ALL_LB={};(res[4].data||[]).forEach(function(x){ALL_LB[x.nurse_id]=x;});
     ALL_MD={};(res[5].data||[]).forEach(function(x){if(!ALL_MD[x.manager_id])ALL_MD[x.manager_id]=[];ALL_MD[x.manager_id].push(x.dept_name);});
     ALL_SW=res[6].data||[];
+    ALL_LP={};(res[7]&&res[7].data||[]).forEach(function(x){if(!ALL_LP[x.nurse_id])ALL_LP[x.nurse_id]=[];ALL_LP[x.nurse_id].push(x);});
     if(!RT){
       RT=sb.channel('rt')
         .on('postgres_changes',{event:'*',schema:'public',table:'schedules'},function(h){
@@ -590,7 +594,7 @@ var PG_TITLES_AR={
   'pg-upload':'\u0631\u0641\u0639 \u0627\u0644\u0645\u0648\u0638\u0641\u064a\u0646',
   'pg-admin':'\u0627\u0644\u0625\u062f\u0627\u0631\u0629'
 };
-var PG_TITLES_EN={'pg-dash':'Dashboard','pg-my':'My Schedule','pg-team':'Full Schedule','pg-swap':'Shift Swap','pg-review':'Review','pg-approve':'Approval','pg-overview':'Coverage','pg-report':'Report','pg-upload':'Upload Staff','pg-admin':'Admin'};
+var PG_TITLES_EN={'pg-dash':'Dashboard','pg-my':'My Schedule','pg-team':'Full Schedule','pg-swap':'Shift Swap','pg-review':'Review','pg-approve':'Approval','pg-overview':'Coverage','pg-report':'Report','pg-upload':'Upload Staff','pg-admin':'Admin','pg-leave':'Leave Plans','pg-ai':'AI Schedule'};
 
 function getSbIcon(id){
   var icons={'pg-dash':'\uD83C\uDFE0','pg-my':'\uD83D\uDCC5','pg-team':'\uD83D\uDC65','pg-swap':'\uD83D\uDD04','pg-review':'\uD83D\uDD0D','pg-approve':'\u2705','pg-overview':'\uD83D\uDCCA','pg-report':'\uD83D\uDCCB','pg-upload':'\uD83D\uDCE4','pg-admin':'\uD83D\uDD11'};
@@ -652,6 +656,8 @@ function render(){
   else if(id==='pg-report')renderReport();
   else if(id==='pg-upload')renderUpload();
   else if(id==='pg-admin')renderAdmin();
+  else if(id==='pg-leave')renderLeave();
+  else if(id==='pg-ai')renderAI();
   updateBadges();
 }
 
@@ -1365,6 +1371,212 @@ function toggleLang(){
 sb.auth.getSession().then(function(r){
   if(r.data&&r.data.session&&r.data.session.user)loadMe(r.data.session.user.id);
 });
+
+</script>
+<script>
+
+function renderLeave(){
+  var pg=document.getElementById('pg-leave'),T=LANG==='ar';
+  if(!pg)return;
+  var isViewer=ME.role==='head_nurse'||ME.role==='manager'||ME.role==='admin';
+  var year=new Date().getFullYear();
+  var mnames=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  if(T)mnames=['\u064a\u0646\u0627\u064a\u0631','\u0641\u0628\u0631\u0627\u064a\u0631','\u0645\u0627\u0631\u0633','\u0623\u0628\u0631\u064a\u0644','\u0645\u0627\u064a\u0648','\u064a\u0648\u0646\u064a\u0648','\u064a\u0648\u0644\u064a\u0648','\u0623\u063a\u0633\u0637\u0633','\u0633\u0628\u062a\u0645\u0628\u0631','\u0623\u0643\u062a\u0648\u0628\u0631','\u0646\u0648\u0641\u0645\u0628\u0631','\u062f\u064a\u0633\u0645\u0628\u0631'];
+  var h='';
+  if(isViewer){
+    var nurses=getNursesByRole();
+    h+='<div class="phdr"><div class="ptitle">\uD83D\uDCC6 '+(T?'\u062e\u0637\u0637 \u0627\u0644\u0625\u062c\u0627\u0632\u0627\u062a':'Leave Plans')+'<\/div><\/div>';
+    nurses.forEach(function(n){
+      var plans=ALL_LP[n.id]||[];
+      h+='<div class="balcard"><div class="baltitle">'+n.name+' <span style="font-weight:400;color:var(--muted)">'+(n.dept||'')+'<\/span><\/div>';
+      h+='<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-top:10px">';
+      mnames.forEach(function(mn,mi){
+        var mp=plans.filter(function(p){return new Date(p.date+'T00:00:00').getMonth()===mi;});
+        var has=mp.length>0;
+        h+='<div style="padding:6px;border-radius:8px;text-align:center;border:1px solid '+(has?'rgba(16,185,129,.4)':'var(--b1)')+';background:'+(has?'var(--off-bg)':'transparent')+'"><div style="font-size:10px;color:var(--muted)">'+mn+'<\/div>';
+        if(has)h+='<div style="font-size:11px;font-weight:700;color:var(--green)">'+mp.length+' \u064a\u0648\u0645<\/div>';
+        else h+='<div style="font-size:10px;color:var(--dim)">\u2014<\/div>';
+        h+='<\/div>';
+      });
+      h+='<\/div><\/div>';
+    });
+    pg.innerHTML=h;return;
+  }
+  var myPlans=ALL_LP[ME.id]||[];
+  var bookedDates=myPlans.map(function(p){return p.date;});
+  var otherBooked={};
+  Object.keys(ALL_LP).forEach(function(uid){
+    if(uid===ME.id)return;
+    var nurse=ALL_P[uid];if(!nurse||nurse.dept!==ME.dept)return;
+    ALL_LP[uid].forEach(function(p){if(!otherBooked[p.date])otherBooked[p.date]=[];otherBooked[p.date].push(nurse.name);});
+  });
+  h+='<div class="phdr"><div class="ptitle">\uD83D\uDCC6 '+(T?'\u062e\u0637\u0629 \u0625\u062c\u0627\u0632\u0627\u062a\u064a':'My Leave Plan')+'<\/div><\/div>';
+  h+='<div class="balcard"><div class="baltitle">\u2795 '+(T?'\u0625\u0636\u0627\u0641\u0629 \u062a\u0627\u0631\u064a\u062e':'Add Date')+'<\/div>';
+  h+='<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">';
+  h+='<input type="date" id="lp-date" style="padding:8px;background:var(--s2);border:1px solid var(--b1);border-radius:7px;color:var(--text);font-size:13px;outline:none">';
+  h+='<select id="lp-type" style="padding:8px;background:var(--s2);border:1px solid var(--b1);border-radius:7px;color:var(--text);font-size:13px;outline:none">';
+  h+='<option value="annual_leave">'+(T?'\u0633\u0646\u0648\u064a\u0629':'Annual')+'<\/option><option value="sick">'+(T?'\u0645\u0631\u0636\u064a\u0629':'Sick')+'<\/option><option value="fitr">'+(T?'\u0641\u0637\u0631':'Eid')+'<\/option><option value="compensation">'+(T?'\u062a\u0639\u0648\u064a\u0636':'Comp')+'<\/option><\/select>';
+  h+='<button class="btn-sub" onclick="addLeavePlan()">'+(T?'\u0625\u0636\u0627\u0641\u0629':'Add')+'<\/button><\/div><\/div>';
+  h+='<div class="balcard"><div class="baltitle">\uD83D\uDCC5 '+(T?'\u062e\u0637\u062a\u064a':'My Plan')+'<\/div>';
+  h+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;margin-top:10px">';
+  mnames.forEach(function(mn,mi){
+    var dim=new Date(year,mi+1,0).getDate();
+    h+='<div style="border:1px solid var(--b1);border-radius:10px;overflow:hidden"><div style="background:var(--s2);padding:8px 12px;font-size:12px;font-weight:700">'+mn+'<\/div>';
+    h+='<div style="padding:8px;display:flex;flex-wrap:wrap;gap:3px">';
+    for(var d=1;d<=dim;d++){
+      var ds=year+'-'+String(mi+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+      var isMy=bookedDates.indexOf(ds)>=0;
+      var oth=otherBooked[ds]||[];
+      var isTaken=oth.length>0&&!isMy;
+      var bg=isMy?'var(--green)':isTaken?'rgba(239,68,68,.2)':'var(--s3)';
+      var col=isMy?'white':isTaken?'var(--red)':'var(--muted)';
+      h+='<div onclick="toggleLeavePlan(\''+ds+'\')" title="'+(isTaken?oth.join(','):'')+'" style="width:26px;height:26px;border-radius:5px;background:'+bg+';color:'+col+';display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;cursor:'+(isTaken?'not-allowed':'pointer')+'">'+d+'<\/div>';
+    }
+    h+='<\/div><\/div>';
+  });
+  h+='<\/div><\/div>';
+  if(myPlans.length>0){
+    h+='<div class="balcard"><div class="baltitle">\uD83D\uDCCB '+(T?'\u0642\u0627\u0626\u0645\u062a\u064a':'List')+'<\/div>';
+    myPlans.sort(function(a,b){return a.date>b.date?1:-1;}).forEach(function(p){
+      var lbl=(SLBL[LANG]||SLBL.ar)[p.type]||p.type;
+      h+='<div class="brow"><span class="bl">'+p.date+'<\/span><span style="color:var(--green);font-size:11px">'+lbl+'<\/span><button onclick="deleteLeavePlan('+p.id+')" style="margin-right:auto;padding:2px 8px;background:rgba(239,68,68,.1);border:none;border-radius:5px;color:var(--red);cursor:pointer;font-size:10px">\u00d7<\/button><\/div>';
+    });
+    h+='<\/div>';
+  }
+  pg.innerHTML=h;
+}
+
+function addLeavePlan(){
+  var T=LANG==='ar';
+  var date=document.getElementById('lp-date').value;
+  var typeEl=document.getElementById('lp-type');
+  var type=typeEl?typeEl.value:'annual_leave';
+  if(!date){toast(T?'\u0627\u062e\u062a\u0631 \u062a\u0627\u0631\u064a\u062e\u0627\u064b':'Select date','tw');return;}
+  var isBooked=Object.keys(ALL_LP).some(function(uid){if(uid===ME.id)return false;var n=ALL_P[uid];if(!n||n.dept!==ME.dept)return false;return(ALL_LP[uid]||[]).some(function(p){return p.date===date;});});
+  if(isBooked){toast(T?'\u0627\u0644\u062a\u0627\u0631\u064a\u062e \u0645\u062d\u062c\u0648\u0632':' Date taken','tw');return;}
+  sb.from('leave_plan').insert({nurse_id:ME.id,date:date,type:type}).then(function(r){
+    if(r.error)return toast(r.error.message,'td');
+    sb.from('leave_plan').select('*').eq('nurse_id',ME.id).then(function(r2){ALL_LP[ME.id]=r2.data||[];renderLeave();});
+    toast(T?'\u062a\u0645 \u0627\u0644\u0625\u0636\u0627\u0641\u0629 \u2713':'Added','ts');
+  });
+}
+
+function toggleLeavePlan(ds){
+  var myPlans=ALL_LP[ME.id]||[];
+  var existing=myPlans.find(function(p){return p.date===ds;});
+  if(existing){deleteLeavePlan(existing.id);return;}
+  var isBooked=Object.keys(ALL_LP).some(function(uid){if(uid===ME.id)return false;var n=ALL_P[uid];if(!n||n.dept!==ME.dept)return false;return(ALL_LP[uid]||[]).some(function(p){return p.date===ds;});});
+  if(isBooked){toast(LANG==='ar'?'\u0645\u062d\u062c\u0648\u0632':'Taken','tw');return;}
+  sb.from('leave_plan').insert({nurse_id:ME.id,date:ds,type:'annual_leave'}).then(function(r){
+    if(r.error)return toast(r.error.message,'td');
+    sb.from('leave_plan').select('*').eq('nurse_id',ME.id).then(function(r2){ALL_LP[ME.id]=r2.data||[];renderLeave();});
+  });
+}
+
+function deleteLeavePlan(id){
+  sb.from('leave_plan').delete().eq('id',id).then(function(r){
+    if(r.error)return toast(r.error.message,'td');
+    if(ALL_LP[ME.id])ALL_LP[ME.id]=ALL_LP[ME.id].filter(function(p){return p.id!==id;});
+    renderLeave();
+    toast(LANG==='ar'?'\u062a\u0645 \u0627\u0644\u062d\u0630\u0641':'Removed','ti');
+  });
+}
+
+function renderAI(){
+  var pg=document.getElementById('pg-ai'),T=LANG==='ar';
+  if(!pg)return;
+  var nurses=Object.values(ALL_P).filter(function(p){return p.role==='nurse'&&p.dept===ME.dept;});
+  var dept=ALL_D[ME.dept]||{m:3,e:3,n:3};
+  var h='<div class="phdr"><div><div class="ptitle">\uD83E\uDD16 '+(T?'\u062c\u062f\u0648\u0644 \u0630\u0643\u064a':'AI Schedule')+'<\/div><\/div>';
+  h+='<div class="mctrl"><button onclick="chMonth(-1)">\u203A<\/button><div class="mlbl">'+mN(MONTH)+'<\/div><button onclick="chMonth(1)">\u2039<\/button><\/div><\/div>';
+  h+='<div class="balcard">';
+  h+='<div style="font-size:12px;color:var(--muted);margin-bottom:12px">\u2600\uFE0F '+dept.m+'&nbsp; \uD83C\uDF06 '+dept.e+'&nbsp; \uD83C\uDF19 '+dept.n+'&nbsp; \uD83D\uDC69\u200D\u2695\uFE0F '+nurses.length+'<\/div>';
+  h+='<label style="font-size:11px;color:var(--muted);display:block;margin-bottom:6px">'+(T?'\u0637\u0644\u0628 \u062e\u0627\u0635 (\u0627\u062e\u062a\u064a\u0627\u0631\u064a)':'Special request (optional)')+'<\/label>';
+  h+='<textarea id="ai-req" rows="3" style="width:100%;padding:10px;background:var(--s2);border:1px solid var(--b1);border-radius:8px;color:var(--text);font-family:Tajawal,sans-serif;font-size:13px;outline:none;resize:vertical"><\/textarea>';
+  h+='<button class="btn-sub" onclick="generateAISchedule()" id="ai-btn" style="width:100%;margin-top:12px">\uD83E\uDD16 '+(T?'\u062a\u0648\u0644\u064a\u062f \u0627\u0644\u062c\u062f\u0648\u0644':'Generate Schedule')+'<\/button><\/div>';
+  h+='<div id="ai-result"><\/div>';
+  pg.innerHTML=h;
+}
+
+function generateAISchedule(){
+  var T=LANG==='ar';
+  var btn=document.getElementById('ai-btn');if(!btn)return;
+  var reqEl=document.getElementById('ai-req');
+  var req=reqEl?reqEl.value:'';
+  var nurses=Object.values(ALL_P).filter(function(p){return p.role==='nurse'&&p.dept===ME.dept;});
+  var y=MONTH.getFullYear(),m=MONTH.getMonth();
+  var daysInMonth=new Date(y,m+1,0).getDate();
+  var dept=ALL_D[ME.dept]||{m:3,e:3,n:3};
+  btn.disabled=true;
+  btn.innerHTML='<span class="loader"><\/span> '+(T?'\u062c\u0627\u0631\u064d...':'Generating...');
+  var leaveInfo=nurses.map(function(n){
+    var plans=(ALL_LP[n.id]||[]).filter(function(p){var dt=new Date(p.date+'T00:00:00');return dt.getFullYear()===y&&dt.getMonth()===m;}).map(function(p){return p.date.slice(8);});
+    return n.name+(plans.length?' (off:'+plans.join(',')+')':'');
+  }).join('; ');
+  var prompt='Create a '+daysInMonth+'-day nurse schedule for '+mN(MONTH)+'.\nNurses: '+nurses.map(function(n){return n.name;}).join(', ')+'\nDaily needs: morning='+dept.m+', evening='+dept.e+', night='+dept.n+'\nLeave info: '+leaveInfo+(req?'\nSpecial: '+req:'')+'\nRules: min 6 rest days, fair distribution, max 3 consecutive same shifts, respect leaves.\nReturn ONLY JSON: {"schedule":{"NurseName":{"1":"morning","2":"off",...all '+daysInMonth+' days}},"summary":"Arabic summary"}';
+  fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:4000,messages:[{role:'user',content:prompt}]})
+  }).then(function(r){return r.json();}).then(function(data){
+    btn.disabled=false;btn.textContent='\uD83E\uDD16 '+(T?'\u062a\u0648\u0644\u064a\u062f \u062c\u062f\u064a\u062f':'Regenerate');
+    var text=data.content&&data.content[0]&&data.content[0].text||'';
+    try{
+      var jm=text.match(/\{[\s\S]*\}/);if(!jm)throw new Error('no json');
+      var result=JSON.parse(jm[0]);
+      window._aiSchedule={schedule:result.schedule,nurses:nurses,y:y,m:m,days:daysInMonth};
+      showAIResult(result.schedule,result.summary||'',daysInMonth);
+    }catch(e){
+      var el=document.getElementById('ai-result');
+      if(el)el.innerHTML='<div class="balcard"><div class="baltitle">AI<\/div><div style="white-space:pre-wrap;font-size:12px;color:var(--muted);max-height:300px;overflow-y:auto">'+text.substring(0,2000)+'<\/div><\/div>';
+    }
+  }).catch(function(e){
+    btn.disabled=false;btn.textContent='\uD83E\uDD16';
+    var el=document.getElementById('ai-result');
+    if(el)el.innerHTML='<div class="alert ae">\u26A0\uFE0F '+e.message+'<\/div>';
+  });
+}
+
+function showAIResult(schedule,summary,daysInMonth){
+  var T=LANG==='ar',el=document.getElementById('ai-result');if(!el)return;
+  var h='<div class="balcard"><div class="baltitle">\u2705 '+(T?'\u0627\u0644\u062c\u062f\u0648\u0644 \u0627\u0644\u0645\u0642\u062a\u0631\u062d':'Proposed Schedule')+'<\/div>';
+  if(summary)h+='<div style="padding:10px;background:var(--blue-bg);border-radius:8px;font-size:12px;color:var(--blue);margin-bottom:12px">'+summary+'<\/div>';
+  h+='<div class="twrap"><table><thead><tr><th>'+(T?'\u0627\u0644\u0645\u0645\u0631\u0636\u0629':'Nurse')+'<\/th>';
+  for(var d=1;d<=daysInMonth;d++)h+='<th>'+d+'<\/th>';
+  h+='<\/tr><\/thead><tbody>';
+  Object.keys(schedule).forEach(function(nm){
+    var sh=schedule[nm];
+    h+='<tr><td style="white-space:nowrap;font-weight:700">'+nm+'<\/td>';
+    for(var d=1;d<=daysInMonth;d++){var sv=sh[String(d)]||sh[d]||'off';h+='<td><span class="sp '+(SCLS[sv]||'po')+'">'+(SICO[sv]||sv.slice(0,1))+'<\/span><\/td>';}
+    h+='<\/tr>';
+  });
+  h+='<\/tbody><\/table><\/div>';
+  h+='<div style="display:flex;gap:10px;margin-top:16px"><button class="btn-sub" onclick="applyAISchedule()">\u2705 '+(T?'\u062a\u0637\u0628\u064a\u0642':'Apply')+'<\/button><button class="btn-no" style="padding:10px 16px;border-radius:9px" onclick="renderAI()">\uD83D\uDD04 '+(T?'\u0625\u0639\u0627\u062f\u0629':'Retry')+'<\/button><\/div><\/div>';
+  el.innerHTML=h;
+}
+
+function applyAISchedule(){
+  var T=LANG==='ar';
+  if(!window._aiSchedule){toast(T?'\u0644\u0627 \u064a\u0648\u062c\u062f \u062c\u062f\u0648\u0644':'No schedule','tw');return;}
+  var ref=window._aiSchedule;
+  if(!confirm(T?'\u062a\u0637\u0628\u064a\u0642 \u0627\u0644\u062c\u062f\u0648\u0644 \u0639\u0644\u0649 \u062c\u0645\u064a\u0639 \u0627\u0644\u0645\u0645\u0631\u0636\u0627\u062a\u061f':'Apply to all nurses?'))return;
+  var toUpsert=[];
+  ref.nurses.forEach(function(nurse){
+    var sh=ref.schedule[nurse.name];if(!sh)return;
+    Object.keys(sh).forEach(function(day){
+      var shift=sh[day];if(!shift||shift==='off')return;
+      var ds=ref.y+'-'+String(ref.m+1).padStart(2,'0')+'-'+String(parseInt(day)).padStart(2,'0');
+      toUpsert.push({nurse_id:nurse.id,date:ds,shift:shift,flag:null});
+    });
+  });
+  if(!toUpsert.length){toast(T?'\u0644\u0627 \u0628\u064a\u0627\u0646\u0627\u062a':'No data','tw');return;}
+  sb.from('schedules').upsert(toUpsert,{onConflict:'nurse_id,date'}).then(function(r){
+    if(r.error)return toast(r.error.message,'td');
+    toUpsert.forEach(function(x){if(!ALL_S[x.nurse_id])ALL_S[x.nurse_id]={};ALL_S[x.nurse_id][x.date]={shift:x.shift,flag:null};});
+    toast((T?'\u062a\u0645 \u062a\u0637\u0628\u064a\u0642 ':'Applied ')+toUpsert.length+(T?' \u064a\u0648\u0645 \u2713':' days'),'ts');
+    switchPg('pg-team');
+  });
+}
 
 </script>
 </body>
