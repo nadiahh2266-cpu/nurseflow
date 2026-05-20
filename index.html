@@ -887,7 +887,7 @@ function saveShift(){
   var dept=ME.dept||'',cap=shiftCap(dept,selShift),cur=shiftCount(dept,selDay,selShift);
   var myEntry=(ALL_S[ME.id]||{})[selDay];
   var isMine=myEntry&&myEntry.shift===selShift;
-  if(SCAT[selShift]==='work'&&cap<99&&cur>=cap&&!isMine){toast((LANG==='ar'?'\u0627\u0644\u0634\u0641\u062a \u0645\u0643\u062a\u0645\u0644 ':'Shift full ')+cur+'/'+cap,'td');return;}
+  if(SCAT[selShift]==='work'&&cap<99&&cur>=cap&&!isMine&&!selFlag){toast((LANG==='ar'?'\u0627\u0644\u0634\u0641\u062a \u0645\u0643\u062a\u0645\u0644 ':'Shift full ')+cur+'/'+cap,'td');return;}
   var shiftToSave=selShift;
   var flag=selFlag||null;
   sb.from('schedules').upsert({nurse_id:ME.id,date:selDay,shift:shiftToSave,flag:flag},{onConflict:'nurse_id,date'}).then(function(r){
