@@ -846,8 +846,8 @@ function submitSched(){
 }
 
 function openModal(ds){
-  selDay=ds;selShift=null;
-  var e=(ALL_S[ME.id]||{})[ds];if(e)selShift=e.shift;
+  selDay=ds;selShift=null;selFlag=null;
+  var e=(ALL_S[ME.id]||{})[ds];if(e){selShift=e.shift;selFlag=e.flag||null;}
   var dt=new Date(ds+'T00:00:00');
   document.getElementById('m-dt').textContent=dt.toLocaleDateString('ar-SA',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
   buildShiftOpts(ds);
@@ -875,24 +875,21 @@ function buildShiftOpts(ds){
 
 function closeModal(){document.getElementById('smodal').style.display='none';}
 
-function pickShift(k){
+var selFlag=null;
+function pickShift(k,flag){
   selShift=k;
+  selFlag=flag!==undefined?flag:null;
   buildShiftOpts(selDay);
-  document.querySelectorAll('.sopt').forEach(function(o){o.classList.remove('picked');});
-  var order=['official','morning','evening','night','long_day','long_night','off','oncall','disaster','annual_leave','hajj','fitr','sick','exceptional','compensation'];
-  var idx=order.indexOf(k);
-  var opts=document.querySelectorAll('.sopt');if(opts[idx])opts[idx].classList.add('picked');
 }
 
 function saveShift(){
   if(!selShift){toast(LANG==='ar'?'\u0627\u062e\u062a\u0631 \u0627\u0644\u0634\u0641\u062a':'Select shift','tw');return;}
   var dept=ME.dept||'',cap=shiftCap(dept,selShift),cur=shiftCount(dept,selDay,selShift);
   var myEntry=(ALL_S[ME.id]||{})[selDay];
-  var myShift=myEntry&&myEntry.shift===selShift;
-  if(SCAT[selShift]==='work'&&cap<99&&cur>=cap&&!myShift){toast((LANG==='ar'?'\u0627\u0644\u0634\u0641\u062a \u0645\u0643\u062a\u0645\u0644 ':'Shift full ')+cur+'/'+cap,'td');return;}
-  var flag=null,shiftToSave=selShift;
-  if(selShift==='oncall'){flag='floater';shiftToSave=(myEntry&&myEntry.shift)||'off';}
-  if(selShift==='disaster'){flag='disaster';}
+  var isMine=myEntry&&myEntry.shift===selShift;
+  if(SCAT[selShift]==='work'&&cap<99&&cur>=cap&&!isMine){toast((LANG==='ar'?'\u0627\u0644\u0634\u0641\u062a \u0645\u0643\u062a\u0645\u0644 ':'Shift full ')+cur+'/'+cap,'td');return;}
+  var shiftToSave=selShift;
+  var flag=selFlag||null;
   sb.from('schedules').upsert({nurse_id:ME.id,date:selDay,shift:shiftToSave,flag:flag},{onConflict:'nurse_id,date'}).then(function(r){
     if(r.error)return toast(r.error.message,'td');
     if(!ALL_S[ME.id])ALL_S[ME.id]={};
