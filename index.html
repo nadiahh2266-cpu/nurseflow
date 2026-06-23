@@ -858,18 +858,34 @@ function buildShiftOpts(ds){
   var dept=ME.dept||'';
   var myEntry=(ALL_S[ME.id]||{})[ds];
   var myShiftType=myEntry?myEntry.shift:null;
-  var order=['official','morning','evening','night','long_day','long_night','off','oncall','disaster','annual_leave','hajj','fitr','sick','exceptional','compensation'];
+  var myFlag=myEntry?myEntry.flag:null;
+  var order=['official','morning','evening','night','long_day','long_night','off','annual_leave','hajj','fitr','sick','exceptional','compensation'];
   var h='';
+  if(myShiftType){
+    var curLbl=SL(myShiftType)+(myFlag==='floater'?' \uD83D\uDD35':myFlag==='disaster'?' \uD83D\uDEA8':'');
+    h+='<div style="grid-column:1/-1;padding:8px 12px;background:var(--s2);border-radius:8px;font-size:11px;color:var(--muted);margin-bottom:4px">'+(LANG==='ar'?'\u0627\u0644\u0634\u0641\u062a \u0627\u0644\u062d\u0627\u0644\u064a:':'Current:')+' <span style="color:var(--text);font-weight:700">'+curLbl+'<\/span><\/div>';
+  }
   order.forEach(function(k){
     var cap=shiftCap(dept,k),cur=shiftCount(dept,ds,k);
-    var myShift=myShiftType===k;
+    var myShift=myShiftType===k&&!selFlag;
     var isFull=SCAT[k]==='work'&&cap<99&&cur>=cap&&!myShift;
-    if(k==='oncall'&&myShiftType&&SCAT[myShiftType]!=='off')isFull=true;
-    if(k==='disaster'&&myShiftType&&SCAT[myShiftType]!=='work')isFull=true;
     var badge=SCAT[k]==='work'&&cap<99?'<span class="cap-b '+(isFull?'cap-f':'cap-o')+'">'+cur+'/'+cap+'<\/span>':'';
-    h+='<div class="sopt'+(isFull?' dis':'')+(k===selShift?' picked':'')+'" style="color:'+SCOLOR[k]+'" onclick="pickShift(\''+k+'\')">';
+    var picked=(selShift===k&&!selFlag)?'picked':'';
+    h+='<div class="sopt'+(isFull?' dis':'')+(picked?' '+picked:'')+'" style="color:'+SCOLOR[k]+'" onclick="pickShift(\''+k+'\',null)">';
     h+=badge+'<div class="ico">'+SICO[k]+'<\/div><div class="lbl">'+SL(k)+'<\/div><div class="tim">'+STIME[k]+'<\/div><\/div>';
   });
+  // Flag options row
+  h+='<div style="grid-column:1/-1;margin-top:8px;border-top:1px solid var(--b1);padding-top:10px;display:flex;gap:8px;flex-wrap:wrap">';
+  // Floater = off + blue dot (counts as rest day)
+  var floaterPicked=(selShift==='off'&&selFlag==='floater');
+  h+='<div class="sopt'+(floaterPicked?' picked':'')+' poc" style="color:var(--blue);flex:1;min-width:90px" onclick="pickShift(\'off\',\'floater\')">';
+  h+='<div class="ico">\uD83D\uDD35<\/div><div class="lbl">'+SL('oncall')+'<\/div><div class="tim">Off \uD83D\uDD35<\/div><\/div>';
+  // Disaster = added on top of existing work shift
+  var hasWork=myShiftType&&SCAT[myShiftType]==='work';
+  var disasterPicked=(selFlag==='disaster');
+  h+='<div class="sopt'+(disasterPicked?' picked':'')+(hasWork?'':' dis')+'" style="color:var(--red);flex:1;min-width:90px"'+(hasWork?' onclick="pickShift(\''+myShiftType+'\',\'disaster\')"':'')+' title="'+(hasWork?'':LANG==='ar'?'\u064a\u062c\u0628 \u0623\u0646 \u064a\u0643\u0648\u0646 \u0644\u062f\u064a\u0647\u0627 \u0634\u0641\u062a \u0639\u0645\u0644':'Requires work shift')+'">';
+  h+='<div class="ico">\uD83D\uDEA8<\/div><div class="lbl">'+SL('disaster')+'<\/div><div class="tim">'+(hasWork?'\uD83D\uDEA8+'+SL(myShiftType):LANG==='ar'?'\u064a\u062a\u0637\u0644\u0628 \u0634\u0641\u062a':'needs shift')+'<\/div><\/div>';
+  h+='<\/div>';
   document.getElementById('shift-opts').innerHTML=h;
 }
 
