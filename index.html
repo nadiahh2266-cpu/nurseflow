@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
+<html lang="ar" dir="rtl">
+<head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>NurseFlow Pro — شبكة الجبيل الصحية</title>
@@ -444,20 +446,110 @@ tbody td:first-child{text-align:right;padding-right:14px}
   </div>
 </div>
 
+<!-- LOGIN -->
+<div id="login">
+  <div class="lcard">
+    <div class="lbrand">
+      <div class="llogo">🏥</div>
+      <div class="lname">NurseFlow Pro</div>
+      <div class="lsub" id="l-sub">نظام إدارة جداول التمريض</div>
+    </div>
+    <div class="fld"><label>البريد الإلكتروني</label>
+      <input type="email" id="li-em" placeholder="nurse@hospital.com" autocomplete="email"></div>
+    <div class="fld"><label>كلمة المرور</label>
+      <input type="password" id="li-pw" placeholder="••••••••" autocomplete="current-password"></div>
+    <button class="btn-login" id="li-btn" onclick="doLogin()">دخول</button>
+    <button class="forgot-btn" onclick="forgotPass()">نسيت كلمة المرور؟</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="app-layout">
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+      <div class="sb-brand">
+        <div class="sb-logo">🏥</div>
+        <div><div class="sb-title">NurseFlow Pro</div><div class="sb-sub">JHN</div></div>
+      </div>
+      <div class="sb-user" style="display:flex;align-items:center;gap:10px">
+        <div class="sb-av" id="u-av"></div>
+        <div><div class="sb-uname" id="u-nm"></div><div class="sb-urole" id="u-rl"></div></div>
+      </div>
+      <div class="sb-nav" id="nav"></div>
+      <div class="sb-bottom">
+        <button class="sb-btn" id="theme-btn" onclick="toggleTheme()">🌙</button>
+        <button class="sb-btn" id="lang-btn" onclick="toggleLang()">EN</button>
+        <button class="sb-btn" onclick="doLogout()" style="flex:2" id="btn-out">خروج</button>
+      </div>
+    </div>
+
+    <!-- Main -->
+    <div class="main">
+      <div class="topbar">
+        <div class="tb-title" id="tb-title">الرئيسية</div>
+        <div class="tb-right">
+          <button class="tb-btn" id="cal-export-btn" onclick="exportToCalendar()" style="display:none">🗓️ تقويم</button>
+        </div>
+      </div>
+      <div class="wrap">
+        <div id="pg-dash" class="pg"></div>
+        <div id="pg-my" class="pg"></div>
+        <div id="pg-team" class="pg"></div>
+        <div id="pg-swap" class="pg"></div>
+        <div id="pg-review" class="pg"></div>
+        <div id="pg-approve" class="pg"></div>
+        <div id="pg-overview" class="pg"></div>
+        <div id="pg-report" class="pg"></div>
+        <div id="pg-upload" class="pg"></div>
+        <div id="pg-admin" class="pg"></div>
+    <div id="pg-leave" class="pg"></div>
+    <div id="pg-ai" class="pg"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Mobile toggle -->
+<button class="mb-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+
+<!-- Shift Modal -->
+<div class="mbg" id="smodal" style="display:none" onclick="if(event.target===this)closeModal()">
+  <div class="mbox">
+    <div class="mtitle">اختر الشفت</div>
+    <div class="mdate" id="m-dt"></div>
+    <div class="sgm" id="shift-opts"></div>
+    <div class="mfoot">
+      <button class="btn-mc" onclick="closeModal()">إلغاء</button>
+      <button class="btn-ms" onclick="saveShift()">حفظ</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, signOut, sendPasswordResetEmail, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, addDoc, collection, query, where, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-// ── CONFIG ──
-var SB_URL='https://roapezlytybnculruflm.supabase.co';
-var SB_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJvYXBlemx5dHlibmN1bHJ1ZmxtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxNjg3NzksImV4cCI6MjA5Mzc0NDc3OX0.L-UHviYrc4kVoh13tJmzk6f8wvCQRWoWo7tHZvs0XsQ';
-var sb=supabase.createClient(SB_URL,SB_ANON);
+const firebaseConfig = {
+  apiKey: "AIzaSyDC2cmBlwZDoOdCJXgQ7dc9X6MBqmlMf5w",
+  authDomain: "nurseflow-jhn.firebaseapp.com",
+  projectId: "nurseflow-jhn",
+  storageBucket: "nurseflow-jhn.firebasestorage.app",
+  messagingSenderId: "1005946269057",
+  appId: "1:1005946269057:web:42e579c1bbcb67d4d28c80"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
 // ── STATE ──
-var ME=null,MONTH=new Date(),selDay=null,selShift=null;
-var ALL_P={},ALL_S={},ALL_ST={},ALL_D={},ALL_LB={},ALL_MD={},ALL_SW=[],ALL_LP={},RT=null;
+var ME=null,MONTH=new Date(),selDay=null,selShift=null,selFlag=null;
+var ALL_P={},ALL_S={},ALL_ST={},ALL_D={},ALL_LB={},ALL_MD={},ALL_SW=[],ALL_LP={};
 var LANG=localStorage.getItem('nf-lang')||'ar';
 MONTH.setDate(1);
 
@@ -476,100 +568,79 @@ var SCOLOR={official:'#06b6d4',morning:'#f59e0b',evening:'#a855f7',night:'#3b82f
 // ── HELPERS ──
 function SL(k){return(SLBL[LANG]||SLBL.ar)[k]||k;}
 function p2(n){return String(n).padStart(2,'0');}
-function mN(d){
-  if(!d||!(d instanceof Date)||isNaN(d.getTime()))return '';
-  return d.toLocaleDateString('ar-SA',{month:'long',year:'numeric'});
-}
-function toast(msg,type){
-  var t=document.getElementById('toast');
-  if(!t)return;
-  t.textContent=msg;t.className='toast '+(type||'ti')+' show';
-  setTimeout(function(){t.classList.remove('show');},3000);
-}
-function p2(n){return String(n).padStart(2,'0');}
+function mN(d){if(!d||!(d instanceof Date)||isNaN(d.getTime()))return '';return d.toLocaleDateString('ar-SA',{month:'long',year:'numeric'});}
+function toast(msg,type){var t=document.getElementById('toast');if(!t)return;t.textContent=msg;t.className='toast '+(type||'ti')+' show';setTimeout(function(){t.classList.remove('show');},3000);}
 
 // ── THEME INIT ──
-(function(){
-  var t=localStorage.getItem('nf-theme');
-  if(t==='light')document.documentElement.setAttribute('data-theme','light');
-})();
+(function(){var t=localStorage.getItem('nf-theme');if(t==='light')document.documentElement.setAttribute('data-theme','light');})();
+
+// ── FIREBASE HELPERS ──
+async function fsGet(col,id){var snap=await getDoc(doc(db,col,id));return snap.exists()?{id:snap.id,...snap.data()}:null;}
+async function fsGetAll(col){var snap=await getDocs(collection(db,col));return snap.docs.map(function(d){return{id:d.id,...d.data()};});}
+async function fsSet(col,id,data){await setDoc(doc(db,col,id),data,{merge:true});}
+async function fsAdd(col,data){return await addDoc(collection(db,col),data);}
+async function fsDel(col,id){await deleteDoc(doc(db,col,id));}
 
 // ── AUTH ──
-sb.auth.onAuthStateChange(function(ev,ses){
-  if(ev==='SIGNED_OUT'){
+onAuthStateChanged(auth,function(user){
+  if(!user){
     ME=null;
     document.getElementById('login').style.display='flex';
     document.getElementById('app').style.display='none';
-    if(RT){sb.removeChannel(RT);RT=null;}
   }
 });
 
-function doLogin(){
+window.doLogin=async function(){
   var em=document.getElementById('li-em').value.trim().toLowerCase();
   var pw=document.getElementById('li-pw').value;
   if(!em||!pw){toast('\u0623\u062f\u062e\u0644 \u0627\u0644\u0628\u064a\u0627\u0646\u0627\u062a','tw');return;}
   var btn=document.getElementById('li-btn');
-  btn.disabled=true;
-  btn.innerHTML='<span class="loader"><\/span>';
-  sb.auth.signInWithPassword({email:em,password:pw}).then(function(r){
-    btn.disabled=false;
-    btn.textContent=LANG==='ar'?'\u062f\u062e\u0648\u0644':'Sign In';
-    if(r.error){toast(LANG==='ar'?'\u0628\u064a\u0627\u0646\u0627\u062a \u062e\u0627\u0637\u0626\u0629':'Invalid credentials','td');return;}
-    if(r.data&&r.data.user)loadMe(r.data.user.id);
-  });
-}
+  btn.disabled=true;btn.innerHTML='<span class="loader"></span>';
+  try{
+    var cred=await signInWithEmailAndPassword(auth,em,pw);
+    await loadMe(cred.user.uid);
+  }catch(e){
+    btn.disabled=false;btn.textContent=LANG==='ar'?'\u062f\u062e\u0648\u0644':'Sign In';
+    toast(LANG==='ar'?'\u0628\u064a\u0627\u0646\u0627\u062a \u062e\u0627\u0637\u0626\u0629':'Invalid credentials','td');
+  }
+};
 
-function doLogout(){sb.auth.signOut();}
+window.doLogout=function(){signOut(auth);};
 
-function forgotPass(){
+window.forgotPass=async function(){
   var em=document.getElementById('li-em').value.trim().toLowerCase();
   if(!em){toast(LANG==='ar'?'\u0623\u062f\u062e\u0644\u064a \u0627\u0644\u0625\u064a\u0645\u064a\u0644':'Enter email','tw');return;}
-  sb.auth.resetPasswordForEmail(em,{redirectTo:window.location.origin}).then(function(){
-    toast(LANG==='ar'?'\u062a\u0645 \u0627\u0644\u0625\u0631\u0633\u0627\u0644 \u2713':'Sent \u2713','ts');
-  });
+  await sendPasswordResetEmail(auth,em);
+  toast(LANG==='ar'?'\u062a\u0645 \u0627\u0644\u0625\u0631\u0633\u0627\u0644 \u2713':'Sent \u2713','ts');
+};
+
+async function loadMe(uid){
+  var profile=await fsGet('user_profiles',uid);
+  if(!profile){toast('\u0627\u0644\u0628\u0631\u0648\u0641\u0627\u064a\u0644 \u063a\u064a\u0631 \u0645\u0648\u062c\u0648\u062f','td');return;}
+  ME=Object.assign({id:uid},profile);
+  await loadAll();
+  showApp();
 }
 
-function loadMe(uid){
-  sb.from('user_profiles').select('*').eq('id',uid).maybeSingle().then(function(r){
-    if(!r.data){toast('\u0627\u0644\u0628\u0631\u0648\u0641\u0627\u064a\u0644 \u063a\u064a\u0631 \u0645\u0648\u062c\u0648\u062f','td');return;}
-    ME=Object.assign({id:uid},r.data);
-    loadAll().then(function(){showApp();});
-  });
-}
-
-function loadAll(){
-  return Promise.all([
-    sb.from('user_profiles').select('*'),
-    sb.from('schedules').select('*'),
-    sb.from('departments').select('*'),
-    sb.from('schedule_status').select('*'),
-    sb.from('leave_balance').select('*'),
-    sb.from('manager_departments').select('*'),
-    sb.from('swap_requests').select('*'),
-    sb.from('leave_plan').select('*')
-  ]).then(function(res){
-    ALL_P={};(res[0].data||[]).forEach(function(x){ALL_P[x.id]=x;});
-    ALL_S={};(res[1].data||[]).forEach(function(x){if(!ALL_S[x.nurse_id])ALL_S[x.nurse_id]={};ALL_S[x.nurse_id][x.date]={shift:x.shift,flag:x.flag};});
-    ALL_D={};(res[2].data||[]).forEach(function(x){ALL_D[x.name]={m:x.cap_morning||99,e:x.cap_evening||99,n:x.cap_night||99,ld:x.cap_long_day||99};});
-    ALL_ST={};(res[3].data||[]).forEach(function(x){ALL_ST[x.nurse_id]=x;});
-    ALL_LB={};(res[4].data||[]).forEach(function(x){ALL_LB[x.nurse_id]=x;});
-    ALL_MD={};(res[5].data||[]).forEach(function(x){if(!ALL_MD[x.manager_id])ALL_MD[x.manager_id]=[];ALL_MD[x.manager_id].push(x.dept_name);});
-    ALL_SW=res[6].data||[];
-    ALL_LP={};(res[7]&&res[7].data||[]).forEach(function(x){if(!ALL_LP[x.nurse_id])ALL_LP[x.nurse_id]=[];ALL_LP[x.nurse_id].push(x);});
-    if(!RT){
-      RT=sb.channel('rt')
-        .on('postgres_changes',{event:'*',schema:'public',table:'schedules'},function(h){
-          var nid=(h.new&&h.new.nurse_id)||(h.old&&h.old.nurse_id);if(!nid)return;
-          if(h.eventType==='DELETE'){if(ALL_S[nid])delete ALL_S[nid][h.old.date];}
-          else{if(!ALL_S[nid])ALL_S[nid]={};ALL_S[nid][h.new.date]={shift:h.new.shift,flag:h.new.flag};}
-          render();
-        })
-        .on('postgres_changes',{event:'*',schema:'public',table:'schedule_status'},function(){
-          sb.from('schedule_status').select('*').then(function(r2){ALL_ST={};(r2.data||[]).forEach(function(x){ALL_ST[x.nurse_id]=x;});render();});
-        })
-        .subscribe();
-    }
-  });
+async function loadAll(){
+  var [profiles,schedules,depts,statuses,balances,mgrDepts,swaps,leavePlans]=await Promise.all([
+    fsGetAll('user_profiles'),
+    fsGetAll('schedules'),
+    fsGetAll('departments'),
+    fsGetAll('schedule_status'),
+    fsGetAll('leave_balance'),
+    fsGetAll('manager_departments'),
+    fsGetAll('swap_requests'),
+    fsGetAll('leave_plan')
+  ]);
+  ALL_P={};profiles.forEach(function(x){ALL_P[x.id]=x;});
+  ALL_S={};schedules.forEach(function(x){if(!ALL_S[x.nurse_id])ALL_S[x.nurse_id]={};ALL_S[x.nurse_id][x.date]={shift:x.shift,flag:x.flag||null,docId:x.id};});
+  ALL_D={};depts.forEach(function(x){ALL_D[x.name]={m:x.cap_morning||99,e:x.cap_evening||99,n:x.cap_night||99,ld:x.cap_long_day||99,docId:x.id};});
+  ALL_ST={};statuses.forEach(function(x){ALL_ST[x.nurse_id]=x;});
+  ALL_LB={};balances.forEach(function(x){ALL_LB[x.nurse_id]=x;});
+  ALL_MD={};mgrDepts.forEach(function(x){if(!ALL_MD[x.manager_id])ALL_MD[x.manager_id]=[];ALL_MD[x.manager_id].push(x.dept_name);});
+  ALL_SW=swaps;
+  ALL_LP={};leavePlans.forEach(function(x){if(!ALL_LP[x.nurse_id])ALL_LP[x.nurse_id]=[];ALL_LP[x.nurse_id].push(x);});
 }
 
 function showApp(){
@@ -582,24 +653,8 @@ function showApp(){
   setTimeout(checkDeadline,1000);
 }
 
-var PG_TITLES_AR={
-  'pg-dash':'\u0627\u0644\u0631\u0626\u064a\u0633\u064a\u0629',
-  'pg-my':'\u062c\u062f\u0648\u0644\u064a',
-  'pg-team':'\u0627\u0644\u062c\u062f\u0648\u0644 \u0627\u0644\u0643\u0627\u0645\u0644',
-  'pg-swap':'\u062a\u0628\u0627\u062f\u0644 \u0627\u0644\u0634\u0641\u062a',
-  'pg-review':'\u0627\u0644\u0645\u0631\u0627\u062c\u0639\u0629',
-  'pg-approve':'\u0627\u0644\u0645\u0648\u0627\u0641\u0642\u0629',
-  'pg-overview':'\u0627\u0644\u062a\u063a\u0637\u064a\u0629',
-  'pg-report':'\u0627\u0644\u062a\u0642\u0631\u064a\u0631',
-  'pg-upload':'\u0631\u0641\u0639 \u0627\u0644\u0645\u0648\u0638\u0641\u064a\u0646',
-  'pg-admin':'\u0627\u0644\u0625\u062f\u0627\u0631\u0629'
-};
+var PG_TITLES_AR={'pg-dash':'\u0627\u0644\u0631\u0626\u064a\u0633\u064a\u0629','pg-my':'\u062c\u062f\u0648\u0644\u064a','pg-team':'\u0627\u0644\u062c\u062f\u0648\u0644 \u0627\u0644\u0643\u0627\u0645\u0644','pg-swap':'\u062a\u0628\u0627\u062f\u0644 \u0627\u0644\u0634\u0641\u062a','pg-review':'\u0627\u0644\u0645\u0631\u0627\u062c\u0639\u0629','pg-approve':'\u0627\u0644\u0645\u0648\u0627\u0641\u0642\u0629','pg-overview':'\u0627\u0644\u062a\u063a\u0637\u064a\u0629','pg-report':'\u0627\u0644\u062a\u0642\u0631\u064a\u0631','pg-upload':'\u0631\u0641\u0639 \u0627\u0644\u0645\u0648\u0638\u0641\u064a\u0646','pg-admin':'\u0627\u0644\u0625\u062f\u0627\u0631\u0629','pg-leave':'\u062e\u0637\u0637 \u0627\u0644\u0625\u062c\u0627\u0632\u0627\u062a','pg-ai':'\u062c\u062f\u0648\u0644 \u0630\u0643\u064a'};
 var PG_TITLES_EN={'pg-dash':'Dashboard','pg-my':'My Schedule','pg-team':'Full Schedule','pg-swap':'Shift Swap','pg-review':'Review','pg-approve':'Approval','pg-overview':'Coverage','pg-report':'Report','pg-upload':'Upload Staff','pg-admin':'Admin','pg-leave':'Leave Plans','pg-ai':'AI Schedule'};
-
-function getSbIcon(id){
-  var icons={'pg-dash':'\uD83C\uDFE0','pg-my':'\uD83D\uDCC5','pg-team':'\uD83D\uDC65','pg-swap':'\uD83D\uDD04','pg-review':'\uD83D\uDD0D','pg-approve':'\u2705','pg-overview':'\uD83D\uDCCA','pg-report':'\uD83D\uDCCB','pg-upload':'\uD83D\uDCE4','pg-admin':'\uD83D\uDD11'};
-  return icons[id]||'\uD83D\uDCC4';
-}
 
 function buildNav(){
   var nav=document.getElementById('nav');
@@ -613,14 +668,14 @@ function buildNav(){
   var list=tabs[ME.role]||[];
   var html='';
   list.forEach(function(t){
-    var badge=t[2]?'<span class="sb-badge" id="b-'+t[1]+'" style="display:none">0<\/span>':'';
-    html+='<div class="sb-item" data-pg="'+t[1]+'" onclick="switchPg(\''+t[1]+'\')">'+t[0]+badge+'<\/div>';
+    var badge=t[2]?'<span class="sb-badge" id="b-'+t[1]+'" style="display:none">0</span>':'';
+    html+='<div class="sb-item" data-pg="'+t[1]+'" onclick="switchPg(\''+t[1]+'\')">'+t[0]+badge+'</div>';
   });
   nav.innerHTML=html;
   if(list.length)switchPg(list[0][1]);
 }
 
-function switchPg(id){
+window.switchPg=function(id){
   document.querySelectorAll('.pg').forEach(function(p){p.classList.remove('on');});
   document.querySelectorAll('.sb-item').forEach(function(t){t.classList.toggle('on',t.dataset.pg===id);});
   var titleEl=document.getElementById('tb-title');
@@ -630,9 +685,9 @@ function switchPg(id){
   document.getElementById('sidebar').classList.remove('open');
   var pg=document.getElementById(id);if(pg)pg.classList.add('on');
   render();
-}
+};
 
-function chMonth(d){
+window.chMonth=function(d){
   var next=new Date(MONTH);
   next.setMonth(next.getMonth()+d);
   if(ME&&ME.role==='nurse'){
@@ -640,8 +695,8 @@ function chMonth(d){
     var allowed=new Date(now.getFullYear(),now.getMonth()+1,1);
     if(next.getFullYear()===allowed.getFullYear()&&next.getMonth()===allowed.getMonth()){MONTH=next;render();}
     else toast(LANG==='ar'?'\u064a\u0645\u0643\u0646\u0643 \u062a\u0639\u0628\u0626\u0629 \u0627\u0644\u0634\u0647\u0631 \u0627\u0644\u0642\u0627\u062f\u0645 \u0641\u0642\u0637':'Next month only','tw');
-  } else {MONTH=next;render();}
-}
+  }else{MONTH=next;render();}
+};
 
 function render(){
   var a=document.querySelector('.pg.on');if(!a)return;
@@ -728,7 +783,7 @@ function checkDeadline(){
   var T=LANG==='ar';
   var b=document.createElement('div');
   b.id='dl-banner';b.className='deadline-banner';
-  b.innerHTML='\u23F0 '+(T?'\u062a\u0630\u0643\u064a\u0631: \u0645\u0648\u0639\u062f \u0631\u0641\u0639 \u0627\u0644\u062c\u062f\u0648\u0644 \u0628\u0639\u062f '+daysLeft+(daysLeft===1?' \u064a\u0648\u0645':' \u0623\u064a\u0627\u0645'):'Deadline in '+daysLeft+(daysLeft===1?' day':' days'))+'<button onclick="this.parentElement.remove()" style="margin-right:auto;background:none;border:none;color:inherit;cursor:pointer;font-size:16px">\u00d7<\/button>';
+  b.innerHTML='\u23F0 '+(T?'\u062a\u0630\u0643\u064a\u0631: \u0645\u0648\u0639\u062f \u0631\u0641\u0639 \u0627\u0644\u062c\u062f\u0648\u0644 \u0628\u0639\u062f '+daysLeft+(daysLeft===1?' \u064a\u0648\u0645':' \u0623\u064a\u0627\u0645'):'Deadline in '+daysLeft+(daysLeft===1?' day':' days'))+'<button onclick="this.parentElement.remove()" style="margin-right:auto;background:none;border:none;color:inherit;cursor:pointer;font-size:16px">\u00d7</button>';
   var wrap=document.querySelector('.wrap');
   if(wrap)wrap.insertAdjacentElement('afterbegin',b);
 }
@@ -741,8 +796,7 @@ function renderDash(){
   var submitted=nurses.filter(function(n){return ALL_ST[n.id]&&ALL_ST[n.id].status==='submitted';}).length;
   var reviewed=nurses.filter(function(n){return ALL_ST[n.id]&&ALL_ST[n.id].status==='reviewed';}).length;
   var approved=nurses.filter(function(n){return ALL_ST[n.id]&&ALL_ST[n.id].status==='approved';}).length;
-  var h='<div style="font-size:18px;font-weight:800;margin-bottom:20px">\uD83D\uDC4B '+(T?'\u0645\u0631\u062d\u0628\u0627\u064b\u060c ':' Welcome, ')+ME.name+'<\/div>';
-  
+  var h='<div style="font-size:18px;font-weight:800;margin-bottom:20px">\uD83D\uDC4B '+(T?'\u0645\u0631\u062d\u0628\u0627\u064b\u060c ':' Welcome, ')+ME.name+'</div>';
   if(ME.role==='nurse'){
     var st=(ALL_ST[ME.id]&&ALL_ST[ME.id].status)||'draft';
     var stNext=new Date(y,m+1,1);
@@ -751,28 +805,27 @@ function renderDash(){
     var stColors={draft:'var(--muted)',submitted:'var(--morning)',reviewed:'var(--blue)',approved:'var(--green)',rejected:'var(--red)'};
     var stLabels={draft:T?'\u0645\u0633\u0648\u062f\u0629':'Draft',submitted:T?'\u0645\u064f\u0631\u0633\u0644':'Submitted',reviewed:T?'\u0631\u0648\u062c\u0639\u062a':'Reviewed',approved:T?'\u0645\u0648\u0627\u0641\u0642':'Approved',rejected:T?'\u0645\u0631\u0641\u0648\u0636':'Rejected'};
     h+='<div class="sgrid">';
-    h+='<div class="scard"><div class="sc-label">'+(T?'\u062c\u062f\u0648\u0644 \u0627\u0644\u0634\u0647\u0631 \u0627\u0644\u0642\u0627\u062f\u0645':'Next Month')+'<\/div><div class="sc-val">'+statsNext.filled+'<\/div><div class="sc-sub">\/'+daysNext+'<\/div><div class="sc-bar"><div class="sc-fill" style="width:'+Math.round(statsNext.filled/daysNext*100)+'%"><\/div><\/div><\/div>';
-    h+='<div class="scard"><div class="sc-label">'+(T?'\u062d\u0627\u0644\u0629 \u0627\u0644\u062c\u062f\u0648\u0644':'Status')+'<\/div><div class="sc-val" style="font-size:14px;color:'+stColors[st]+'">'+stLabels[st]+'<\/div><\/div>';
-    h+='<\/div>';
+    h+='<div class="scard"><div class="sc-label">'+(T?'\u062c\u062f\u0648\u0644 \u0627\u0644\u0634\u0647\u0631 \u0627\u0644\u0642\u0627\u062f\u0645':'Next Month')+'</div><div class="sc-val">'+statsNext.filled+'</div><div class="sc-sub">/'+daysNext+'</div><div class="sc-bar"><div class="sc-fill" style="width:'+Math.round(statsNext.filled/daysNext*100)+'%"></div></div></div>';
+    h+='<div class="scard"><div class="sc-label">'+(T?'\u062d\u0627\u0644\u0629 \u0627\u0644\u062c\u062f\u0648\u0644':'Status')+'</div><div class="sc-val" style="font-size:14px;color:'+stColors[st]+'">'+stLabels[st]+'</div></div>';
+    h+='</div>';
     h+='<div class="qagrid">';
-    h+='<div class="qacard" onclick="switchPg(\'pg-my\')"><div class="qa-ico">\uD83D\uDCC5<\/div><div class="qa-title">'+(T?'\u062c\u062f\u0648\u0644\u064a':'My Schedule')+'<\/div><\/div>';
-    h+='<div class="qacard" onclick="switchPg(\'pg-swap\')"><div class="qa-ico">\uD83D\uDD04<\/div><div class="qa-title">'+(T?'\u062a\u0628\u0627\u062f\u0644 \u0634\u0641\u062a':'Swap Shift')+'<\/div><\/div>';
-    h+='<div class="qacard" onclick="exportToCalendar()"><div class="qa-ico">\uD83D\uDCC6<\/div><div class="qa-title">'+(T?'\u062a\u0635\u062f\u064a\u0631 \u062a\u0642\u0648\u064a\u0645':'Export Calendar')+'<\/div><\/div>';
-    h+='<div class="qacard" onclick="copySchedule()"><div class="qa-ico">\uD83D\uDCC4<\/div><div class="qa-title">'+(T?'\u0646\u0633\u062e \u0627\u0644\u062c\u062f\u0648\u0644':'Copy Schedule')+'<\/div><\/div>';
-    h+='<\/div>';
-  } else {
+    h+='<div class="qacard" onclick="switchPg(\'pg-my\')"><div class="qa-ico">\uD83D\uDCC5</div><div class="qa-title">'+(T?'\u062c\u062f\u0648\u0644\u064a':'My Schedule')+'</div></div>';
+    h+='<div class="qacard" onclick="switchPg(\'pg-swap\')"><div class="qa-ico">\uD83D\uDD04</div><div class="qa-title">'+(T?'\u062a\u0628\u0627\u062f\u0644 \u0634\u0641\u062a':'Swap Shift')+'</div></div>';
+    h+='<div class="qacard" onclick="exportToCalendar()"><div class="qa-ico">\uD83D\uDCC6</div><div class="qa-title">'+(T?'\u062a\u0635\u062f\u064a\u0631 \u062a\u0642\u0648\u064a\u0645':'Export Calendar')+'</div></div>';
+    h+='</div>';
+  }else{
     h+='<div class="sgrid">';
-    h+='<div class="scard"><div class="sc-label">'+(T?'\u0625\u062c\u0645\u0627\u0644\u064a \u0627\u0644\u0645\u0645\u0631\u0636\u0627\u062a':'Total Nurses')+'<\/div><div class="sc-val">'+nurses.length+'<\/div><\/div>';
-    h+='<div class="scard"><div class="sc-label">'+(T?'\u0628\u0627\u0646\u062a\u0638\u0627\u0631 \u0645\u0631\u0627\u062c\u0639\u0629':'Awaiting Review')+'<\/div><div class="sc-val" style="color:var(--morning)">'+submitted+'<\/div><\/div>';
-    h+='<div class="scard"><div class="sc-label">'+(T?'\u0628\u0627\u0646\u062a\u0638\u0627\u0631 \u0645\u0648\u0627\u0641\u0642\u0629':'Awaiting Approval')+'<\/div><div class="sc-val" style="color:var(--blue)">'+reviewed+'<\/div><\/div>';
-    h+='<div class="scard"><div class="sc-label">'+(T?'\u0645\u0648\u0627\u0641\u0642 \u0639\u0644\u064a\u0647\u0627':'Approved')+'<\/div><div class="sc-val" style="color:var(--green)">'+approved+'<\/div><\/div>';
-    h+='<\/div>';
+    h+='<div class="scard"><div class="sc-label">'+(T?'\u0625\u062c\u0645\u0627\u0644\u064a \u0627\u0644\u0645\u0645\u0631\u0636\u0627\u062a':'Total Nurses')+'</div><div class="sc-val">'+nurses.length+'</div></div>';
+    h+='<div class="scard"><div class="sc-label">'+(T?'\u0628\u0627\u0646\u062a\u0638\u0627\u0631 \u0645\u0631\u0627\u062c\u0639\u0629':'Awaiting Review')+'</div><div class="sc-val" style="color:var(--morning)">'+submitted+'</div></div>';
+    h+='<div class="scard"><div class="sc-label">'+(T?'\u0628\u0627\u0646\u062a\u0638\u0627\u0631 \u0645\u0648\u0627\u0641\u0642\u0629':'Awaiting Approval')+'</div><div class="sc-val" style="color:var(--blue)">'+reviewed+'</div></div>';
+    h+='<div class="scard"><div class="sc-label">'+(T?'\u0645\u0648\u0627\u0641\u0642 \u0639\u0644\u064a\u0647\u0627':'Approved')+'</div><div class="sc-val" style="color:var(--green)">'+approved+'</div></div>';
+    h+='</div>';
     if(ME.role==='head_nurse'){
       var alerts=getAlerts(ME.dept,MONTH.getFullYear(),MONTH.getMonth());
       if(alerts.length){
-        h+='<div class="balcard"><div class="baltitle" style="color:var(--red)">\u26A0\uFE0F '+(T?'\u062a\u0646\u0628\u064a\u0647\u0627\u062a \u0646\u0642\u0635 \u0627\u0644\u062a\u063a\u0637\u064a\u0629':'Coverage Alerts')+'<\/div>';
-        alerts.slice(0,5).forEach(function(a){h+='<div class="brow"><span class="bl">'+a.msg+'<\/span><\/div>';});
-        h+='<\/div>';
+        h+='<div class="balcard"><div class="baltitle" style="color:var(--red)">\u26A0\uFE0F '+(T?'\u062a\u0646\u0628\u064a\u0647\u0627\u062a \u0646\u0642\u0635 \u0627\u0644\u062a\u063a\u0637\u064a\u0629':'Coverage Alerts')+'</div>';
+        alerts.slice(0,5).forEach(function(a){h+='<div class="brow"><span class="bl">'+a.msg+'</span></div>';});
+        h+='</div>';
       }
     }
   }
@@ -796,22 +849,22 @@ function renderMy(){
   var allFilled=stats.filled>=daysInMonth;
   var sbMap={draft:['sb-d','\uD83D\uDCDD '+(T?'\u0645\u0633\u0648\u062f\u0629':'Draft')],submitted:['sb-s','\u23F3 '+(T?'\u0628\u0627\u0646\u062a\u0638\u0627\u0631 Head Nurse':'Awaiting Head Nurse')],reviewed:['sb-rv','\uD83D\uDD0D '+(T?'\u062a\u0645\u062a \u0627\u0644\u0645\u0631\u0627\u062c\u0639\u0629':'Reviewed')],approved:['sb-a','\u2705 '+(T?'\u0645\u0648\u0627\u0641\u0642 \u0639\u0644\u064a\u0647':'Approved')],rejected:['sb-rj','\u2716 '+(T?'\u0645\u0631\u0641\u0648\u0636':'Rejected')+((ALL_ST[uid]&&ALL_ST[uid].notes)?' \u2014 '+ALL_ST[uid].notes:'')]};
   var sb2=sbMap[st]||sbMap.draft;
-  var h='<div class="sbar '+sb2[0]+'">'+sb2[1]+'<\/div>';
+  var h='<div class="sbar '+sb2[0]+'">'+sb2[1]+'</div>';
   h+='<div class="sgrid">';
-  h+='<div class="scard"><div class="sc-label">'+(T?'\u0623\u064a\u0627\u0645 \u0645\u062d\u062f\u062f\u0629':'Days Set')+'<\/div><div class="sc-val">'+stats.filled+'<\/div><div class="sc-sub">\/'+stats.days+'<\/div><\/div>';
-  h+='<div class="scard"><div class="sc-label">\u2600\uFE0F<\/div><div class="sc-val" style="color:var(--morning)">'+(stats.counts.morning||0)+'<\/div><\/div>';
-  h+='<div class="scard"><div class="sc-label">\uD83C\uDF06<\/div><div class="sc-val" style="color:var(--evening)">'+(stats.counts.evening||0)+'<\/div><\/div>';
-  h+='<div class="scard"><div class="sc-label">\uD83C\uDF19<\/div><div class="sc-val" style="color:var(--night)">'+(stats.counts.night||0)+'<\/div><\/div>';
-  h+='<div class="scard"><div class="sc-label">\u2705<\/div><div class="sc-val" style="color:var(--off)">'+(stats.counts.off||0)+'<\/div><\/div>';
-  h+='<div class="scard"><div class="sc-label">'+(T?'\u0631\u0627\u062d\u0629 \u0645\u0637\u0644\u0648\u0628\u0629':'Req. Rest')+'<\/div><div class="sc-val '+(stats.rest>=req&&req>0?'bok':'berr')+'" style="font-size:16px">'+stats.rest+'/'+(req||'?')+'<\/div><\/div>';
-  h+='<\/div>';
-  h+='<div class="phdr"><div><div class="ptitle">'+(T?'\u062c\u062f\u0648\u0644\u064a \u2014 ':'My Schedule \u2014 ')+mN(MONTH)+'<\/div><\/div>';
-  h+='<div style="display:flex;gap:8px;align-items:center"><div class="mctrl"><button onclick="chMonth(-1)">\u203A<\/button><div class="mlbl">'+mN(MONTH)+'<\/div><button onclick="chMonth(1)">\u2039<\/button><\/div>';
-  if(canEdit)h+='<button class="btn-sub" '+(allFilled?'':'disabled title="'+(T?'\u0639\u0628\u0626\u064a \u0643\u0644 \u0627\u0644\u0623\u064a\u0627\u0645':'Fill all days')+'"')+' onclick="submitSched()">\uD83D\uDCE4 '+(T?'\u0625\u0631\u0633\u0627\u0644 \u0644\u0644\u0645\u0631\u0627\u062c\u0639\u0629':'Submit')+(allFilled?'':' ('+stats.filled+'/'+daysInMonth+')')+'<\/button>';
-  h+='<\/div><\/div>';
+  h+='<div class="scard"><div class="sc-label">'+(T?'\u0623\u064a\u0627\u0645 \u0645\u062d\u062f\u062f\u0629':'Days Set')+'</div><div class="sc-val">'+stats.filled+'</div><div class="sc-sub">/'+stats.days+'</div></div>';
+  h+='<div class="scard"><div class="sc-label">\u2600\uFE0F</div><div class="sc-val" style="color:var(--morning)">'+(stats.counts.morning||0)+'</div></div>';
+  h+='<div class="scard"><div class="sc-label">\uD83C\uDF06</div><div class="sc-val" style="color:var(--evening)">'+(stats.counts.evening||0)+'</div></div>';
+  h+='<div class="scard"><div class="sc-label">\uD83C\uDF19</div><div class="sc-val" style="color:var(--night)">'+(stats.counts.night||0)+'</div></div>';
+  h+='<div class="scard"><div class="sc-label">\u2705</div><div class="sc-val" style="color:var(--off)">'+(stats.counts.off||0)+'</div></div>';
+  h+='<div class="scard"><div class="sc-label">'+(T?'\u0631\u0627\u062d\u0629 \u0645\u0637\u0644\u0648\u0628\u0629':'Req. Rest')+'</div><div class="sc-val '+(stats.rest>=req&&req>0?'bok':'berr')+'" style="font-size:16px">'+stats.rest+'/'+(req||'?')+'</div></div>';
+  h+='</div>';
+  h+='<div class="phdr"><div><div class="ptitle">'+(T?'\u062c\u062f\u0648\u0644\u064a \u2014 ':'My Schedule \u2014 ')+mN(MONTH)+'</div></div>';
+  h+='<div style="display:flex;gap:8px;align-items:center"><div class="mctrl"><button onclick="chMonth(-1)">\u203A</button><div class="mlbl">'+mN(MONTH)+'</div><button onclick="chMonth(1)">\u2039</button></div>';
+  if(canEdit)h+='<button class="btn-sub" '+(allFilled?'':'disabled title="'+(T?'\u0639\u0628\u0626\u064a \u0643\u0644 \u0627\u0644\u0623\u064a\u0627\u0645':'Fill all days')+'"')+' onclick="submitSched()">\uD83D\uDCE4 '+(T?'\u0625\u0631\u0633\u0627\u0644 \u0644\u0644\u0645\u0631\u0627\u062c\u0639\u0629':'Submit')+(allFilled?'':' ('+stats.filled+'/'+daysInMonth+')')+'</button>';
+  h+='</div></div>';
   h+='<div class="calwrap"><div class="calhead">';
-  (T?['\u0623\u062d\u062f','\u0627\u062b\u0646\u064a\u0646','\u062b\u0644\u0627\u062b\u0627\u0621','\u0623\u0631\u0628\u0639\u0627\u0621','\u062e\u0645\u064a\u0633','\u062c\u0645\u0639\u0629','\u0633\u0628\u062a']:['Sun','Mon','Tue','Wed','Thu','Fri','Sat']).forEach(function(d){h+='<div class="calh">'+d+'<\/div>';});
-  h+='<\/div><div class="calgrid" id="cg"><\/div><\/div>';
+  (T?['\u0623\u062d\u062f','\u0627\u062b\u0646\u064a\u0646','\u062b\u0644\u0627\u062b\u0627\u0621','\u0623\u0631\u0628\u0639\u0627\u0621','\u062e\u0645\u064a\u0633','\u062c\u0645\u0639\u0629','\u0633\u0628\u062a']:['Sun','Mon','Tue','Wed','Thu','Fri','Sat']).forEach(function(d){h+='<div class="calh">'+d+'</div>';});
+  h+='</div><div class="calgrid" id="cg"></div></div>';
   pg.innerHTML=h;
   buildCal('cg',uid,canEdit,y,m);
 }
@@ -820,39 +873,37 @@ function buildCal(gridId,uid,editable,y,m){
   var grid=document.getElementById(gridId);if(!grid)return;
   var first=new Date(y,m,1).getDay(),days=new Date(y,m+1,0).getDate();
   var today=new Date(),data=ALL_S[uid]||{},h='';
-  for(var i=0;i<first;i++)h+='<div class="cday cempty"><\/div>';
+  for(var i=0;i<first;i++)h+='<div class="cday cempty"></div>';
   for(var d=1;d<=days;d++){
     var ds=y+'-'+p2(m+1)+'-'+p2(d);
     var iT=today.getFullYear()===y&&today.getMonth()===m&&today.getDate()===d;
     var e=data[ds];
     var pill='';
     if(e){
-      pill='<span class="sp '+(SCLS[e.shift]||'po')+'">'+SL(e.shift)+'<\/span>';
-      if(e.flag==='floater')pill+='<span class="sp poc" style="font-size:8px">\uD83D\uDD35<\/span>';
-      if(e.flag==='disaster')pill+='<span class="sp pds" style="font-size:8px">\uD83D\uDEA8<\/span>';
+      pill='<span class="sp '+(SCLS[e.shift]||'po')+'">'+SL(e.shift)+'</span>';
+      if(e.flag==='floater')pill+='<span class="sp poc" style="font-size:8px">\uD83D\uDD35</span>';
+      if(e.flag==='disaster')pill+='<span class="sp pds" style="font-size:8px">\uD83D\uDEA8</span>';
     }
     var cl=editable?'onclick="openModal(\''+ds+'\')"':'';
-    h+='<div class="cday'+(iT?' today':'')+(editable?'':' cempty')+'" '+cl+'><div class="dn">'+d+'<\/div>'+pill+'<\/div>';
+    h+='<div class="cday'+(iT?' today':'')+(editable?'':' cempty')+'" '+cl+'><div class="dn">'+d+'</div>'+pill+'</div>';
   }
   grid.innerHTML=h;
 }
 
-function submitSched(){
-  sb.from('schedule_status').upsert({nurse_id:ME.id,status:'submitted',submitted_at:new Date().toISOString(),reviewed_by:null,approved_by:null,notes:null},{onConflict:'nurse_id'}).then(function(r){
-    if(r.error)return toast(r.error.message,'td');
-    sb.from('schedule_status').select('*').then(function(st2){ALL_ST={};(st2.data||[]).forEach(function(x){ALL_ST[x.nurse_id]=x;});render();});
-    toast(LANG==='ar'?'\u062a\u0645 \u0627\u0644\u0625\u0631\u0633\u0627\u0644 \u2713':'Submitted \u2713','ts');
-  });
-}
+window.submitSched=async function(){
+  await fsSet('schedule_status',ME.id,{nurse_id:ME.id,status:'submitted',submitted_at:new Date().toISOString(),reviewed_by:null,approved_by:null,notes:null});
+  ALL_ST[ME.id]={nurse_id:ME.id,status:'submitted'};
+  render();toast(LANG==='ar'?'\u062a\u0645 \u0627\u0644\u0625\u0631\u0633\u0627\u0644 \u2713':'Submitted \u2713','ts');
+};
 
-function openModal(ds){
+window.openModal=function(ds){
   selDay=ds;selShift=null;selFlag=null;
   var e=(ALL_S[ME.id]||{})[ds];if(e){selShift=e.shift;selFlag=e.flag||null;}
   var dt=new Date(ds+'T00:00:00');
   document.getElementById('m-dt').textContent=dt.toLocaleDateString('ar-SA',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
   buildShiftOpts(ds);
   document.getElementById('smodal').style.display='flex';
-}
+};
 
 function buildShiftOpts(ds){
   var dept=ME.dept||'';
@@ -863,62 +914,60 @@ function buildShiftOpts(ds){
   var h='';
   if(myShiftType){
     var curLbl=SL(myShiftType)+(myFlag==='floater'?' \uD83D\uDD35':myFlag==='disaster'?' \uD83D\uDEA8':'');
-    h+='<div style="grid-column:1/-1;padding:8px 12px;background:var(--s2);border-radius:8px;font-size:11px;color:var(--muted);margin-bottom:4px">'+(LANG==='ar'?'\u0627\u0644\u0634\u0641\u062a \u0627\u0644\u062d\u0627\u0644\u064a:':'Current:')+' <span style="color:var(--text);font-weight:700">'+curLbl+'<\/span><\/div>';
+    h+='<div style="grid-column:1/-1;padding:8px 12px;background:var(--s2);border-radius:8px;font-size:11px;color:var(--muted);margin-bottom:4px">'+(LANG==='ar'?'\u0627\u0644\u0634\u0641\u062a \u0627\u0644\u062d\u0627\u0644\u064a:':'Current:')+' <span style="color:var(--text);font-weight:700">'+curLbl+'</span></div>';
   }
   order.forEach(function(k){
     var cap=shiftCap(dept,k),cur=shiftCount(dept,ds,k);
     var myShift=myShiftType===k&&!selFlag;
     var isFull=SCAT[k]==='work'&&cap<99&&cur>=cap&&!myShift;
-    var badge=SCAT[k]==='work'&&cap<99?'<span class="cap-b '+(isFull?'cap-f':'cap-o')+'">'+cur+'/'+cap+'<\/span>':'';
+    var badge=SCAT[k]==='work'&&cap<99?'<span class="cap-b '+(isFull?'cap-f':'cap-o')+'">'+cur+'/'+cap+'</span>':'';
     var picked=(selShift===k&&!selFlag)?'picked':'';
     h+='<div class="sopt'+(isFull?' dis':'')+(picked?' '+picked:'')+'" style="color:'+SCOLOR[k]+'" onclick="pickShift(\''+k+'\',null)">';
-    h+=badge+'<div class="ico">'+SICO[k]+'<\/div><div class="lbl">'+SL(k)+'<\/div><div class="tim">'+STIME[k]+'<\/div><\/div>';
+    h+=badge+'<div class="ico">'+SICO[k]+'</div><div class="lbl">'+SL(k)+'</div><div class="tim">'+STIME[k]+'</div></div>';
   });
-  // Flag options row
   h+='<div style="grid-column:1/-1;margin-top:8px;border-top:1px solid var(--b1);padding-top:10px;display:flex;gap:8px;flex-wrap:wrap">';
-  // Floater = off + blue dot (counts as rest day)
   var floaterPicked=(selShift==='off'&&selFlag==='floater');
   h+='<div class="sopt'+(floaterPicked?' picked':'')+' poc" style="color:var(--blue);flex:1;min-width:90px" onclick="pickShift(\'off\',\'floater\')">';
-  h+='<div class="ico">\uD83D\uDD35<\/div><div class="lbl">'+SL('oncall')+'<\/div><div class="tim">Off \uD83D\uDD35<\/div><\/div>';
-  // Disaster = added on top of existing work shift
+  h+='<div class="ico">\uD83D\uDD35</div><div class="lbl">'+SL('oncall')+'</div><div class="tim">Off \uD83D\uDD35</div></div>';
   var hasWork=myShiftType&&SCAT[myShiftType]==='work';
   var disasterPicked=(selFlag==='disaster');
   h+='<div class="sopt'+(disasterPicked?' picked':'')+(hasWork?'':' dis')+'" style="color:var(--red);flex:1;min-width:90px"'+(hasWork?' onclick="pickShift(\''+myShiftType+'\',\'disaster\')"':'')+' title="'+(hasWork?'':LANG==='ar'?'\u064a\u062c\u0628 \u0623\u0646 \u064a\u0643\u0648\u0646 \u0644\u062f\u064a\u0647\u0627 \u0634\u0641\u062a \u0639\u0645\u0644':'Requires work shift')+'">';
-  h+='<div class="ico">\uD83D\uDEA8<\/div><div class="lbl">'+SL('disaster')+'<\/div><div class="tim">'+(hasWork?'\uD83D\uDEA8+'+SL(myShiftType):LANG==='ar'?'\u064a\u062a\u0637\u0644\u0628 \u0634\u0641\u062a':'needs shift')+'<\/div><\/div>';
-  h+='<\/div>';
+  h+='<div class="ico">\uD83D\uDEA8</div><div class="lbl">'+SL('disaster')+'</div><div class="tim">'+(hasWork?'\uD83D\uDEA8+'+SL(myShiftType):LANG==='ar'?'\u064a\u062a\u0637\u0644\u0628 \u0634\u0641\u062a':'needs shift')+'</div></div>';
+  h+='</div>';
   document.getElementById('shift-opts').innerHTML=h;
 }
 
-function closeModal(){document.getElementById('smodal').style.display='none';}
+window.closeModal=function(){document.getElementById('smodal').style.display='none';};
 
-var selFlag=null;
-function pickShift(k,flag){
-  selShift=k;
-  selFlag=flag!==undefined?flag:null;
+window.pickShift=function(k,flag){
+  selShift=k;selFlag=flag!==undefined?flag:null;
   buildShiftOpts(selDay);
-}
+};
 
-function saveShift(){
+window.saveShift=async function(){
   if(!selShift){toast(LANG==='ar'?'\u0627\u062e\u062a\u0631 \u0627\u0644\u0634\u0641\u062a':'Select shift','tw');return;}
   var dept=ME.dept||'',cap=shiftCap(dept,selShift),cur=shiftCount(dept,selDay,selShift);
   var myEntry=(ALL_S[ME.id]||{})[selDay];
   var isMine=myEntry&&myEntry.shift===selShift;
   if(SCAT[selShift]==='work'&&cap<99&&cur>=cap&&!isMine&&!selFlag){toast((LANG==='ar'?'\u0627\u0644\u0634\u0641\u062a \u0645\u0643\u062a\u0645\u0644 ':'Shift full ')+cur+'/'+cap,'td');return;}
-  var shiftToSave=selShift;
+  var docId=myEntry&&myEntry.docId;
   var flag=selFlag||null;
-  sb.from('schedules').upsert({nurse_id:ME.id,date:selDay,shift:shiftToSave,flag:flag},{onConflict:'nurse_id,date'}).then(function(r){
-    if(r.error)return toast(r.error.message,'td');
-    if(!ALL_S[ME.id])ALL_S[ME.id]={};
-    ALL_S[ME.id][selDay]={shift:shiftToSave,flag:flag};
-    var curSt=ALL_ST[ME.id]&&ALL_ST[ME.id].status;
-    if(curSt&&curSt!=='draft'){
-      sb.from('schedule_status').update({status:'draft'}).eq('nurse_id',ME.id).then(function(){
-        sb.from('schedule_status').select('*').then(function(st2){ALL_ST={};(st2.data||[]).forEach(function(x){ALL_ST[x.nurse_id]=x;});});
-      });
-    }
-    closeModal();render();toast(LANG==='ar'?'\u062a\u0645 \u0627\u0644\u062d\u0641\u0638 \u2713':'Saved \u2713','ts');
-  });
-}
+  var schedData={nurse_id:ME.id,date:selDay,shift:selShift,flag:flag};
+  if(docId){
+    await fsSet('schedules',docId,schedData);
+  }else{
+    var ref=await fsAdd('schedules',schedData);
+    docId=ref.id;
+  }
+  if(!ALL_S[ME.id])ALL_S[ME.id]={};
+  ALL_S[ME.id][selDay]={shift:selShift,flag:flag,docId:docId};
+  var curSt=ALL_ST[ME.id]&&ALL_ST[ME.id].status;
+  if(curSt&&curSt!=='draft'){
+    await fsSet('schedule_status',ME.id,{status:'draft'});
+    ALL_ST[ME.id]={...ALL_ST[ME.id],status:'draft'};
+  }
+  closeModal();render();toast(LANG==='ar'?'\u062a\u0645 \u0627\u0644\u062d\u0641\u0638 \u2713':'Saved \u2713','ts');
+};
 
 function nurseCard(p,role,y,m){
   var uid=p.id,st=(ALL_ST[uid]&&ALL_ST[uid].status)||'draft';
@@ -927,16 +976,14 @@ function nurseCard(p,role,y,m){
   var s=stMap[st]||stMap.draft;
   var actions='';
   if(role==='head_nurse'&&st==='submitted'){
-    actions='<button class="btn-ok" onclick="hnOk(\''+uid+'\')">'+(T?'\u2705 \u0645\u0648\u0627\u0641\u0642\u0629 \u0648\u0625\u0631\u0633\u0627\u0644':'\u2705 Approve & Send')+'<\/button><button class="btn-no" onclick="hnNo(\''+uid+'\')">'+(T?'\u21A9 \u0625\u0631\u062c\u0627\u0639':'\u21A9 Return')+'<\/button>';
-  } else if((role==='manager'||role==='admin')&&st==='reviewed'){
-    actions='<button class="btn-ok" onclick="mgOk(\''+uid+'\')">'+(T?'\u2705 \u0645\u0648\u0627\u0641\u0642\u0629 \u0646\u0647\u0627\u0626\u064a\u0629':'\u2705 Final Approval')+'<\/button><button class="btn-no" onclick="mgNo(\''+uid+'\')">'+(T?'\u2716 \u0631\u0641\u0636':'\u2716 Reject')+'<\/button>';
-  } else {
-    actions='<span style="color:var(--muted);font-size:11px">'+s.lbl+'<\/span>';
-  }
-  return '<div class="ncard"><div class="nctop"><div class="nav2">'+p.name.slice(0,2)+'<\/div><div><div class="nn">'+p.name+'<\/div><div class="nd">'+(p.dept||'')+'<\/div><\/div><div class="nst"><span class="stpl '+s.cls+'">'+s.lbl+'<\/span><\/div><\/div>'
-    +'<div class="nbal"><div class="nbi"><div class="nbl">'+(T?'\u0623\u064a\u0627\u0645 \u0645\u062d\u062f\u062f\u0629':'Days set')+'<\/div><div class="nbv">'+stats.filled+'/'+stats.days+'<\/div><\/div>'
-    +'<div class="nbi"><div class="nbl">'+(T?'\u0627\u0644\u0631\u0627\u062d\u0629':'Rest')+'<\/div><div class="nbv '+(stats.rest>=req&&req>0?'bok':'berr')+'">'+stats.rest+'/'+(req||'?')+'<\/div><\/div><\/div>'
-    +'<div class="nacts">'+actions+'<\/div><\/div>';
+    actions='<button class="btn-ok" onclick="hnOk(\''+uid+'\')">'+(T?'\u2705 \u0645\u0648\u0627\u0641\u0642\u0629 \u0648\u0625\u0631\u0633\u0627\u0644':'\u2705 Approve & Send')+'</button><button class="btn-no" onclick="hnNo(\''+uid+'\')">'+(T?'\u21A9 \u0625\u0631\u062c\u0627\u0639':'\u21A9 Return')+'</button>';
+  }else if((role==='manager'||role==='admin')&&st==='reviewed'){
+    actions='<button class="btn-ok" onclick="mgOk(\''+uid+'\')">'+(T?'\u2705 \u0645\u0648\u0627\u0641\u0642\u0629 \u0646\u0647\u0627\u0626\u064a\u0629':'\u2705 Final Approval')+'</button><button class="btn-no" onclick="mgNo(\''+uid+'\')">'+(T?'\u2716 \u0631\u0641\u0636':'\u2716 Reject')+'</button>';
+  }else{actions='<span style="color:var(--muted);font-size:11px">'+s.lbl+'</span>';}
+  return '<div class="ncard"><div class="nctop"><div class="nav2">'+p.name.slice(0,2)+'</div><div><div class="nn">'+p.name+'</div><div class="nd">'+(p.dept||'')+'</div></div><div class="nst"><span class="stpl '+s.cls+'">'+s.lbl+'</span></div></div>'
+    +'<div class="nbal"><div class="nbi"><div class="nbl">'+(T?'\u0623\u064a\u0627\u0645 \u0645\u062d\u062f\u062f\u0629':'Days set')+'</div><div class="nbv">'+stats.filled+'/'+stats.days+'</div></div>'
+    +'<div class="nbi"><div class="nbl">'+(T?'\u0627\u0644\u0631\u0627\u062d\u0629':'Rest')+'</div><div class="nbv '+(stats.rest>=req&&req>0?'bok':'berr')+'">'+stats.rest+'/'+(req||'?')+'</div></div></div>'
+    +'<div class="nacts">'+actions+'</div></div>';
 }
 
 function getNursesByRole(){
@@ -954,9 +1001,9 @@ function renderReview(){
   var nurses=Object.values(ALL_P).filter(function(p){return p.role==='nurse'&&p.dept===ME.dept;});
   var y=MONTH.getFullYear(),m=MONTH.getMonth();
   var alerts=getAlerts(ME.dept,y,m);
-  var h='<div class="phdr"><div class="ptitle">'+(T?'\u0645\u0631\u0627\u062c\u0639\u0629 \u062c\u062f\u0627\u0648\u0644 \u2014 ':'Review \u2014 ')+ME.dept+'<\/div><\/div>';
-  if(alerts.length){h+='<div class="alerts">';alerts.forEach(function(a){h+='<div class="alert '+(a.w?'aw':'ae')+'">\u26A0\uFE0F '+a.msg+'<\/div>';});h+='<\/div>';}
-  h+='<div class="cgrid">'+nurses.map(function(n){return nurseCard(n,'head_nurse',y,m);}).join('')+'<\/div>';
+  var h='<div class="phdr"><div class="ptitle">'+(T?'\u0645\u0631\u0627\u062c\u0639\u0629 \u062c\u062f\u0627\u0648\u0644 \u2014 ':'Review \u2014 ')+ME.dept+'</div></div>';
+  if(alerts.length){h+='<div class="alerts">';alerts.forEach(function(a){h+='<div class="alert '+(a.w?'aw':'ae')+'">\u26A0\uFE0F '+a.msg+'</div>';});h+='</div>';}
+  h+='<div class="cgrid">'+nurses.map(function(n){return nurseCard(n,'head_nurse',y,m);}).join('')+'</div>';
   pg.innerHTML=h;
 }
 
@@ -965,40 +1012,36 @@ function renderApprove(){
   var nurses=getNursesByRole();
   var y=MONTH.getFullYear(),m=MONTH.getMonth();
   var byDept={};nurses.forEach(function(n){if(!byDept[n.dept])byDept[n.dept]=[];byDept[n.dept].push(n);});
-  var h='<div class="phdr"><div class="ptitle">'+(T?'\u0627\u0644\u0645\u0648\u0627\u0641\u0642\u0629 \u0627\u0644\u0646\u0647\u0627\u0626\u064a\u0629':'Final Approval')+'<\/div><\/div>';
+  var h='<div class="phdr"><div class="ptitle">'+(T?'\u0627\u0644\u0645\u0648\u0627\u0641\u0642\u0629 \u0627\u0644\u0646\u0647\u0627\u0626\u064a\u0629':'Final Approval')+'</div></div>';
   Object.keys(byDept).forEach(function(dept){
-    h+='<div style="margin-bottom:20px"><div style="font-size:13px;font-weight:700;color:var(--muted);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--b1)">'+dept+' \u2014 '+byDept[dept].length+'<\/div>';
-    h+='<div class="cgrid">'+byDept[dept].map(function(n){return nurseCard(n,ME.role,y,m);}).join('')+'<\/div><\/div>';
+    h+='<div style="margin-bottom:20px"><div style="font-size:13px;font-weight:700;color:var(--muted);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--b1)">'+dept+' \u2014 '+byDept[dept].length+'</div>';
+    h+='<div class="cgrid">'+byDept[dept].map(function(n){return nurseCard(n,ME.role,y,m);}).join('')+'</div></div>';
   });
   pg.innerHTML=h;
 }
 
-function hnOk(uid){
-  sb.from('schedule_status').update({status:'reviewed',reviewed_by:ME.id,reviewed_at:new Date().toISOString()}).eq('nurse_id',uid).then(function(){
-    sb.from('schedule_status').select('*').then(function(r){ALL_ST={};(r.data||[]).forEach(function(x){ALL_ST[x.nurse_id]=x;});render();});
-    toast(LANG==='ar'?'\u0623\u0631\u0633\u0644 \u0644\u0644\u0645\u062f\u064a\u0631 \u2713':'Sent to Manager \u2713','ts');
-  });
-}
-function hnNo(uid){
+window.hnOk=async function(uid){
+  await fsSet('schedule_status',uid,{status:'reviewed',reviewed_by:ME.id,reviewed_at:new Date().toISOString()});
+  ALL_ST[uid]={...ALL_ST[uid],status:'reviewed'};render();
+  toast(LANG==='ar'?'\u0623\u0631\u0633\u0644 \u0644\u0644\u0645\u062f\u064a\u0631 \u2713':'Sent to Manager \u2713','ts');
+};
+window.hnNo=async function(uid){
   var note=prompt(LANG==='ar'?'\u0633\u0628\u0628 \u0627\u0644\u0631\u0641\u0636 (\u0627\u062e\u062a\u064a\u0627\u0631\u064a):':'Rejection reason (optional):','');
-  sb.from('schedule_status').update({status:'rejected',reviewed_by:ME.id,notes:note||null}).eq('nurse_id',uid).then(function(){
-    sb.from('schedule_status').select('*').then(function(r){ALL_ST={};(r.data||[]).forEach(function(x){ALL_ST[x.nurse_id]=x;});render();});
-    toast(LANG==='ar'?'\u0631\u062c\u0639 \u0644\u0644\u0645\u0645\u0631\u0636\u0629':'Returned','ti');
-  });
-}
-function mgOk(uid){
-  sb.from('schedule_status').update({status:'approved',approved_by:ME.id,approved_at:new Date().toISOString()}).eq('nurse_id',uid).then(function(){
-    sb.from('schedule_status').select('*').then(function(r){ALL_ST={};(r.data||[]).forEach(function(x){ALL_ST[x.nurse_id]=x;});render();});
-    toast('\u2705 '+(LANG==='ar'?'\u062a\u0645\u062a \u0627\u0644\u0645\u0648\u0627\u0641\u0642\u0629':'Approved'),'ts');
-  });
-}
-function mgNo(uid){
+  await fsSet('schedule_status',uid,{status:'rejected',reviewed_by:ME.id,notes:note||null});
+  ALL_ST[uid]={...ALL_ST[uid],status:'rejected',notes:note||null};render();
+  toast(LANG==='ar'?'\u0631\u062c\u0639 \u0644\u0644\u0645\u0645\u0631\u0636\u0629':'Returned','ti');
+};
+window.mgOk=async function(uid){
+  await fsSet('schedule_status',uid,{status:'approved',approved_by:ME.id,approved_at:new Date().toISOString()});
+  ALL_ST[uid]={...ALL_ST[uid],status:'approved'};render();
+  toast('\u2705 '+(LANG==='ar'?'\u062a\u0645\u062a \u0627\u0644\u0645\u0648\u0627\u0641\u0642\u0629':'Approved'),'ts');
+};
+window.mgNo=async function(uid){
   var note=prompt(LANG==='ar'?'\u0633\u0628\u0628 \u0627\u0644\u0631\u0641\u0636:':'Rejection reason:','');
-  sb.from('schedule_status').update({status:'rejected',approved_by:ME.id,notes:note||null}).eq('nurse_id',uid).then(function(){
-    sb.from('schedule_status').select('*').then(function(r){ALL_ST={};(r.data||[]).forEach(function(x){ALL_ST[x.nurse_id]=x;});render();});
-    toast(LANG==='ar'?'\u062a\u0645 \u0627\u0644\u0631\u0641\u0636':'Rejected','ti');
-  });
-}
+  await fsSet('schedule_status',uid,{status:'rejected',approved_by:ME.id,notes:note||null});
+  ALL_ST[uid]={...ALL_ST[uid],status:'rejected',notes:note||null};render();
+  toast(LANG==='ar'?'\u062a\u0645 \u0627\u0644\u0631\u0641\u0636':'Rejected','ti');
+};
 
 function renderOverview(){
   var pg=document.getElementById('pg-overview'),T=LANG==='ar';if(!pg)return;
@@ -1007,9 +1050,9 @@ function renderOverview(){
   if(ME.role==='head_nurse')depts=[ME.dept];
   else if(ME.role==='manager')depts=ALL_MD[ME.id]||[];
   else{depts=Object.keys(ALL_D);if(!depts.length)depts=Array.from(new Set(Object.values(ALL_P).filter(function(p){return p.role==='nurse';}).map(function(p){return p.dept;})));}
-  var h='<div class="phdr"><div class="ptitle">'+(T?'\u062a\u063a\u0637\u064a\u0629 \u0627\u0644\u0634\u0641\u062a\u0627\u062a':'Shift Coverage')+'<\/div><div class="mctrl"><button onclick="chMonth(-1)">\u203A<\/button><div class="mlbl">'+mN(MONTH)+'<\/div><button onclick="chMonth(1)">\u2039<\/button><\/div><\/div>';
+  var h='<div class="phdr"><div class="ptitle">'+(T?'\u062a\u063a\u0637\u064a\u0629 \u0627\u0644\u0634\u0641\u062a\u0627\u062a':'Shift Coverage')+'</div><div class="mctrl"><button onclick="chMonth(-1)">\u203A</button><div class="mlbl">'+mN(MONTH)+'</div><button onclick="chMonth(1)">\u2039</button></div></div>';
   depts.forEach(function(dept){
-    h+='<div style="margin-bottom:24px"><div style="font-size:13px;font-weight:700;color:var(--muted);margin-bottom:10px">'+dept+'<\/div><div class="ovgrid">';
+    h+='<div style="margin-bottom:24px"><div style="font-size:13px;font-weight:700;color:var(--muted);margin-bottom:10px">'+dept+'</div><div class="ovgrid">';
     for(var d=1;d<=days;d++){
       var ds=y+'-'+p2(m+1)+'-'+p2(d);
       var dt=new Date(ds+'T00:00:00');
@@ -1017,13 +1060,13 @@ function renderOverview(){
       var ev=shiftCount(dept,ds,'evening'),ce=shiftCap(dept,'evening');
       var ni=shiftCount(dept,ds,'night'),cn=shiftCap(dept,'night');
       var ald=(cm<99&&mo<cm)||(ce<99&&ev<ce)||(cn<99&&ni<cn);
-      h+='<div class="ovday'+(ald?' ald':'')+'"><div class="ovdn">'+dt.toLocaleDateString('ar-SA',{weekday:'short'})+'<\/div><div class="ovnum">'+d+'<\/div>';
-      h+='<div class="ovrow" style="color:var(--morning)">\u2600\uFE0F '+mo+'/'+(cm<99?cm:'?')+'<\/div>';
-      h+='<div class="ovrow" style="color:var(--evening)">\uD83C\uDF06 '+ev+'/'+(ce<99?ce:'?')+'<\/div>';
-      h+='<div class="ovrow" style="color:var(--night)">\uD83C\uDF19 '+ni+'/'+(cn<99?cn:'?')+'<\/div>';
-      h+='<\/div>';
+      h+='<div class="ovday'+(ald?' ald':'')+'"><div class="ovdn">'+dt.toLocaleDateString('ar-SA',{weekday:'short'})+'</div><div class="ovnum">'+d+'</div>';
+      h+='<div class="ovrow" style="color:var(--morning)">\u2600\uFE0F '+mo+'/'+(cm<99?cm:'?')+'</div>';
+      h+='<div class="ovrow" style="color:var(--evening)">\uD83C\uDF06 '+ev+'/'+(ce<99?ce:'?')+'</div>';
+      h+='<div class="ovrow" style="color:var(--night)">\uD83C\uDF19 '+ni+'/'+(cn<99?cn:'?')+'</div>';
+      h+='</div>';
     }
-    h+='<\/div><\/div>';
+    h+='</div></div>';
   });
   pg.innerHTML=h;
 }
@@ -1032,141 +1075,124 @@ function renderTable(){
   var pg=document.getElementById('pg-team'),T=LANG==='ar';if(!pg)return;
   var nurses=getNursesByRole();
   var y=MONTH.getFullYear(),m=MONTH.getMonth(),days=new Date(y,m+1,0).getDate();
-  var th='<tr><th>'+(T?'\u0627\u0644\u0645\u0645\u0631\u0636\u0629':'Nurse')+'<\/th>';
-  for(var d=1;d<=days;d++){var dw=new Date(y,m,d).getDay();th+='<th style="'+(dw===5||dw===6?'background:rgba(59,130,246,.06)':'')+'">'+d+'<\/th>';}
-  th+='<\/tr>';
+  var th='<tr><th>'+(T?'\u0627\u0644\u0645\u0645\u0631\u0636\u0629':'Nurse')+'</th>';
+  for(var d=1;d<=days;d++){var dw=new Date(y,m,d).getDay();th+='<th style="'+(dw===5||dw===6?'background:rgba(59,130,246,.06)':'')+'">'+d+'</th>';}
+  th+='</tr>';
   var tb='';
   nurses.forEach(function(n){
     var data=ALL_S[n.id]||{};
-    tb+='<tr><td><div class="nrow"><div class="mav">'+n.name.slice(0,2)+'<\/div>'+n.name+'<\/div><\/td>';
+    tb+='<tr><td><div class="nrow"><div class="mav">'+n.name.slice(0,2)+'</div>'+n.name+'</div></td>';
     for(var d=1;d<=days;d++){
       var ds=y+'-'+p2(m+1)+'-'+p2(d);var e=data[ds];
-      var cell=e?('<span class="sp '+(SCLS[e.shift]||'po')+'">'+SICO[e.shift]+(e.flag==='floater'?'\uD83D\uDD35':e.flag==='disaster'?'\uD83D\uDEA8':'')+'<\/span>'):'<span style="color:var(--b2)">-<\/span>';
-      tb+='<td>'+cell+'<\/td>';
+      var cell=e?('<span class="sp '+(SCLS[e.shift]||'po')+'">'+SICO[e.shift]+(e.flag==='floater'?'\uD83D\uDD35':e.flag==='disaster'?'\uD83D\uDEA8':'')+'</span>'):'<span style="color:var(--b2)">-</span>';
+      tb+='<td>'+cell+'</td>';
     }
-    tb+='<\/tr>';
+    tb+='</tr>';
   });
-  pg.innerHTML='<div class="phdr"><div class="ptitle">'+(T?'\u0627\u0644\u062c\u062f\u0648\u0644 \u0627\u0644\u0643\u0627\u0645\u0644':'Full Schedule')+'<\/div><div class="mctrl"><button onclick="chMonth(-1)">\u203A<\/button><div class="mlbl">'+mN(MONTH)+'<\/div><button onclick="chMonth(1)">\u2039<\/button><\/div><\/div><div class="calwrap twrap"><table><thead>'+th+'<\/thead><tbody>'+tb+'<\/tbody><\/table><\/div>';
+  pg.innerHTML='<div class="phdr"><div class="ptitle">'+(T?'\u0627\u0644\u062c\u062f\u0648\u0644 \u0627\u0644\u0643\u0627\u0645\u0644':'Full Schedule')+'</div><div class="mctrl"><button onclick="chMonth(-1)">\u203A</button><div class="mlbl">'+mN(MONTH)+'</div><button onclick="chMonth(1)">\u2039</button></div></div><div class="calwrap twrap"><table><thead>'+th+'</thead><tbody>'+tb+'</tbody></table></div>';
 }
 
 function renderReport(){
   var pg=document.getElementById('pg-report'),T=LANG==='ar';if(!pg)return;
   var nurses=getNursesByRole();
   var canEdit=ME.role==='head_nurse';
-  var th='<tr><th>'+(T?'\u0627\u0644\u0645\u0648\u0638\u0641\u0629':'Nurse')+'<\/th><th>'+(T?'\u0627\u0644\u0642\u0633\u0645':'Dept')+'<\/th><th>'+(T?'\u0633\u0646\u0648\u064a\u0629':'Annual')+'<\/th><th>'+(T?'\u0627\u0633\u062a\u062b\u0646\u0627\u0626\u064a\u0629':'Exception')+'<\/th><th>'+(T?'\u0645\u0631\u0636\u064a\u0629':'Sick')+'<\/th><th>'+(T?'\u0641\u0637\u0631':'Eid Fitr')+'<\/th><th>'+(T?'\u0623\u0636\u062d\u0649':'Eid Adha')+'<\/th><th>'+(T?'\u062a\u0639\u0648\u064a\u0636':'Comp')+'<\/th><th>\uD83D\uDD35<\/th><th>\uD83D\uDEA8<\/th><\/tr>';
+  var th='<tr><th>'+(T?'\u0627\u0644\u0645\u0648\u0638\u0641\u0629':'Nurse')+'</th><th>'+(T?'\u0627\u0644\u0642\u0633\u0645':'Dept')+'</th><th>'+(T?'\u0633\u0646\u0648\u064a\u0629':'Annual')+'</th><th>'+(T?'\u0627\u0633\u062a\u062b\u0646\u0627\u0626\u064a\u0629':'Exception')+'</th><th>'+(T?'\u0645\u0631\u0636\u064a\u0629':'Sick')+'</th><th>'+(T?'\u0641\u0637\u0631':'Eid Fitr')+'</th><th>'+(T?'\u0623\u0636\u062d\u0649':'Eid Adha')+'</th><th>'+(T?'\u062a\u0639\u0648\u064a\u0636':'Comp')+'</th><th>\uD83D\uDD35</th><th>\uD83D\uDEA8</th></tr>';
   var tb='';
   nurses.forEach(function(n){
     var uid=n.id,data=ALL_S[uid]||{},lb=ALL_LB[uid]||{};
     var cnt={annual_leave:0,exceptional:0,sick:0,fitr:0,hajj:0,compensation:0,floater:0,disaster:0};
-    Object.values(data).forEach(function(e){
-      if(e.shift&&cnt[e.shift]!==undefined)cnt[e.shift]++;
-      if(e.flag==='floater')cnt.floater++;
-      if(e.flag==='disaster')cnt.disaster++;
-    });
+    Object.values(data).forEach(function(e){if(e.shift&&cnt[e.shift]!==undefined)cnt[e.shift]++;if(e.flag==='floater')cnt.floater++;if(e.flag==='disaster')cnt.disaster++;});
     var fa=lb.fitr_allowed||0,aa=lb.adha_allowed||0,ca=lb.compensation_allowed||0;
-    function bc(used,allowed,uid2,type){
-      var ok=!allowed||used<=allowed;
-      var s2='<span class="'+(ok?'bok':'berr')+'">'+used+'/'+(allowed||'?')+'<\/span>';
-      if(canEdit)s2+=' <button class="edit-bal" onclick="editBal(\''+uid2+'\',\''+type+'\','+allowed+')">\u270F\uFE0F<\/button>';
-      return s2;
-    }
-    tb+='<tr><td><div class="nrow"><div class="mav">'+n.name.slice(0,2)+'<\/div>'+n.name+'<\/div><\/td><td>'+(n.dept||'-')+'<\/td><td>'+cnt.annual_leave+'<\/td><td>'+cnt.exceptional+'<\/td><td>'+cnt.sick+'<\/td><td>'+bc(cnt.fitr,fa,uid,'fitr')+'<\/td><td>'+bc(cnt.hajj,aa,uid,'adha')+'<\/td><td>'+bc(cnt.compensation,ca,uid,'comp')+'<\/td><td>'+cnt.floater+'<\/td><td>'+cnt.disaster+'<\/td><\/tr>';
+    function bc(used,allowed,uid2,type){var ok=!allowed||used<=allowed;var s2='<span class="'+(ok?'bok':'berr')+'">'+used+'/'+(allowed||'?')+'</span>';if(canEdit)s2+=' <button class="edit-bal" onclick="editBal(\''+uid2+'\',\''+type+'\','+allowed+')">\u270F\uFE0F</button>';return s2;}
+    tb+='<tr><td><div class="nrow"><div class="mav">'+n.name.slice(0,2)+'</div>'+n.name+'</div></td><td>'+(n.dept||'-')+'</td><td>'+cnt.annual_leave+'</td><td>'+cnt.exceptional+'</td><td>'+cnt.sick+'</td><td>'+bc(cnt.fitr,fa,uid,'fitr')+'</td><td>'+bc(cnt.hajj,aa,uid,'adha')+'</td><td>'+bc(cnt.compensation,ca,uid,'comp')+'</td><td>'+cnt.floater+'</td><td>'+cnt.disaster+'</td></tr>';
   });
-  pg.innerHTML='<div class="phdr"><div class="ptitle">\uD83D\uDCCB '+(T?'\u062a\u0642\u0631\u064a\u0631 \u0627\u0644\u0625\u062c\u0627\u0632\u0627\u062a':'Leave Report')+'<\/div><button class="print-btn" onclick="printReport()">\uD83D\uDDA8\uFE0F '+(T?'\u0637\u0628\u0627\u0639\u0629':'Print')+'<\/button><\/div><div class="calwrap twrap"><table><thead>'+th+'<\/thead><tbody>'+tb+'<\/tbody><\/table><\/div>';
+  pg.innerHTML='<div class="phdr"><div class="ptitle">\uD83D\uDCCB '+(T?'\u062a\u0642\u0631\u064a\u0631 \u0627\u0644\u0625\u062c\u0627\u0632\u0627\u062a':'Leave Report')+'</div><button class="print-btn" onclick="printReport()">\uD83D\uDDA8\uFE0F '+(T?'\u0637\u0628\u0627\u0639\u0629':'Print')+'</button></div><div class="calwrap twrap"><table><thead>'+th+'</thead><tbody>'+tb+'</tbody></table></div>';
 }
 
-function editBal(uid,type,current){
+window.editBal=async function(uid,type,current){
   var T=LANG==='ar';
   var labels={fitr:T?'\u0623\u064a\u0627\u0645 \u0639\u064a\u062f \u0627\u0644\u0641\u0637\u0631':'Eid Al-Fitr days',adha:T?'\u0623\u064a\u0627\u0645 \u0639\u064a\u062f \u0627\u0644\u0623\u0636\u062d\u0649':'Eid Al-Adha days',comp:T?'\u0623\u064a\u0627\u0645 \u0627\u0644\u062a\u0639\u0648\u064a\u0636':'Comp days'};
   var val=prompt(labels[type]+':',current||0);
   if(val===null)return;
-  var n=parseInt(val);if(isNaN(n)||n<0)return toast(T?'\u0631\u0642\u0645 \u063a\u064a\u0631 \u0635\u062d\u064a\u062d':'Invalid number','tw');
+  var n2=parseInt(val);if(isNaN(n2)||n2<0)return toast(T?'\u0631\u0642\u0645 \u063a\u064a\u0631 \u0635\u062d\u064a\u062d':'Invalid number','tw');
   var obj={nurse_id:uid,year:new Date().getFullYear()};
-  if(type==='fitr')obj.fitr_allowed=n;
-  if(type==='adha')obj.adha_allowed=n;
-  if(type==='comp')obj.compensation_allowed=n;
-  sb.from('leave_balance').upsert(obj,{onConflict:'nurse_id,year'}).then(function(r){
-    if(r.error)return toast(r.error.message,'td');
-    sb.from('leave_balance').select('*').then(function(lb2){ALL_LB={};(lb2.data||[]).forEach(function(x){ALL_LB[x.nurse_id]=x;});renderReport();});
-    toast(T?'\u062a\u0645 \u0627\u0644\u062d\u0641\u0638 \u2713':'Saved \u2713','ts');
-  });
-}
+  if(type==='fitr')obj.fitr_allowed=n2;
+  if(type==='adha')obj.adha_allowed=n2;
+  if(type==='comp')obj.compensation_allowed=n2;
+  await fsSet('leave_balance',uid+'_'+new Date().getFullYear(),obj);
+  if(!ALL_LB[uid])ALL_LB[uid]={};
+  Object.assign(ALL_LB[uid],obj);
+  renderReport();toast(T?'\u062a\u0645 \u0627\u0644\u062d\u0641\u0638 \u2713':'Saved \u2713','ts');
+};
 
-function printReport(){
+window.printReport=function(){
   var T=LANG==='ar';
-  var content=document.querySelector('#pg-report .calwrap');
-  if(!content)return;
+  var content=document.querySelector('#pg-report .calwrap');if(!content)return;
   var win=window.open('','_blank');
-  win.document.write('<html dir="'+(T?'rtl':'ltr')+'"><head><meta charset="UTF-8"><title>'+(T?'\u062a\u0642\u0631\u064a\u0631 \u0627\u0644\u0625\u062c\u0627\u0632\u0627\u062a':'Leave Report')+'<\/title><style>body{font-family:Tajawal,sans-serif;padding:20px}table{width:100%;border-collapse:collapse;font-size:11px}th,td{border:1px solid #ccc;padding:6px 8px;text-align:center}th{background:#f0f0f0}.bok{color:green}.berr{color:red}.edit-bal{display:none}<\/style><\/head><body>');
-  win.document.write(content.outerHTML);
-  win.document.write('<\/body><\/html>');
-  win.document.close();
+  win.document.write('<html dir="'+(T?'rtl':'ltr')+'"><head><meta charset="UTF-8"><title>'+(T?'\u062a\u0642\u0631\u064a\u0631 \u0627\u0644\u0625\u062c\u0627\u0632\u0627\u062a':'Leave Report')+'</title><style>body{font-family:Tajawal,sans-serif;padding:20px}table{width:100%;border-collapse:collapse;font-size:11px}th,td{border:1px solid #ccc;padding:6px 8px;text-align:center}th{background:#f0f0f0}.bok{color:green}.berr{color:red}.edit-bal{display:none}</style></head><body>');
+  win.document.write(content.outerHTML);win.document.write('</body></html>');win.document.close();
   setTimeout(function(){win.print();},500);
-}
+};
 
 function renderSwap(){
   var pg=document.getElementById('pg-swap'),T=LANG==='ar';if(!pg)return;
   var mySwaps=ALL_SW.filter(function(s){return s.requester_id===ME.id||s.target_id===ME.id;});
   var pendingForMe=ALL_SW.filter(function(s){return s.target_id===ME.id&&s.status==='pending';});
   var myDeptNurses=Object.values(ALL_P).filter(function(p){return p.role==='nurse'&&p.dept===ME.dept&&p.id!==ME.id;});
-  var h='<div class="phdr"><div class="ptitle">\uD83D\uDD04 '+(T?'\u062a\u0628\u0627\u062f\u0644 \u0627\u0644\u0634\u0641\u062a\u0627\u062a':'Shift Swap')+'<\/div><\/div>';
-  h+='<div class="balcard"><div class="baltitle">\u2795 '+(T?'\u0637\u0644\u0628 \u062a\u0628\u062f\u064a\u0644':'Request Swap')+'<\/div>';
+  var h='<div class="phdr"><div class="ptitle">\uD83D\uDD04 '+(T?'\u062a\u0628\u0627\u062f\u0644 \u0627\u0644\u0634\u0641\u062a\u0627\u062a':'Shift Swap')+'</div></div>';
+  h+='<div class="balcard"><div class="baltitle">\u2795 '+(T?'\u0637\u0644\u0628 \u062a\u0628\u062f\u064a\u0644':'Request Swap')+'</div>';
   h+='<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">';
-  h+='<div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">'+(T?'\u0627\u0644\u064a\u0648\u0645':'Date')+'<\/label><input type="date" id="sw-date" style="padding:8px;background:var(--s2);border:1px solid var(--b1);border-radius:7px;color:var(--text);font-size:13px;outline:none"><\/div>';
-  h+='<div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">'+(T?'\u0645\u0639 \u0645\u0645\u0631\u0636\u0629':'With Nurse')+'<\/label><select id="sw-nurse" style="padding:8px;background:var(--s2);border:1px solid var(--b1);border-radius:7px;color:var(--text);font-size:13px;outline:none"><option value="">'+(T?'\u0627\u062e\u062a\u0631...':'Select...')+'<\/option>'+myDeptNurses.map(function(n){return '<option value="'+n.id+'">'+n.name+'<\/option>';}).join('')+'<\/select><\/div>';
-  h+='<button class="btn-sub" onclick="requestSwap()">'+(T?'\u0625\u0631\u0633\u0627\u0644 \u0627\u0644\u0637\u0644\u0628':'Send Request')+'<\/button><\/div><\/div>';
+  h+='<div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">'+(T?'\u0627\u0644\u064a\u0648\u0645':'Date')+'</label><input type="date" id="sw-date" style="padding:8px;background:var(--s2);border:1px solid var(--b1);border-radius:7px;color:var(--text);font-size:13px;outline:none"></div>';
+  h+='<div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">'+(T?'\u0645\u0639 \u0645\u0645\u0631\u0636\u0629':'With Nurse')+'</label><select id="sw-nurse" style="padding:8px;background:var(--s2);border:1px solid var(--b1);border-radius:7px;color:var(--text);font-size:13px;outline:none"><option value="">'+(T?'\u0627\u062e\u062a\u0631...':'Select...')+'</option>'+myDeptNurses.map(function(n){return '<option value="'+n.id+'">'+n.name+'</option>';}).join('')+'</select></div>';
+  h+='<button class="btn-sub" onclick="requestSwap()">'+(T?'\u0625\u0631\u0633\u0627\u0644 \u0627\u0644\u0637\u0644\u0628':'Send Request')+'</button></div></div>';
   if(pendingForMe.length){
-    h+='<div class="balcard"><div class="baltitle" style="color:var(--morning)">\u23F3 '+(T?'\u0637\u0644\u0628\u0627\u062a \u0648\u0627\u0631\u062f\u0629':'Incoming Requests')+'<\/div>';
-    pendingForMe.forEach(function(s){
-      var req=ALL_P[s.requester_id];
-      h+='<div class="brow"><span class="bl">'+(req?req.name:'?')+' \u2014 '+s.swap_date+'<\/span><div style="display:flex;gap:6px"><button class="btn-ok" style="padding:5px 12px;font-size:11px" onclick="respondSwap(\''+s.id+'\',\'approved\')">'+(T?'\u0645\u0648\u0627\u0641\u0642':'Accept')+'<\/button><button class="btn-no" style="padding:5px 12px;font-size:11px" onclick="respondSwap(\''+s.id+'\',\'rejected\')">'+(T?'\u0631\u0641\u0636':'Reject')+'<\/button><\/div><\/div>';
-    });
-    h+='<\/div>';
+    h+='<div class="balcard"><div class="baltitle" style="color:var(--morning)">\u23F3 '+(T?'\u0637\u0644\u0628\u0627\u062a \u0648\u0627\u0631\u062f\u0629':'Incoming Requests')+'</div>';
+    pendingForMe.forEach(function(s){var req=ALL_P[s.requester_id];h+='<div class="brow"><span class="bl">'+(req?req.name:'?')+' \u2014 '+s.swap_date+'</span><div style="display:flex;gap:6px"><button class="btn-ok" style="padding:5px 12px;font-size:11px" onclick="respondSwap(\''+s.id+'\',\'approved\')">'+(T?'\u0645\u0648\u0627\u0641\u0642':'Accept')+'</button><button class="btn-no" style="padding:5px 12px;font-size:11px" onclick="respondSwap(\''+s.id+'\',\'rejected\')">'+(T?'\u0631\u0641\u0636':'Reject')+'</button></div></div>';});
+    h+='</div>';
   }
   if(mySwaps.length){
-    h+='<div class="balcard"><div class="baltitle">\uD83D\uDCCB '+(T?'\u0637\u0644\u0628\u0627\u062a\u064a':'My Requests')+'<\/div>';
-    mySwaps.forEach(function(s){
-      var other=ALL_P[s.requester_id===ME.id?s.target_id:s.requester_id];
-      var sc={pending:'var(--morning)',approved:'var(--green)',rejected:'var(--red)'};
-      var sl={pending:T?'\u0628\u0627\u0646\u062a\u0638\u0627\u0631':'Pending',approved:T?'\u0645\u0648\u0627\u0641\u0642':'Approved',rejected:T?'\u0645\u0631\u0641\u0648\u0636':'Rejected'};
-      h+='<div class="brow"><span class="bl">'+(other?other.name:'?')+' \u2014 '+s.swap_date+'<\/span><span style="color:'+sc[s.status]+';font-weight:700;font-size:12px">'+sl[s.status]+'<\/span><\/div>';
-    });
-    h+='<\/div>';
+    h+='<div class="balcard"><div class="baltitle">\uD83D\uDCCB '+(T?'\u0637\u0644\u0628\u0627\u062a\u064a':'My Requests')+'</div>';
+    mySwaps.forEach(function(s){var other=ALL_P[s.requester_id===ME.id?s.target_id:s.requester_id];var sc={pending:'var(--morning)',approved:'var(--green)',rejected:'var(--red)'};var sl={pending:T?'\u0628\u0627\u0646\u062a\u0638\u0627\u0631':'Pending',approved:T?'\u0645\u0648\u0627\u0641\u0642':'Approved',rejected:T?'\u0645\u0631\u0641\u0648\u0636':'Rejected'};h+='<div class="brow"><span class="bl">'+(other?other.name:'?')+' \u2014 '+s.swap_date+'</span><span style="color:'+sc[s.status]+';font-weight:700;font-size:12px">'+sl[s.status]+'</span></div>';});
+    h+='</div>';
   }
   pg.innerHTML=h;
 }
 
-function requestSwap(){
+window.requestSwap=async function(){
   var T=LANG==='ar';
   var date=document.getElementById('sw-date').value;
   var targetId=document.getElementById('sw-nurse').value;
   if(!date||!targetId){toast(T?'\u0627\u062e\u062a\u0631 \u0627\u0644\u062a\u0627\u0631\u064a\u062e \u0648\u0627\u0644\u0645\u0645\u0631\u0636\u0629':'Select date and nurse','tw');return;}
-  sb.from('swap_requests').insert({requester_id:ME.id,target_id:targetId,swap_date:date,status:'pending'}).then(function(r){
-    if(r.error)return toast(r.error.message,'td');
-    toast(T?'\u062a\u0645 \u0627\u0644\u0625\u0631\u0633\u0627\u0644 \u2713':'Sent \u2713','ts');
-    loadAll().then(render);
-  });
-}
+  var ref=await fsAdd('swap_requests',{requester_id:ME.id,target_id:targetId,swap_date:date,status:'pending'});
+  ALL_SW.push({id:ref.id,requester_id:ME.id,target_id:targetId,swap_date:date,status:'pending'});
+  toast(T?'\u062a\u0645 \u0627\u0644\u0625\u0631\u0633\u0627\u0644 \u2713':'Sent \u2713','ts');render();
+};
 
-function respondSwap(id,status){
+window.respondSwap=async function(id,status){
   var T=LANG==='ar';
   var swap=ALL_SW.find(function(s){return String(s.id)===String(id);});
-  sb.from('swap_requests').update({status:status}).eq('id',id).then(function(r){
-    if(r.error)return toast(r.error.message,'td');
-    if(status==='approved'&&swap){
-      var myShift=(ALL_S[ME.id]||{})[swap.swap_date];
-      var theirShift=(ALL_S[swap.requester_id]||{})[swap.swap_date];
-      var ops=[];
-      if(myShift)ops.push(sb.from('schedules').upsert({nurse_id:swap.requester_id,date:swap.swap_date,shift:myShift.shift,flag:myShift.flag||null},{onConflict:'nurse_id,date'}));
-      if(theirShift)ops.push(sb.from('schedules').upsert({nurse_id:ME.id,date:swap.swap_date,shift:theirShift.shift,flag:theirShift.flag||null},{onConflict:'nurse_id,date'}));
-      Promise.all(ops).then(function(){loadAll().then(render);});
+  await fsSet('swap_requests',id,{status:status});
+  var idx=ALL_SW.findIndex(function(s){return s.id===id;});
+  if(idx>=0)ALL_SW[idx].status=status;
+  if(status==='approved'&&swap){
+    var myShift=(ALL_S[ME.id]||{})[swap.swap_date];
+    var theirShift=(ALL_S[swap.requester_id]||{})[swap.swap_date];
+    if(myShift){
+      var ref1=await fsAdd('schedules',{nurse_id:swap.requester_id,date:swap.swap_date,shift:myShift.shift,flag:myShift.flag||null});
+      if(!ALL_S[swap.requester_id])ALL_S[swap.requester_id]={};
+      ALL_S[swap.requester_id][swap.swap_date]={shift:myShift.shift,flag:myShift.flag||null,docId:ref1.id};
     }
-    toast(status==='approved'?(T?'\u062a\u0645 \u0627\u0644\u062a\u0628\u062f\u064a\u0644 \u2713':'Swapped \u2713'):(T?'\u062a\u0645 \u0627\u0644\u0631\u0641\u0636':'Rejected'),'ts');
-    loadAll().then(render);
-  });
-}
+    if(theirShift){
+      var ref2=await fsAdd('schedules',{nurse_id:ME.id,date:swap.swap_date,shift:theirShift.shift,flag:theirShift.flag||null});
+      if(!ALL_S[ME.id])ALL_S[ME.id]={};
+      ALL_S[ME.id][swap.swap_date]={shift:theirShift.shift,flag:theirShift.flag||null,docId:ref2.id};
+    }
+  }
+  toast(status==='approved'?(T?'\u062a\u0645 \u0627\u0644\u062a\u0628\u062f\u064a\u0644 \u2713':'Swapped \u2713'):(T?'\u062a\u0645 \u0627\u0644\u0631\u0641\u0636':'Rejected'),'ts');
+  render();
+};
 
-function exportToCalendar(){
+window.exportToCalendar=function(){
   var T=LANG==='ar';
   var data=ALL_S[ME.id]||{};
   var lines=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//NurseFlow//EN','CALSCALE:GREGORIAN'];
@@ -1185,54 +1211,32 @@ function exportToCalendar(){
   var a=document.createElement('a');a.href=url;a.download='nurseflow-schedule.ics';a.click();
   URL.revokeObjectURL(url);
   toast(T?'\u062a\u0645 \u0627\u0644\u062a\u0635\u062f\u064a\u0631 \u2713':'Exported \u2713','ts');
-}
-
-function copySchedule(){
-  var T=LANG==='ar';
-  if(!confirm(T?'\u0646\u0633\u062e \u062c\u062f\u0648\u0644 \u0627\u0644\u0634\u0647\u0631 \u0627\u0644\u062d\u0627\u0644\u064a \u0644\u0644\u0634\u0647\u0631 \u0627\u0644\u0642\u0627\u062f\u0645\u061f':'Copy current month to next month?'))return;
-  var now=new Date(),y=now.getFullYear(),m=now.getMonth();
-  var nextY=m===11?y+1:y,nextM=m===11?0:m+1;
-  var data=ALL_S[ME.id]||{},toInsert=[];
-  Object.keys(data).forEach(function(ds){
-    var d=new Date(ds+'T00:00:00');
-    if(d.getFullYear()===y&&d.getMonth()===m){
-      var e=data[ds];
-      toInsert.push({nurse_id:ME.id,date:nextY+'-'+p2(nextM+1)+'-'+p2(d.getDate()),shift:e.shift,flag:e.flag||null});
-    }
-  });
-  if(!toInsert.length){toast(T?'\u0644\u0627 \u064a\u0648\u062c\u062f \u062c\u062f\u0648\u0644 \u0644\u0644\u0646\u0633\u062e':'No schedule to copy','tw');return;}
-  sb.from('schedules').upsert(toInsert,{onConflict:'nurse_id,date'}).then(function(r){
-    if(r.error)return toast(r.error.message,'td');
-    toInsert.forEach(function(x){if(!ALL_S[ME.id])ALL_S[ME.id]={};ALL_S[ME.id][x.date]={shift:x.shift,flag:x.flag};});
-    toast((T?'\u062a\u0645 \u0627\u0644\u0646\u0633\u062e: ':'Copied: ')+toInsert.length+(T?' \u064a\u0648\u0645':' days'),'ts');
-    render();
-  });
-}
+};
 
 function renderUpload(){
   var pg=document.getElementById('pg-upload'),T=LANG==='ar';if(!pg)return;
-  pg.innerHTML='<div class="phdr"><div><div class="ptitle">\uD83D\uDCE4 '+(T?'\u0631\u0641\u0639 \u0645\u0648\u0638\u0641\u064a\u0646 \u0645\u0646 Excel':'Upload Staff from Excel')+'<\/div><\/div><\/div>'
-    +'<div class="balcard"><div class="baltitle">\u2B07\uFE0F '+(T?'\u062a\u062d\u0645\u064a\u0644 \u0642\u0627\u0644\u0628 Excel':'Download Template')+'<\/div><button class="btn-sub" onclick="downloadTemplate()">'+(T?'\u062a\u062d\u0645\u064a\u0644 \u0627\u0644\u0642\u0627\u0644\u0628':'Download Template')+'<\/button><\/div>'
-    +'<div class="balcard"><div class="baltitle">\uD83D\uDCC1 '+(T?'\u0631\u0641\u0639 \u0627\u0644\u0645\u0644\u0641':'Upload File')+'<\/div>'
-    +'<div class="upload-area" onclick="document.getElementById(\'xl-input\').click()"><input type="file" id="xl-input" accept=".xlsx,.xls,.csv" onchange="handleUpload(this)"><div style="font-size:32px;margin-bottom:8px">\uD83D\uDCCA<\/div><div style="font-weight:700">'+(T?'\u0627\u0633\u062d\u0628 \u0645\u0644\u0641 Excel \u0647\u0646\u0627':'Drag Excel file here')+'<\/div><\/div>'
-    +'<div id="upload-progress" style="display:none"><div class="prog-wrap"><div class="prog-fill" id="prog-bar" style="width:0%"><\/div><\/div><div id="prog-text" style="font-size:12px;color:var(--muted)"><\/div><\/div><div id="upload-results"><\/div><\/div>'
-    +'<div class="balcard"><div class="baltitle">\u270F\uFE0F '+(T?'\u062a\u0639\u062f\u064a\u0644 \u0627\u0644\u0645\u0648\u0638\u0641\u064a\u0646':'Edit Staff Roles')+'<\/div>'
-    +'<div class="calwrap twrap"><table><thead><tr><th>'+(T?'\u0627\u0644\u0627\u0633\u0645':'Name')+'<\/th><th>'+(T?'\u0627\u0644\u0642\u0633\u0645':'Dept')+'<\/th><th>'+(T?'\u0627\u0644\u062f\u0648\u0631':'Role')+'<\/th><th><\/th><\/tr><\/thead><tbody>'
+  pg.innerHTML='<div class="phdr"><div><div class="ptitle">\uD83D\uDCE4 '+(T?'\u0631\u0641\u0639 \u0645\u0648\u0638\u0641\u064a\u0646 \u0645\u0646 Excel':'Upload Staff from Excel')+'</div></div></div>'
+    +'<div class="balcard"><div class="baltitle">\u2B07\uFE0F '+(T?'\u062a\u062d\u0645\u064a\u0644 \u0642\u0627\u0644\u0628 Excel':'Download Template')+'</div><button class="btn-sub" onclick="downloadTemplate()">'+(T?'\u062a\u062d\u0645\u064a\u0644 \u0627\u0644\u0642\u0627\u0644\u0628':'Download Template')+'</button></div>'
+    +'<div class="balcard"><div class="baltitle">\uD83D\uDCC1 '+(T?'\u0631\u0641\u0639 \u0627\u0644\u0645\u0644\u0641':'Upload File')+'</div>'
+    +'<div class="upload-area" onclick="document.getElementById(\'xl-input\').click()"><input type="file" id="xl-input" accept=".xlsx,.xls,.csv" onchange="handleUpload(this)"><div style="font-size:32px;margin-bottom:8px">\uD83D\uDCCA</div><div style="font-weight:700">'+(T?'\u0627\u0633\u062d\u0628 \u0645\u0644\u0641 Excel \u0647\u0646\u0627':'Drag Excel file here')+'</div></div>'
+    +'<div id="upload-progress" style="display:none"><div class="prog-wrap"><div class="prog-fill" id="prog-bar" style="width:0%"></div></div><div id="prog-text" style="font-size:12px;color:var(--muted)"></div></div><div id="upload-results"></div></div>'
+    +'<div class="balcard"><div class="baltitle">\u270F\uFE0F '+(T?'\u062a\u0639\u062f\u064a\u0644 \u0627\u0644\u0645\u0648\u0638\u0641\u064a\u0646':'Edit Staff Roles')+'</div>'
+    +'<div class="calwrap twrap"><table><thead><tr><th>'+(T?'\u0627\u0644\u0627\u0633\u0645':'Name')+'</th><th>'+(T?'\u0627\u0644\u0642\u0633\u0645':'Dept')+'</th><th>'+(T?'\u0627\u0644\u062f\u0648\u0631':'Role')+'</th><th></th></tr></thead><tbody>'
     +Object.values(ALL_P).map(function(u){
-      return '<tr><td>'+u.name+'<\/td><td><input id="ef-'+u.id+'-dept" value="'+(u.dept||'')+'" style="padding:4px 8px;background:var(--s2);border:1px solid var(--b1);border-radius:5px;color:var(--text);font-size:12px;outline:none;width:100px"><\/td>'
-        +'<td><select id="rs-'+u.id+'" style="padding:4px 8px;background:var(--s2);border:1px solid var(--b1);border-radius:5px;color:var(--text);font-size:12px;outline:none"><option value="nurse"'+(u.role==='nurse'?' selected':'')+'>'+(T?'\u0645\u0645\u0631\u0636\u0629':'Nurse')+'<\/option><option value="head_nurse"'+(u.role==='head_nurse'?' selected':'')+'>Head Nurse<\/option><option value="manager"'+(u.role==='manager'?' selected':'')+'>Manager<\/option><option value="admin"'+(u.role==='admin'?' selected':'')+'>Admin<\/option><\/select><\/td>'
-        +'<td><button class="btn-ok" style="padding:5px 10px;font-size:11px" onclick="saveUserEdit(\''+u.id+'\')">'+(T?'\u062d\u0641\u0638':'Save')+'<\/button><\/td><\/tr>';
-    }).join('')+'<\/tbody><\/table><\/div><\/div>';
+      return '<tr><td>'+u.name+'</td><td><input id="ef-'+u.id+'-dept" value="'+(u.dept||'')+'" style="padding:4px 8px;background:var(--s2);border:1px solid var(--b1);border-radius:5px;color:var(--text);font-size:12px;outline:none;width:100px"></td>'
+        +'<td><select id="rs-'+u.id+'" style="padding:4px 8px;background:var(--s2);border:1px solid var(--b1);border-radius:5px;color:var(--text);font-size:12px;outline:none"><option value="nurse"'+(u.role==='nurse'?' selected':'')+'>'+(T?'\u0645\u0645\u0631\u0636\u0629':'Nurse')+'</option><option value="head_nurse"'+(u.role==='head_nurse'?' selected':'')+'>Head Nurse</option><option value="manager"'+(u.role==='manager'?' selected':'')+'>Manager</option><option value="admin"'+(u.role==='admin'?' selected':'')+'>Admin</option></select></td>'
+        +'<td><button class="btn-ok" style="padding:5px 10px;font-size:11px" onclick="saveUserEdit(\''+u.id+'\')">'+(T?'\u062d\u0641\u0638':'Save')+'</button></td></tr>';
+    }).join('')+'</tbody></table></div></div>';
 }
 
-function downloadTemplate(){
+window.downloadTemplate=function(){
   var T=LANG==='ar';
   var ws=XLSX.utils.aoa_to_sheet([[T?'\u0627\u0644\u0627\u0633\u0645':'Name',T?'\u0627\u0644\u0625\u064a\u0645\u064a\u0644':'Email',T?'\u0643\u0644\u0645\u0629 \u0627\u0644\u0633\u0631':'Password',T?'\u0627\u0644\u062f\u0648\u0631':'Role',T?'\u0627\u0644\u0642\u0633\u0645':'Department'],['Example Name','nurse@hospital.com','1234','nurse',T?'\u0637\u0648\u0627\u0631\u0626':'Emergency']]);
   var wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Staff');
   XLSX.writeFile(wb,'nurseflow_template.xlsx');
-}
+};
 
-function handleUpload(input){
+window.handleUpload=function(input){
   var file=input.files[0];if(!file)return;
   var reader=new FileReader();
   reader.onload=function(e){
@@ -1244,52 +1248,49 @@ function handleUpload(input){
     processRows(rows.slice(1));
   };
   reader.readAsArrayBuffer(file);
-}
+};
 
-function processRows(rows){
+async function processRows(rows){
   var T=LANG==='ar';
   var valid=rows.filter(function(r){return r[0]&&r[1]&&r[2];});
   if(!valid.length){toast(T?'\u0644\u0627 \u062a\u0648\u062c\u062f \u0628\u064a\u0627\u0646\u0627\u062a':'No valid data','tw');return;}
   document.getElementById('upload-progress').style.display='block';
   var results=[],done=0;
-  function updateProgress(){var pct=Math.round(done/valid.length*100);document.getElementById('prog-bar').style.width=pct+'%';document.getElementById('prog-text').textContent=(T?'\u062c\u0627\u0631\u064d \u0627\u0644\u0645\u0639\u0627\u0644\u062c\u0629: ':'Processing: ')+done+'/'+valid.length;}
-  function processNext(idx){
-    if(idx>=valid.length){showResults(results);return;}
-    var row=valid[idx];
+  for(var i=0;i<valid.length;i++){
+    var row=valid[i];
     var name=String(row[0]||'').trim(),email=String(row[1]||'').trim().toLowerCase(),pass=String(row[2]||'1234').trim(),role=String(row[3]||'nurse').trim(),dept=String(row[4]||'').trim();
     if(!['nurse','head_nurse','manager','admin'].includes(role))role='nurse';
-    sb.rpc('create_user_with_profile',{p_email:email,p_password:pass,p_name:name,p_role:role,p_dept:dept}).then(function(r){
-      done++;updateProgress();
-      if(r.error)results.push({name:name,email:email,ok:false,msg:r.error.message});
-      else{results.push({name:name,email:email,ok:true});if(r.data)ALL_P[r.data]={id:r.data,name:name,email:email,role:role,dept:dept};}
-      setTimeout(function(){processNext(idx+1);},200);
-    });
+    try{
+      // Note: Creating users via client SDK requires admin SDK. Show instructions instead.
+      results.push({name:name,email:email,ok:false,msg:'يجب إنشاء المستخدم يدوياً في Firebase Console'});
+    }catch(e){results.push({name:name,email:email,ok:false,msg:e.message});}
+    done++;
+    var pct=Math.round(done/valid.length*100);
+    document.getElementById('prog-bar').style.width=pct+'%';
+    document.getElementById('prog-text').textContent=(T?'\u062c\u0627\u0631\u064d \u0627\u0644\u0645\u0639\u0627\u0644\u062c\u0629: ':'Processing: ')+done+'/'+valid.length;
   }
-  processNext(0);
+  showUploadResults(results);
 }
 
-function showResults(results){
+function showUploadResults(results){
   var T=LANG==='ar';
   var ok=results.filter(function(r){return r.ok;}).length;
   var fail=results.filter(function(r){return !r.ok;});
-  var h='<div class="balcard" style="margin-top:16px"><div class="baltitle">\u2705 '+(T?'\u0627\u0644\u0646\u062a\u0627\u0626\u062c':'Results')+': '+ok+'/'+(ok+fail.length)+'<\/div>';
-  if(fail.length){h+='<div style="margin-top:8px">';fail.forEach(function(f){h+='<div style="font-size:11px;color:var(--muted);padding:4px 0">'+f.email+': '+f.msg+'<\/div>';});h+='<\/div>';}
-  h+='<\/div>';
+  var h='<div class="balcard" style="margin-top:16px"><div class="baltitle">\u2139\uFE0F '+(T?'\u0645\u0644\u0627\u062d\u0638\u0629':'Note')+'</div>';
+  h+='<div style="font-size:12px;color:var(--muted);padding:8px 0">'+(T?'\u0644\u0625\u0636\u0627\u0641\u0629 \u0645\u0648\u0638\u0641\u064a\u0646: \u0627\u0630\u0647\u0628\u064a \u0644\u0640 Firebase Console \u2190 Authentication \u2190 Add user':'To add staff: Go to Firebase Console \u2192 Authentication \u2192 Add user')+'</div>';
+  h+='</div>';
   document.getElementById('upload-results').innerHTML=h;
   document.getElementById('upload-progress').style.display='none';
-  toast((T?'\u062a\u0645\u062a \u0627\u0644\u0645\u0639\u0627\u0644\u062c\u0629: ':'Done: ')+ok+' '+(T?'\u062a\u0645\u062a \u0625\u0636\u0627\u0641\u062a\u0647\u0645':'added'),'ts');
 }
 
-function saveUserEdit(uid){
+window.saveUserEdit=async function(uid){
   var deptEl=document.getElementById('ef-'+uid+'-dept');
   var roleEl=document.getElementById('rs-'+uid);
   if(!deptEl||!roleEl)return;
-  sb.from('user_profiles').update({dept:deptEl.value.trim(),role:roleEl.value}).eq('id',uid).then(function(r){
-    if(r.error)return toast(r.error.message,'td');
-    if(ALL_P[uid]){ALL_P[uid].dept=deptEl.value.trim();ALL_P[uid].role=roleEl.value;}
-    toast(LANG==='ar'?'\u062a\u0645 \u0627\u0644\u062a\u0639\u062f\u064a\u0644 \u2713':'Updated \u2713','ts');
-  });
-}
+  await fsSet('user_profiles',uid,{dept:deptEl.value.trim(),role:roleEl.value});
+  if(ALL_P[uid]){ALL_P[uid].dept=deptEl.value.trim();ALL_P[uid].role=roleEl.value;}
+  toast(LANG==='ar'?'\u062a\u0645 \u0627\u0644\u062a\u0639\u062f\u064a\u0644 \u2713':'Updated \u2713','ts');
+};
 
 function renderAdmin(){
   var pg=document.getElementById('pg-admin'),T=LANG==='ar';if(!pg)return;
@@ -1297,65 +1298,63 @@ function renderAdmin(){
   var deptsRows='';
   depts.forEach(function(name){
     var d=ALL_D[name];
-    deptsRows+='<tr><td><b>'+name+'<\/b><\/td><td>'+d.m+'<\/td><td>'+d.e+'<\/td><td>'+d.n+'<\/td><td>'+d.ld+'<\/td><td><button onclick="delDept(\''+name+'\')" style="padding:3px 8px;background:rgba(239,68,68,.12);border:none;border-radius:5px;color:var(--red);cursor:pointer;font-size:11px">'+(T?'\u062d\u0630\u0641':'Del')+'<\/button><\/td><\/tr>';
+    deptsRows+='<tr><td><b>'+name+'</b></td><td>'+d.m+'</td><td>'+d.e+'</td><td>'+d.n+'</td><td>'+d.ld+'</td><td><button onclick="delDept(\''+name+'\')" style="padding:3px 8px;background:rgba(239,68,68,.12);border:none;border-radius:5px;color:var(--red);cursor:pointer;font-size:11px">'+(T?'\u062d\u0630\u0641':'Del')+'</button></td></tr>';
   });
   var managers=Object.values(ALL_P).filter(function(p){return p.role==='manager';});
   var mgrHtml='';
   managers.forEach(function(mgr){
     var myDepts=ALL_MD[mgr.id]||[];
-    mgrHtml+='<div style="margin-bottom:12px;padding:12px;background:var(--s2);border-radius:8px"><div style="font-size:13px;font-weight:700;margin-bottom:8px">'+mgr.name+'<\/div><div style="display:flex;flex-wrap:wrap;gap:6px">';
-    depts.forEach(function(d){
-      var has=myDepts.indexOf(d)>=0;
-      mgrHtml+='<button onclick="toggleMgrDept(\''+mgr.id+'\',\''+d+'\')" style="padding:5px 12px;border-radius:20px;border:1.5px solid '+(has?'var(--blue)':'var(--b1)')+';background:'+(has?'var(--blue-bg)':'transparent')+';color:'+(has?'var(--blue)':'var(--muted)')+';font-family:Tajawal,sans-serif;font-size:12px;cursor:pointer">'+d+'<\/button>';
-    });
-    mgrHtml+='<\/div><\/div>';
+    mgrHtml+='<div style="margin-bottom:12px;padding:12px;background:var(--s2);border-radius:8px"><div style="font-size:13px;font-weight:700;margin-bottom:8px">'+mgr.name+'</div><div style="display:flex;flex-wrap:wrap;gap:6px">';
+    depts.forEach(function(d){var has=myDepts.indexOf(d)>=0;mgrHtml+='<button onclick="toggleMgrDept(\''+mgr.id+'\',\''+d+'\')" style="padding:5px 12px;border-radius:20px;border:1.5px solid '+(has?'var(--blue)':'var(--b1)')+';background:'+(has?'var(--blue-bg)':'transparent')+';color:'+(has?'var(--blue)':'var(--muted)')+';font-family:Tajawal,sans-serif;font-size:12px;cursor:pointer">'+d+'</button>';});
+    mgrHtml+='</div></div>';
   });
-  pg.innerHTML='<div class="phdr"><div class="ptitle">\uD83D\uDD11 '+(T?'\u0644\u0648\u062d\u0629 \u0627\u0644\u0625\u062f\u0627\u0631\u0629':'Admin Panel')+'<\/div><\/div>'
-    +'<div class="balcard" style="margin-bottom:16px"><div class="baltitle">\u2795 '+(T?'\u0625\u0636\u0627\u0641\u0629 \u0642\u0633\u0645':'Add Dept')+'<\/div>'
+  pg.innerHTML='<div class="phdr"><div class="ptitle">\uD83D\uDD11 '+(T?'\u0644\u0648\u062d\u0629 \u0627\u0644\u0625\u062f\u0627\u0631\u0629':'Admin Panel')+'</div></div>'
+    +'<div class="balcard" style="margin-bottom:16px"><div class="baltitle">\u2795 '+(T?'\u0625\u0636\u0627\u0641\u0629 \u0642\u0633\u0645':'Add Dept')+'</div>'
     +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">'
-    +'<div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">'+(T?'\u0627\u0644\u0627\u0633\u0645':'Name')+'<\/label><input id="d-n" placeholder="'+(T?'\u0637\u0648\u0627\u0631\u0626':'ER')+'" style="padding:8px 10px;background:var(--s2);border:1px solid var(--b1);border-radius:7px;color:var(--text);font-size:13px;outline:none;width:130px"><\/div>'
-    +'<div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">\u2600\uFE0F<\/label><input id="d-m" type="number" placeholder="0" min="0" style="padding:8px;background:var(--s2);border:1px solid var(--b1);border-radius:7px;color:var(--text);font-size:13px;outline:none;width:55px"><\/div>'
-    +'<div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">\uD83C\uDF06<\/label><input id="d-e" type="number" placeholder="0" min="0" style="padding:8px;background:var(--s2);border:1px solid var(--b1);border-radius:7px;color:var(--text);font-size:13px;outline:none;width:55px"><\/div>'
-    +'<div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">\uD83C\uDF19<\/label><input id="d-nn" type="number" placeholder="0" min="0" style="padding:8px;background:var(--s2);border:1px solid var(--b1);border-radius:7px;color:var(--text);font-size:13px;outline:none;width:55px"><\/div>'
-    +'<div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">12h<\/label><input id="d-l" type="number" placeholder="0" min="0" style="padding:8px;background:var(--s2);border:1px solid var(--b1);border-radius:7px;color:var(--text);font-size:13px;outline:none;width:55px"><\/div>'
-    +'<button onclick="addDept()" class="btn-sub">'+(T?'\u062d\u0641\u0638':'Save')+'<\/button><\/div><\/div>'
-    +'<div class="calwrap twrap" style="margin-bottom:16px"><table><thead><tr><th>'+(T?'\u0627\u0644\u0642\u0633\u0645':'Dept')+'<\/th><th>\u2600\uFE0F<\/th><th>\uD83C\uDF06<\/th><th>\uD83C\uDF19<\/th><th>12h<\/th><th><\/th><\/tr><\/thead><tbody>'+deptsRows+'<\/tbody><\/table><\/div>'
-    +(managers.length?'<div class="balcard"><div class="baltitle">\uD83D\uDC54 '+(T?'\u0623\u0642\u0633\u0627\u0645 \u0627\u0644\u0645\u0646\u062c\u0631\u0632':'Manager Depts')+'<\/div>'+mgrHtml+'<\/div>':'');
+    +'<div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">'+(T?'\u0627\u0644\u0627\u0633\u0645':'Name')+'</label><input id="d-n" placeholder="'+(T?'\u0637\u0648\u0627\u0631\u0626':'ER')+'" style="padding:8px 10px;background:var(--s2);border:1px solid var(--b1);border-radius:7px;color:var(--text);font-size:13px;outline:none;width:130px"></div>'
+    +'<div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">\u2600\uFE0F</label><input id="d-m" type="number" placeholder="0" min="0" style="padding:8px;background:var(--s2);border:1px solid var(--b1);border-radius:7px;color:var(--text);font-size:13px;outline:none;width:55px"></div>'
+    +'<div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">\uD83C\uDF06</label><input id="d-e" type="number" placeholder="0" min="0" style="padding:8px;background:var(--s2);border:1px solid var(--b1);border-radius:7px;color:var(--text);font-size:13px;outline:none;width:55px"></div>'
+    +'<div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">\uD83C\uDF19</label><input id="d-nn" type="number" placeholder="0" min="0" style="padding:8px;background:var(--s2);border:1px solid var(--b1);border-radius:7px;color:var(--text);font-size:13px;outline:none;width:55px"></div>'
+    +'<div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">12h</label><input id="d-l" type="number" placeholder="0" min="0" style="padding:8px;background:var(--s2);border:1px solid var(--b1);border-radius:7px;color:var(--text);font-size:13px;outline:none;width:55px"></div>'
+    +'<button onclick="addDept()" class="btn-sub">'+(T?'\u062d\u0641\u0638':'Save')+'</button></div></div>'
+    +'<div class="calwrap twrap" style="margin-bottom:16px"><table><thead><tr><th>'+(T?'\u0627\u0644\u0642\u0633\u0645':'Dept')+'</th><th>\u2600\uFE0F</th><th>\uD83C\uDF06</th><th>\uD83C\uDF19</th><th>12h</th><th></th></tr></thead><tbody>'+deptsRows+'</tbody></table></div>'
+    +(managers.length?'<div class="balcard"><div class="baltitle">\uD83D\uDC54 '+(T?'\u0623\u0642\u0633\u0627\u0645 \u0627\u0644\u0645\u0646\u062c\u0631\u0632':'Manager Depts')+'</div>'+mgrHtml+'</div>':'');
 }
 
-function addDept(){
+window.addDept=async function(){
   var name=document.getElementById('d-n').value.trim();
   var m2=parseInt(document.getElementById('d-m').value)||0;
   var e2=parseInt(document.getElementById('d-e').value)||0;
   var n2=parseInt(document.getElementById('d-nn').value)||0;
   var l2=parseInt(document.getElementById('d-l').value)||0;
   if(!name){toast(LANG==='ar'?'\u0623\u062f\u062e\u0644 \u0627\u0633\u0645 \u0627\u0644\u0642\u0633\u0645':'Enter dept name','tw');return;}
-  sb.from('departments').insert({name:name,cap_morning:m2,cap_evening:e2,cap_night:n2,cap_long_day:l2,cap_long_night:l2}).then(function(r){
-    if(r.error)return toast(r.error.message,'td');
-    ALL_D[name]={m:m2,e:e2,n:n2,ld:l2};render();toast(LANG==='ar'?'\u062a\u0645 \u0627\u0644\u0625\u0636\u0627\u0641\u0629 \u2713':'Added \u2713','ts');
-  });
-}
+  var ref=await fsAdd('departments',{name:name,cap_morning:m2,cap_evening:e2,cap_night:n2,cap_long_day:l2,cap_long_night:l2});
+  ALL_D[name]={m:m2,e:e2,n:n2,ld:l2,docId:ref.id};
+  render();toast(LANG==='ar'?'\u062a\u0645 \u0627\u0644\u0625\u0636\u0627\u0641\u0629 \u2713':'Added \u2713','ts');
+};
 
-function delDept(name){
+window.delDept=async function(name){
   if(!confirm((LANG==='ar'?'\u062d\u0630\u0641 \u0642\u0633\u0645 ':'Delete dept ')+name+'?'))return;
-  sb.from('departments').delete().eq('name',name).then(function(){delete ALL_D[name];render();toast(LANG==='ar'?'\u062a\u0645 \u0627\u0644\u062d\u0630\u0641':'Deleted','ti');});
-}
+  var docId=ALL_D[name]&&ALL_D[name].docId;
+  if(docId)await fsDel('departments',docId);
+  delete ALL_D[name];render();toast(LANG==='ar'?'\u062a\u0645 \u0627\u0644\u062d\u0630\u0641':'Deleted','ti');
+};
 
-function toggleMgrDept(mgrId,dept){
+window.toggleMgrDept=async function(mgrId,dept){
   var myDepts=ALL_MD[mgrId]||[];
   var has=myDepts.indexOf(dept)>=0;
   if(has){
-    sb.from('manager_departments').delete().eq('manager_id',mgrId).eq('dept_name',dept).then(function(r){
-      if(r.error)return toast(r.error.message,'td');
-      ALL_MD[mgrId]=myDepts.filter(function(d){return d!==dept;});render();toast(LANG==='ar'?'\u062a\u0645 \u0627\u0644\u062d\u0630\u0641':'Removed','ti');
-    });
-  } else {
-    sb.from('manager_departments').insert({manager_id:mgrId,dept_name:dept}).then(function(r){
-      if(r.error)return toast(r.error.message,'td');
-      if(!ALL_MD[mgrId])ALL_MD[mgrId]=[];ALL_MD[mgrId].push(dept);render();toast(LANG==='ar'?'\u062a\u0645 \u0627\u0644\u0625\u0636\u0627\u0641\u0629 \u2713':'Added \u2713','ts');
-    });
+    var snap=await getDocs(query(collection(db,'manager_departments'),where('manager_id','==',mgrId),where('dept_name','==',dept)));
+    for(var d of snap.docs)await fsDel('manager_departments',d.id);
+    ALL_MD[mgrId]=myDepts.filter(function(d){return d!==dept;});
+    toast(LANG==='ar'?'\u062a\u0645 \u0627\u0644\u062d\u0630\u0641':'Removed','ti');
+  }else{
+    await fsAdd('manager_departments',{manager_id:mgrId,dept_name:dept});
+    if(!ALL_MD[mgrId])ALL_MD[mgrId]=[];ALL_MD[mgrId].push(dept);
+    toast(LANG==='ar'?'\u062a\u0645 \u0627\u0644\u0625\u0636\u0627\u0641\u0629 \u2713':'Added \u2713','ts');
   }
-}
+  render();
+};
 
 function updateBadges(){
   var nurses=Object.values(ALL_P).filter(function(p){return p.role==='nurse';});
@@ -1365,53 +1364,44 @@ function updateBadges(){
   if(ab){var n2=nurses.filter(function(n3){return ALL_ST[n3.id]&&ALL_ST[n3.id].status==='reviewed';}).length;ab.textContent=n2;ab.style.display=n2?'inline-flex':'none';}
 }
 
-function toggleTheme(){
+window.toggleTheme=function(){
   var isL=document.documentElement.getAttribute('data-theme')==='light';
   if(isL){document.documentElement.removeAttribute('data-theme');localStorage.setItem('nf-theme','dark');document.getElementById('theme-btn').textContent='\uD83C\uDF19';}
   else{document.documentElement.setAttribute('data-theme','light');localStorage.setItem('nf-theme','light');document.getElementById('theme-btn').textContent='\u2600\uFE0F';}
-}
+};
 
-function toggleLang(){
+window.toggleLang=function(){
   LANG=LANG==='ar'?'en':'ar';
   localStorage.setItem('nf-lang',LANG);
   document.documentElement.dir=LANG==='ar'?'rtl':'ltr';
   document.getElementById('lang-btn').textContent=LANG==='ar'?'EN':'AR';
   document.getElementById('btn-out').textContent=LANG==='ar'?'\u062e\u0631\u0648\u062c':'Sign Out';
   if(ME)render();
-}
+};
 
-// ── INIT ──
-sb.auth.getSession().then(function(r){
-  if(r.data&&r.data.session&&r.data.session.user)loadMe(r.data.session.user.id);
-});
-
-</script>
-<script>
-
+// Leave Plans
 function renderLeave(){
-  var pg=document.getElementById('pg-leave'),T=LANG==='ar';
-  if(!pg)return;
+  var pg=document.getElementById('pg-leave'),T=LANG==='ar';if(!pg)return;
   var isViewer=ME.role==='head_nurse'||ME.role==='manager'||ME.role==='admin';
   var year=new Date().getFullYear();
-  var mnames=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  if(T)mnames=['\u064a\u0646\u0627\u064a\u0631','\u0641\u0628\u0631\u0627\u064a\u0631','\u0645\u0627\u0631\u0633','\u0623\u0628\u0631\u064a\u0644','\u0645\u0627\u064a\u0648','\u064a\u0648\u0646\u064a\u0648','\u064a\u0648\u0644\u064a\u0648','\u0623\u063a\u0633\u0637\u0633','\u0633\u0628\u062a\u0645\u0628\u0631','\u0623\u0643\u062a\u0648\u0628\u0631','\u0646\u0648\u0641\u0645\u0628\u0631','\u062f\u064a\u0633\u0645\u0628\u0631'];
+  var mnames=T?['\u064a\u0646\u0627\u064a\u0631','\u0641\u0628\u0631\u0627\u064a\u0631','\u0645\u0627\u0631\u0633','\u0623\u0628\u0631\u064a\u0644','\u0645\u0627\u064a\u0648','\u064a\u0648\u0646\u064a\u0648','\u064a\u0648\u0644\u064a\u0648','\u0623\u063a\u0633\u0637\u0633','\u0633\u0628\u062a\u0645\u0628\u0631','\u0623\u0643\u062a\u0648\u0628\u0631','\u0646\u0648\u0641\u0645\u0628\u0631','\u062f\u064a\u0633\u0645\u0628\u0631']:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   var h='';
   if(isViewer){
     var nurses=getNursesByRole();
-    h+='<div class="phdr"><div class="ptitle">\uD83D\uDCC6 '+(T?'\u062e\u0637\u0637 \u0627\u0644\u0625\u062c\u0627\u0632\u0627\u062a':'Leave Plans')+'<\/div><\/div>';
+    h+='<div class="phdr"><div class="ptitle">\uD83D\uDCC6 '+(T?'\u062e\u0637\u0637 \u0627\u0644\u0625\u062c\u0627\u0632\u0627\u062a':'Leave Plans')+'</div></div>';
     nurses.forEach(function(n){
       var plans=ALL_LP[n.id]||[];
-      h+='<div class="balcard"><div class="baltitle">'+n.name+' <span style="font-weight:400;color:var(--muted)">'+(n.dept||'')+'<\/span><\/div>';
+      h+='<div class="balcard"><div class="baltitle">'+n.name+' <span style="font-weight:400;color:var(--muted)">'+(n.dept||'')+'</span></div>';
       h+='<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-top:10px">';
       mnames.forEach(function(mn,mi){
         var mp=plans.filter(function(p){return new Date(p.date+'T00:00:00').getMonth()===mi;});
         var has=mp.length>0;
-        h+='<div style="padding:6px;border-radius:8px;text-align:center;border:1px solid '+(has?'rgba(16,185,129,.4)':'var(--b1)')+';background:'+(has?'var(--off-bg)':'transparent')+'"><div style="font-size:10px;color:var(--muted)">'+mn+'<\/div>';
-        if(has)h+='<div style="font-size:11px;font-weight:700;color:var(--green)">'+mp.length+' \u064a\u0648\u0645<\/div>';
-        else h+='<div style="font-size:10px;color:var(--dim)">\u2014<\/div>';
-        h+='<\/div>';
+        h+='<div style="padding:6px;border-radius:8px;text-align:center;border:1px solid '+(has?'rgba(16,185,129,.4)':'var(--b1)')+';background:'+(has?'var(--off-bg)':'transparent')+'"><div style="font-size:10px;color:var(--muted)">'+mn+'</div>';
+        if(has)h+='<div style="font-size:11px;font-weight:700;color:var(--green)">'+mp.length+' \u064a\u0648\u0645</div>';
+        else h+='<div style="font-size:10px;color:var(--dim)">\u2014</div>';
+        h+='</div>';
       });
-      h+='<\/div><\/div>';
+      h+='</div></div>';
     });
     pg.innerHTML=h;return;
   }
@@ -1423,18 +1413,17 @@ function renderLeave(){
     var nurse=ALL_P[uid];if(!nurse||nurse.dept!==ME.dept)return;
     ALL_LP[uid].forEach(function(p){if(!otherBooked[p.date])otherBooked[p.date]=[];otherBooked[p.date].push(nurse.name);});
   });
-  h+='<div class="phdr"><div class="ptitle">\uD83D\uDCC6 '+(T?'\u062e\u0637\u0629 \u0625\u062c\u0627\u0632\u0627\u062a\u064a':'My Leave Plan')+'<\/div><\/div>';
-  h+='<div class="balcard"><div class="baltitle">\u2795 '+(T?'\u0625\u0636\u0627\u0641\u0629 \u062a\u0627\u0631\u064a\u062e':'Add Date')+'<\/div>';
+  h+='<div class="phdr"><div class="ptitle">\uD83D\uDCC6 '+(T?'\u062e\u0637\u0629 \u0625\u062c\u0627\u0632\u0627\u062a\u064a':'My Leave Plan')+'</div></div>';
+  h+='<div class="balcard"><div class="baltitle">\u2795 '+(T?'\u0625\u0636\u0627\u0641\u0629 \u062a\u0627\u0631\u064a\u062e':'Add Date')+'</div>';
   h+='<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">';
   h+='<input type="date" id="lp-date" style="padding:8px;background:var(--s2);border:1px solid var(--b1);border-radius:7px;color:var(--text);font-size:13px;outline:none">';
-  h+='<select id="lp-type" style="padding:8px;background:var(--s2);border:1px solid var(--b1);border-radius:7px;color:var(--text);font-size:13px;outline:none">';
-  h+='<option value="annual_leave">'+(T?'\u0633\u0646\u0648\u064a\u0629':'Annual')+'<\/option><option value="sick">'+(T?'\u0645\u0631\u0636\u064a\u0629':'Sick')+'<\/option><option value="fitr">'+(T?'\u0641\u0637\u0631':'Eid')+'<\/option><option value="compensation">'+(T?'\u062a\u0639\u0648\u064a\u0636':'Comp')+'<\/option><\/select>';
-  h+='<button class="btn-sub" onclick="addLeavePlan()">'+(T?'\u0625\u0636\u0627\u0641\u0629':'Add')+'<\/button><\/div><\/div>';
-  h+='<div class="balcard"><div class="baltitle">\uD83D\uDCC5 '+(T?'\u062e\u0637\u062a\u064a':'My Plan')+'<\/div>';
+  h+='<select id="lp-type" style="padding:8px;background:var(--s2);border:1px solid var(--b1);border-radius:7px;color:var(--text);font-size:13px;outline:none"><option value="annual_leave">'+(T?'\u0633\u0646\u0648\u064a\u0629':'Annual')+'</option><option value="sick">'+(T?'\u0645\u0631\u0636\u064a\u0629':'Sick')+'</option><option value="fitr">'+(T?'\u0641\u0637\u0631':'Eid')+'</option><option value="compensation">'+(T?'\u062a\u0639\u0648\u064a\u0636':'Comp')+'</option></select>';
+  h+='<button class="btn-sub" onclick="addLeavePlan()">'+(T?'\u0625\u0636\u0627\u0641\u0629':'Add')+'</button></div></div>';
+  h+='<div class="balcard"><div class="baltitle">\uD83D\uDCC5 '+(T?'\u062e\u0637\u062a\u064a':'My Plan')+'</div>';
   h+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;margin-top:10px">';
   mnames.forEach(function(mn,mi){
     var dim=new Date(year,mi+1,0).getDate();
-    h+='<div style="border:1px solid var(--b1);border-radius:10px;overflow:hidden"><div style="background:var(--s2);padding:8px 12px;font-size:12px;font-weight:700">'+mn+'<\/div>';
+    h+='<div style="border:1px solid var(--b1);border-radius:10px;overflow:hidden"><div style="background:var(--s2);padding:8px 12px;font-size:12px;font-weight:700">'+mn+'</div>';
     h+='<div style="padding:8px;display:flex;flex-wrap:wrap;gap:3px">';
     for(var d=1;d<=dim;d++){
       var ds=year+'-'+String(mi+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
@@ -1443,23 +1432,23 @@ function renderLeave(){
       var isTaken=oth.length>0&&!isMy;
       var bg=isMy?'var(--green)':isTaken?'rgba(239,68,68,.2)':'var(--s3)';
       var col=isMy?'white':isTaken?'var(--red)':'var(--muted)';
-      h+='<div onclick="toggleLeavePlan(\''+ds+'\')" title="'+(isTaken?oth.join(','):'')+'" style="width:26px;height:26px;border-radius:5px;background:'+bg+';color:'+col+';display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;cursor:'+(isTaken?'not-allowed':'pointer')+'">'+d+'<\/div>';
+      h+='<div onclick="toggleLeavePlan(\''+ds+'\')" title="'+(isTaken?oth.join(','):'')+'" style="width:26px;height:26px;border-radius:5px;background:'+bg+';color:'+col+';display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;cursor:'+(isTaken?'not-allowed':'pointer')+'">'+d+'</div>';
     }
-    h+='<\/div><\/div>';
+    h+='</div></div>';
   });
-  h+='<\/div><\/div>';
+  h+='</div></div>';
   if(myPlans.length>0){
-    h+='<div class="balcard"><div class="baltitle">\uD83D\uDCCB '+(T?'\u0642\u0627\u0626\u0645\u062a\u064a':'List')+'<\/div>';
+    h+='<div class="balcard"><div class="baltitle">\uD83D\uDCCB '+(T?'\u0642\u0627\u0626\u0645\u062a\u064a':'List')+'</div>';
     myPlans.sort(function(a,b){return a.date>b.date?1:-1;}).forEach(function(p){
       var lbl=(SLBL[LANG]||SLBL.ar)[p.type]||p.type;
-      h+='<div class="brow"><span class="bl">'+p.date+'<\/span><span style="color:var(--green);font-size:11px">'+lbl+'<\/span><button onclick="deleteLeavePlan('+p.id+')" style="margin-right:auto;padding:2px 8px;background:rgba(239,68,68,.1);border:none;border-radius:5px;color:var(--red);cursor:pointer;font-size:10px">\u00d7<\/button><\/div>';
+      h+='<div class="brow"><span class="bl">'+p.date+'</span><span style="color:var(--green);font-size:11px">'+lbl+'</span><button onclick="deleteLeavePlan(\''+p.id+'\')" style="margin-right:auto;padding:2px 8px;background:rgba(239,68,68,.1);border:none;border-radius:5px;color:var(--red);cursor:pointer;font-size:10px">\u00d7</button></div>';
     });
-    h+='<\/div>';
+    h+='</div>';
   }
   pg.innerHTML=h;
 }
 
-function addLeavePlan(){
+window.addLeavePlan=async function(){
   var T=LANG==='ar';
   var date=document.getElementById('lp-date').value;
   var typeEl=document.getElementById('lp-type');
@@ -1467,129 +1456,111 @@ function addLeavePlan(){
   if(!date){toast(T?'\u0627\u062e\u062a\u0631 \u062a\u0627\u0631\u064a\u062e\u0627\u064b':'Select date','tw');return;}
   var isBooked=Object.keys(ALL_LP).some(function(uid){if(uid===ME.id)return false;var n=ALL_P[uid];if(!n||n.dept!==ME.dept)return false;return(ALL_LP[uid]||[]).some(function(p){return p.date===date;});});
   if(isBooked){toast(T?'\u0627\u0644\u062a\u0627\u0631\u064a\u062e \u0645\u062d\u062c\u0648\u0632':' Date taken','tw');return;}
-  sb.from('leave_plan').insert({nurse_id:ME.id,date:date,type:type}).then(function(r){
-    if(r.error)return toast(r.error.message,'td');
-    sb.from('leave_plan').select('*').eq('nurse_id',ME.id).then(function(r2){ALL_LP[ME.id]=r2.data||[];renderLeave();});
-    toast(T?'\u062a\u0645 \u0627\u0644\u0625\u0636\u0627\u0641\u0629 \u2713':'Added','ts');
-  });
-}
+  var ref=await fsAdd('leave_plan',{nurse_id:ME.id,date:date,type:type});
+  if(!ALL_LP[ME.id])ALL_LP[ME.id]=[];
+  ALL_LP[ME.id].push({id:ref.id,nurse_id:ME.id,date:date,type:type});
+  renderLeave();toast(T?'\u062a\u0645 \u0627\u0644\u0625\u0636\u0627\u0641\u0629 \u2713':'Added','ts');
+};
 
-function toggleLeavePlan(ds){
+window.toggleLeavePlan=async function(ds){
   var myPlans=ALL_LP[ME.id]||[];
   var existing=myPlans.find(function(p){return p.date===ds;});
-  if(existing){deleteLeavePlan(existing.id);return;}
+  if(existing){window.deleteLeavePlan(existing.id);return;}
   var isBooked=Object.keys(ALL_LP).some(function(uid){if(uid===ME.id)return false;var n=ALL_P[uid];if(!n||n.dept!==ME.dept)return false;return(ALL_LP[uid]||[]).some(function(p){return p.date===ds;});});
   if(isBooked){toast(LANG==='ar'?'\u0645\u062d\u062c\u0648\u0632':'Taken','tw');return;}
-  sb.from('leave_plan').insert({nurse_id:ME.id,date:ds,type:'annual_leave'}).then(function(r){
-    if(r.error)return toast(r.error.message,'td');
-    sb.from('leave_plan').select('*').eq('nurse_id',ME.id).then(function(r2){ALL_LP[ME.id]=r2.data||[];renderLeave();});
-  });
-}
+  var ref=await fsAdd('leave_plan',{nurse_id:ME.id,date:ds,type:'annual_leave'});
+  if(!ALL_LP[ME.id])ALL_LP[ME.id]=[];
+  ALL_LP[ME.id].push({id:ref.id,nurse_id:ME.id,date:ds,type:'annual_leave'});
+  renderLeave();
+};
 
-function deleteLeavePlan(id){
-  sb.from('leave_plan').delete().eq('id',id).then(function(r){
-    if(r.error)return toast(r.error.message,'td');
-    if(ALL_LP[ME.id])ALL_LP[ME.id]=ALL_LP[ME.id].filter(function(p){return p.id!==id;});
-    renderLeave();
-    toast(LANG==='ar'?'\u062a\u0645 \u0627\u0644\u062d\u0630\u0641':'Removed','ti');
-  });
-}
+window.deleteLeavePlan=async function(id){
+  await fsDel('leave_plan',id);
+  if(ALL_LP[ME.id])ALL_LP[ME.id]=ALL_LP[ME.id].filter(function(p){return p.id!==id;});
+  renderLeave();toast(LANG==='ar'?'\u062a\u0645 \u0627\u0644\u062d\u0630\u0641':'Removed','ti');
+};
 
 function renderAI(){
-  var pg=document.getElementById('pg-ai'),T=LANG==='ar';
-  if(!pg)return;
+  var pg=document.getElementById('pg-ai'),T=LANG==='ar';if(!pg)return;
   var nurses=Object.values(ALL_P).filter(function(p){return p.role==='nurse'&&p.dept===ME.dept;});
   var dept=ALL_D[ME.dept]||{m:3,e:3,n:3};
-  var h='<div class="phdr"><div><div class="ptitle">\uD83E\uDD16 '+(T?'\u062c\u062f\u0648\u0644 \u0630\u0643\u064a':'AI Schedule')+'<\/div><\/div>';
-  h+='<div class="mctrl"><button onclick="chMonth(-1)">\u203A<\/button><div class="mlbl">'+mN(MONTH)+'<\/div><button onclick="chMonth(1)">\u2039<\/button><\/div><\/div>';
-  h+='<div class="balcard">';
-  h+='<div style="font-size:12px;color:var(--muted);margin-bottom:12px">\u2600\uFE0F '+dept.m+'&nbsp; \uD83C\uDF06 '+dept.e+'&nbsp; \uD83C\uDF19 '+dept.n+'&nbsp; \uD83D\uDC69\u200D\u2695\uFE0F '+nurses.length+'<\/div>';
-  h+='<label style="font-size:11px;color:var(--muted);display:block;margin-bottom:6px">'+(T?'\u0637\u0644\u0628 \u062e\u0627\u0635 (\u0627\u062e\u062a\u064a\u0627\u0631\u064a)':'Special request (optional)')+'<\/label>';
-  h+='<textarea id="ai-req" rows="3" style="width:100%;padding:10px;background:var(--s2);border:1px solid var(--b1);border-radius:8px;color:var(--text);font-family:Tajawal,sans-serif;font-size:13px;outline:none;resize:vertical"><\/textarea>';
-  h+='<button class="btn-sub" onclick="generateAISchedule()" id="ai-btn" style="width:100%;margin-top:12px">\uD83E\uDD16 '+(T?'\u062a\u0648\u0644\u064a\u062f \u0627\u0644\u062c\u062f\u0648\u0644':'Generate Schedule')+'<\/button><\/div>';
-  h+='<div id="ai-result"><\/div>';
+  var h='<div class="phdr"><div><div class="ptitle">\uD83E\uDD16 '+(T?'\u062c\u062f\u0648\u0644 \u0630\u0643\u064a':'AI Schedule')+'</div></div>';
+  h+='<div class="mctrl"><button onclick="chMonth(-1)">\u203A</button><div class="mlbl">'+mN(MONTH)+'</div><button onclick="chMonth(1)">\u2039</button></div></div>';
+  h+='<div class="balcard"><div style="font-size:12px;color:var(--muted);margin-bottom:12px">\u2600\uFE0F '+dept.m+'&nbsp; \uD83C\uDF06 '+dept.e+'&nbsp; \uD83C\uDF19 '+dept.n+'&nbsp; \uD83D\uDC69\u200D\u2695\uFE0F '+nurses.length+'</div>';
+  h+='<label style="font-size:11px;color:var(--muted);display:block;margin-bottom:6px">'+(T?'\u0637\u0644\u0628 \u062e\u0627\u0635 (\u0627\u062e\u062a\u064a\u0627\u0631\u064a)':'Special request (optional)')+'</label>';
+  h+='<textarea id="ai-req" rows="3" style="width:100%;padding:10px;background:var(--s2);border:1px solid var(--b1);border-radius:8px;color:var(--text);font-family:Tajawal,sans-serif;font-size:13px;outline:none;resize:vertical"></textarea>';
+  h+='<button class="btn-sub" onclick="generateAISchedule()" id="ai-btn" style="width:100%;margin-top:12px">\uD83E\uDD16 '+(T?'\u062a\u0648\u0644\u064a\u062f \u0627\u0644\u062c\u062f\u0648\u0644':'Generate Schedule')+'</button></div>';
+  h+='<div id="ai-result"></div>';
   pg.innerHTML=h;
 }
 
-function generateAISchedule(){
+window.generateAISchedule=async function(){
   var T=LANG==='ar';
   var btn=document.getElementById('ai-btn');if(!btn)return;
-  var reqEl=document.getElementById('ai-req');
-  var req=reqEl?reqEl.value:'';
+  var reqEl=document.getElementById('ai-req');var req=reqEl?reqEl.value:'';
   var nurses=Object.values(ALL_P).filter(function(p){return p.role==='nurse'&&p.dept===ME.dept;});
   var y=MONTH.getFullYear(),m=MONTH.getMonth();
   var daysInMonth=new Date(y,m+1,0).getDate();
   var dept=ALL_D[ME.dept]||{m:3,e:3,n:3};
-  btn.disabled=true;
-  btn.innerHTML='<span class="loader"><\/span> '+(T?'\u062c\u0627\u0631\u064d...':'Generating...');
-  var leaveInfo=nurses.map(function(n){
-    var plans=(ALL_LP[n.id]||[]).filter(function(p){var dt=new Date(p.date+'T00:00:00');return dt.getFullYear()===y&&dt.getMonth()===m;}).map(function(p){return p.date.slice(8);});
-    return n.name+(plans.length?' (off:'+plans.join(',')+')':'');
-  }).join('; ');
+  btn.disabled=true;btn.innerHTML='<span class="loader"></span> '+(T?'\u062c\u0627\u0631\u064d...':'Generating...');
+  var leaveInfo=nurses.map(function(n){var plans=(ALL_LP[n.id]||[]).filter(function(p){var dt=new Date(p.date+'T00:00:00');return dt.getFullYear()===y&&dt.getMonth()===m;}).map(function(p){return p.date.slice(8);});return n.name+(plans.length?' (off:'+plans.join(',')+')':'');}).join('; ');
   var prompt='Create a '+daysInMonth+'-day nurse schedule for '+mN(MONTH)+'.\nNurses: '+nurses.map(function(n){return n.name;}).join(', ')+'\nDaily needs: morning='+dept.m+', evening='+dept.e+', night='+dept.n+'\nLeave info: '+leaveInfo+(req?'\nSpecial: '+req:'')+'\nRules: min 6 rest days, fair distribution, max 3 consecutive same shifts, respect leaves.\nReturn ONLY JSON: {"schedule":{"NurseName":{"1":"morning","2":"off",...all '+daysInMonth+' days}},"summary":"Arabic summary"}';
-  fetch('https://api.anthropic.com/v1/messages',{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:4000,messages:[{role:'user',content:prompt}]})
-  }).then(function(r){return r.json();}).then(function(data){
+  try{
+    var response=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:4000,messages:[{role:'user',content:prompt}]})});
+    var data=await response.json();
     btn.disabled=false;btn.textContent='\uD83E\uDD16 '+(T?'\u062a\u0648\u0644\u064a\u062f \u062c\u062f\u064a\u062f':'Regenerate');
     var text=data.content&&data.content[0]&&data.content[0].text||'';
-    try{
-      var jm=text.match(/\{[\s\S]*\}/);if(!jm)throw new Error('no json');
-      var result=JSON.parse(jm[0]);
-      window._aiSchedule={schedule:result.schedule,nurses:nurses,y:y,m:m,days:daysInMonth};
-      showAIResult(result.schedule,result.summary||'',daysInMonth);
-    }catch(e){
-      var el=document.getElementById('ai-result');
-      if(el)el.innerHTML='<div class="balcard"><div class="baltitle">AI<\/div><div style="white-space:pre-wrap;font-size:12px;color:var(--muted);max-height:300px;overflow-y:auto">'+text.substring(0,2000)+'<\/div><\/div>';
-    }
-  }).catch(function(e){
+    var jm=text.match(/\{[\s\S]*\}/);if(!jm)throw new Error('no json');
+    var result=JSON.parse(jm[0]);
+    window._aiSchedule={schedule:result.schedule,nurses:nurses,y:y,m:m,days:daysInMonth};
+    showAIResult(result.schedule,result.summary||'',daysInMonth);
+  }catch(e){
     btn.disabled=false;btn.textContent='\uD83E\uDD16';
     var el=document.getElementById('ai-result');
-    if(el)el.innerHTML='<div class="alert ae">\u26A0\uFE0F '+e.message+'<\/div>';
-  });
-}
+    if(el)el.innerHTML='<div class="alert ae">\u26A0\uFE0F '+e.message+'</div>';
+  }
+};
 
 function showAIResult(schedule,summary,daysInMonth){
   var T=LANG==='ar',el=document.getElementById('ai-result');if(!el)return;
-  var h='<div class="balcard"><div class="baltitle">\u2705 '+(T?'\u0627\u0644\u062c\u062f\u0648\u0644 \u0627\u0644\u0645\u0642\u062a\u0631\u062d':'Proposed Schedule')+'<\/div>';
-  if(summary)h+='<div style="padding:10px;background:var(--blue-bg);border-radius:8px;font-size:12px;color:var(--blue);margin-bottom:12px">'+summary+'<\/div>';
-  h+='<div class="twrap"><table><thead><tr><th>'+(T?'\u0627\u0644\u0645\u0645\u0631\u0636\u0629':'Nurse')+'<\/th>';
-  for(var d=1;d<=daysInMonth;d++)h+='<th>'+d+'<\/th>';
-  h+='<\/tr><\/thead><tbody>';
-  Object.keys(schedule).forEach(function(nm){
-    var sh=schedule[nm];
-    h+='<tr><td style="white-space:nowrap;font-weight:700">'+nm+'<\/td>';
-    for(var d=1;d<=daysInMonth;d++){var sv=sh[String(d)]||sh[d]||'off';h+='<td><span class="sp '+(SCLS[sv]||'po')+'">'+(SICO[sv]||sv.slice(0,1))+'<\/span><\/td>';}
-    h+='<\/tr>';
-  });
-  h+='<\/tbody><\/table><\/div>';
-  h+='<div style="display:flex;gap:10px;margin-top:16px"><button class="btn-sub" onclick="applyAISchedule()">\u2705 '+(T?'\u062a\u0637\u0628\u064a\u0642':'Apply')+'<\/button><button class="btn-no" style="padding:10px 16px;border-radius:9px" onclick="renderAI()">\uD83D\uDD04 '+(T?'\u0625\u0639\u0627\u062f\u0629':'Retry')+'<\/button><\/div><\/div>';
+  var h='<div class="balcard"><div class="baltitle">\u2705 '+(T?'\u0627\u0644\u062c\u062f\u0648\u0644 \u0627\u0644\u0645\u0642\u062a\u0631\u062d':'Proposed Schedule')+'</div>';
+  if(summary)h+='<div style="padding:10px;background:var(--blue-bg);border-radius:8px;font-size:12px;color:var(--blue);margin-bottom:12px">'+summary+'</div>';
+  h+='<div class="twrap"><table><thead><tr><th>'+(T?'\u0627\u0644\u0645\u0645\u0631\u0636\u0629':'Nurse')+'</th>';
+  for(var d=1;d<=daysInMonth;d++)h+='<th>'+d+'</th>';
+  h+='</tr></thead><tbody>';
+  Object.keys(schedule).forEach(function(nm){var sh=schedule[nm];h+='<tr><td style="white-space:nowrap;font-weight:700">'+nm+'</td>';for(var d=1;d<=daysInMonth;d++){var sv=sh[String(d)]||sh[d]||'off';h+='<td><span class="sp '+(SCLS[sv]||'po')+'">'+(SICO[sv]||sv.slice(0,1))+'</span></td>';}h+='</tr>';});
+  h+='</tbody></table></div>';
+  h+='<div style="display:flex;gap:10px;margin-top:16px"><button class="btn-sub" onclick="applyAISchedule()">\u2705 '+(T?'\u062a\u0637\u0628\u064a\u0642':'Apply')+'</button><button class="btn-no" style="padding:10px 16px;border-radius:9px" onclick="renderAI()">\uD83D\uDD04 '+(T?'\u0625\u0639\u0627\u062f\u0629':'Retry')+'</button></div></div>';
   el.innerHTML=h;
 }
 
-function applyAISchedule(){
+window.applyAISchedule=async function(){
   var T=LANG==='ar';
   if(!window._aiSchedule){toast(T?'\u0644\u0627 \u064a\u0648\u062c\u062f \u062c\u062f\u0648\u0644':'No schedule','tw');return;}
   var ref=window._aiSchedule;
   if(!confirm(T?'\u062a\u0637\u0628\u064a\u0642 \u0627\u0644\u062c\u062f\u0648\u0644 \u0639\u0644\u0649 \u062c\u0645\u064a\u0639 \u0627\u0644\u0645\u0645\u0631\u0636\u0627\u062a\u061f':'Apply to all nurses?'))return;
-  var toUpsert=[];
-  ref.nurses.forEach(function(nurse){
-    var sh=ref.schedule[nurse.name];if(!sh)return;
-    Object.keys(sh).forEach(function(day){
-      var shift=sh[day];if(!shift||shift==='off')return;
+  var count=0;
+  for(var i=0;i<ref.nurses.length;i++){
+    var nurse=ref.nurses[i];
+    var sh=ref.schedule[nurse.name];if(!sh)continue;
+    var days=Object.keys(sh);
+    for(var j=0;j<days.length;j++){
+      var day=days[j];var shift=sh[day];if(!shift||shift==='off')continue;
       var ds=ref.y+'-'+String(ref.m+1).padStart(2,'0')+'-'+String(parseInt(day)).padStart(2,'0');
-      toUpsert.push({nurse_id:nurse.id,date:ds,shift:shift,flag:null});
-    });
-  });
-  if(!toUpsert.length){toast(T?'\u0644\u0627 \u0628\u064a\u0627\u0646\u0627\u062a':'No data','tw');return;}
-  sb.from('schedules').upsert(toUpsert,{onConflict:'nurse_id,date'}).then(function(r){
-    if(r.error)return toast(r.error.message,'td');
-    toUpsert.forEach(function(x){if(!ALL_S[x.nurse_id])ALL_S[x.nurse_id]={};ALL_S[x.nurse_id][x.date]={shift:x.shift,flag:null};});
-    toast((T?'\u062a\u0645 \u062a\u0637\u0628\u064a\u0642 ':'Applied ')+toUpsert.length+(T?' \u064a\u0648\u0645 \u2713':' days'),'ts');
-    switchPg('pg-team');
-  });
-}
+      var docRef=await fsAdd('schedules',{nurse_id:nurse.id,date:ds,shift:shift,flag:null});
+      if(!ALL_S[nurse.id])ALL_S[nurse.id]={};
+      ALL_S[nurse.id][ds]={shift:shift,flag:null,docId:docRef.id};
+      count++;
+    }
+  }
+  toast((T?'\u062a\u0645 \u062a\u0637\u0628\u064a\u0642 ':'Applied ')+count+(T?' \u064a\u0648\u0645 \u2713':' days'),'ts');
+  switchPg('pg-team');
+};
+
+// ── INIT ──
+onAuthStateChanged(auth,async function(user){
+  if(user){await loadMe(user.uid);}
+});
 
 </script>
 </body>
