@@ -453,15 +453,7 @@ async function fsSet(col,id,data){await setDoc(doc(db,col,id),data,{merge:true})
 async function fsAdd(col,data){return await addDoc(collection(db,col),data);}
 async function fsDel(col,id){await deleteDoc(doc(db,col,id));}
 
-// ── AUTH ──
-// ── HELPERS ──
-function SL(k){return(SLBL[LANG]||SLBL.ar)[k]||k;}
-function p2(n){return String(n).padStart(2,'0');}
-function mN(d){if(!d||!(d instanceof Date)||isNaN(d.getTime()))return '';return d.toLocaleDateString('ar-SA',{month:'long',year:'numeric'});}
-function toast(msg,type){var t=document.getElementById('toast');if(!t)return;t.textContent=msg;t.className='toast '+(type||'ti')+' show';setTimeout(function(){t.classList.remove('show');},3000);}
-
-// ── THEME INIT ──
-(function(){var t=localStorage.getItem('nf-theme');if(t==='light')document.documentElement.setAttribute('data-theme','light');})();
+// ── FIREBASE HELPERS (auth section) ──
 
 // ── FIREBASE HELPERS ──
 async function fsGet(col,id){var snap=await getDoc(doc(db,col,id));return snap.exists()?{id:snap.id,...snap.data()}:null;}
