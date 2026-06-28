@@ -453,23 +453,8 @@ async function fsSet(col,id,data){await setDoc(doc(db,col,id),data,{merge:true})
 async function fsAdd(col,data){return await addDoc(collection(db,col),data);}
 async function fsDel(col,id){await deleteDoc(doc(db,col,id));}
 
-// ── FIREBASE HELPERS (auth section) ──
-
-// ── FIREBASE HELPERS ──
-async function fsGet(col,id){var snap=await getDoc(doc(db,col,id));return snap.exists()?{id:snap.id,...snap.data()}:null;}
-async function fsGetAll(col){var snap=await getDocs(collection(db,col));return snap.docs.map(function(d){return{id:d.id,...d.data()};});}
-async function fsSet(col,id,data){await setDoc(doc(db,col,id),data,{merge:true});}
-async function fsAdd(col,data){return await addDoc(collection(db,col),data);}
-async function fsDel(col,id){await deleteDoc(doc(db,col,id));}
-
 // ── AUTH ──
-onAuthStateChanged(auth,function(user){
-  if(!user){
-    ME=null;
-    document.getElementById('login').style.display='flex';
-    document.getElementById('app').style.display='none';
-  }
-});
+// ── AUTH STATE ──
 
 window.doLogin=async function(){
   var em=document.getElementById('li-em').value.trim().toLowerCase();
@@ -1436,6 +1421,11 @@ window.applyAISchedule=async function(){
 // ── INIT ──
 onAuthStateChanged(auth,async function(user){
   if(user){await loadMe(user.uid);}
+  else{
+    ME=null;
+    document.getElementById('login').style.display='flex';
+    document.getElementById('app').style.display='none';
+  }
 });
 
 </script>
