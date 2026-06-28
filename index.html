@@ -357,7 +357,7 @@ tbody td:first-child{text-align:right;padding-right:14px}
     <div class="th-right">
       <button class="th-btn" id="theme-btn" onclick="toggleTheme()" style="display:none">🌙</button>
       <button class="th-btn" id="lang-btn" onclick="toggleLang()">AR</button>
-      <div class="th-user">
+      <div class="th-user" onclick="switchPg('pg-profile')" title="الملف الشخصي">
         <div class="th-av" id="u-av"></div>
         <div><div class="th-uname" id="u-nm"></div><div class="th-urole" id="u-rl"></div></div>
       </div>
@@ -382,6 +382,8 @@ tbody td:first-child{text-align:right;padding-right:14px}
     <div id="pg-admin" class="pg"></div>
     <div id="pg-leave" class="pg"></div>
     <div id="pg-ai" class="pg"></div>
+    <div id="pg-roles" class="pg"></div>
+    <div id="pg-profile" class="pg"></div>
   </div>
 </div>
 
@@ -522,8 +524,8 @@ function buildNav(){
   var tabs={
     nurse:[['\uD83C\uDFE0 '+(T?'\u0627\u0644\u0631\u0626\u064a\u0633\u064a\u0629':'Dashboard'),'pg-dash'],['\uD83D\uDCC5 '+(T?'\u062c\u062f\u0648\u0644\u064a':'My Schedule'),'pg-my'],['\uD83D\uDD04 '+(T?'\u062a\u0628\u0627\u062f\u0644':'Swap'),'pg-swap']],
     head_nurse:[['\uD83C\uDFE0 '+(T?'\u0627\u0644\u0631\u0626\u064a\u0633\u064a\u0629':'Dashboard'),'pg-dash'],['\uD83D\uDD0D '+(T?'\u0645\u0631\u0627\u062c\u0639\u0629':'Review'),'pg-review',1],['\uD83D\uDCCB '+(T?'\u062a\u0642\u0631\u064a\u0631':'Report'),'pg-report'],['\uD83D\uDCC5 '+(T?'\u0627\u0644\u062c\u062f\u0648\u0644':'Schedule'),'pg-team'],['\uD83D\uDCCA '+(T?'\u062a\u063a\u0637\u064a\u0629':'Coverage'),'pg-overview']],
-    manager:[['\uD83C\uDFE0 '+(T?'\u0627\u0644\u0631\u0626\u064a\u0633\u064a\u0629':'Dashboard'),'pg-dash'],['\u2705 '+(T?'\u0645\u0648\u0627\u0641\u0642\u0629':'Approval'),'pg-approve',1],['\uD83D\uDCCB '+(T?'\u062a\u0642\u0631\u064a\u0631':'Report'),'pg-report'],['\uD83D\uDCCA '+(T?'\u062a\u063a\u0637\u064a\u0629':'Coverage'),'pg-overview'],['\uD83D\uDCC5 '+(T?'\u0627\u0644\u062c\u062f\u0648\u0644':'Schedule'),'pg-team']],
-    admin:[['\uD83C\uDFE0 '+(T?'\u0627\u0644\u0631\u0626\u064a\u0633\u064a\u0629':'Dashboard'),'pg-dash'],['\uD83D\uDD11 '+(T?'\u0625\u062f\u0627\u0631\u0629':'Admin'),'pg-admin'],['\uD83D\uDCE4 '+(T?'\u0631\u0641\u0639':'Upload'),'pg-upload'],['\u2705 '+(T?'\u0645\u0648\u0627\u0641\u0642\u0629':'Approval'),'pg-approve',1],['\uD83D\uDCCB '+(T?'\u062a\u0642\u0631\u064a\u0631':'Report'),'pg-report'],['\uD83D\uDCCA '+(T?'\u062a\u063a\u0637\u064a\u0629':'Coverage'),'pg-overview'],['\uD83D\uDCC5 '+(T?'\u0627\u0644\u062c\u062f\u0648\u0644':'Schedule'),'pg-team']]
+    manager:[['\uD83C\uDFE0 '+(T?'\u0627\u0644\u0631\u0626\u064a\u0633\u064a\u0629':'Dashboard'),'pg-dash'],['\u2705 '+(T?'\u0645\u0648\u0627\u0641\u0642\u0629':'Approval'),'pg-approve',1],['\uD83D\uDCCB '+(T?'\u062a\u0642\u0631\u064a\u0631':'Report'),'pg-report'],['\uD83D\uDCCA '+(T?'\u062a\u063a\u0637\u064a\u0629':'Coverage'),'pg-overview'],['\uD83D\uDCC5 '+(T?'\u0627\u0644\u062c\u062f\u0648\u0644':'Schedule'),'pg-team'],['\uD83D\uDC65 '+(T?'\u0625\u062f\u0627\u0631\u0629 \u0627\u0644\u0623\u062f\u0648\u0627\u0631':'Roles'),'pg-roles']],
+    admin:[['\uD83C\uDFE0 '+(T?'\u0627\u0644\u0631\u0626\u064a\u0633\u064a\u0629':'Dashboard'),'pg-dash'],['\uD83D\uDD11 '+(T?'\u0625\u062f\u0627\u0631\u0629':'Admin'),'pg-admin'],['\uD83D\uDCE4 '+(T?'\u0631\u0641\u0639':'Upload'),'pg-upload'],['\u2705 '+(T?'\u0645\u0648\u0627\u0641\u0642\u0629':'Approval'),'pg-approve',1],['\uD83D\uDCCB '+(T?'\u062a\u0642\u0631\u064a\u0631':'Report'),'pg-report'],['\uD83D\uDCCA '+(T?'\u062a\u063a\u0637\u064a\u0629':'Coverage'),'pg-overview'],['\uD83D\uDCC5 '+(T?'\u0627\u0644\u062c\u062f\u0648\u0644':'Schedule'),'pg-team'],['\uD83D\uDC65 '+(T?'\u0625\u062f\u0627\u0631\u0629 \u0627\u0644\u0623\u062f\u0648\u0627\u0631':'Roles'),'pg-roles']]
   };
   var list=tabs[ME.role]||[];
   var html='';
@@ -574,6 +576,8 @@ function render(){
   else if(id==='pg-admin')renderAdmin();
   else if(id==='pg-leave')renderLeave();
   else if(id==='pg-ai')renderAI();
+  else if(id==='pg-roles')renderRoles();
+  else if(id==='pg-profile')renderProfile();
   updateBadges();
 }
 
@@ -1419,7 +1423,90 @@ window.applyAISchedule=async function(){
 };
 
 // ── INIT ──
-onAuthStateChanged(auth,async function(user){
+// ── PROFILE ──
+function renderProfile(){
+  var pg=document.getElementById('pg-profile'),T=LANG==='ar';if(!pg)return;
+  var roleLabel={nurse:T?'\u0645\u0645\u0631\u0636\u0629':'Nurse',head_nurse:'Head Nurse',manager:'Manager',admin:'Admin'};
+  pg.innerHTML='<div class="phdr"><div><div class="ptitle">\uD83D\uDC64 '+(T?'\u0627\u0644\u0645\u0644\u0641 \u0627\u0644\u0634\u062e\u0635\u064a':'My Profile')+'</div></div></div>'
+  +'<div style="max-width:480px">'
+  +'<div class="balcard" style="text-align:center;padding:32px">'
+  +'<div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--navy),var(--blue));display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;color:white;margin:0 auto 16px">'+ME.name.slice(0,2)+'</div>'
+  +'<div style="font-size:20px;font-weight:800;color:var(--navy);margin-bottom:4px">'+ME.name+'</div>'
+  +'<div style="font-size:13px;color:var(--muted);margin-bottom:4px">'+ME.email+'</div>'
+  +'<span class="stpl st-rv">'+roleLabel[ME.role]+'</span>'
+  +(ME.dept?'<div style="font-size:12px;color:var(--muted);margin-top:8px">\uD83C\uDFE5 '+ME.dept+'</div>':'')
+  +'</div>'
+  +'<div class="balcard">'
+  +'<div class="baltitle">\uD83D\uDD12 '+(T?'\u062a\u063a\u064a\u064a\u0631 \u0643\u0644\u0645\u0629 \u0627\u0644\u0645\u0631\u0648\u0631':'Change Password')+'</div>'
+  +'<div class="fld" style="margin-bottom:14px"><label style="display:block;font-size:12px;font-weight:700;color:var(--text2);margin-bottom:6px">'+(T?'\u0643\u0644\u0645\u0629 \u0627\u0644\u0645\u0631\u0648\u0631 \u0627\u0644\u062c\u062f\u064a\u062f\u0629':'New Password')+'</label>'
+  +'<input type="password" id="pw-new" placeholder="••••••••" style="width:100%;padding:11px 14px;background:#f8fafc;border:1.5px solid var(--border2);border-radius:10px;color:var(--text);font-family:Tajawal,sans-serif;font-size:14px;outline:none"></div>'
+  +'<div class="fld" style="margin-bottom:18px"><label style="display:block;font-size:12px;font-weight:700;color:var(--text2);margin-bottom:6px">'+(T?'\u062a\u0623\u0643\u064a\u062f \u0643\u0644\u0645\u0629 \u0627\u0644\u0645\u0631\u0648\u0631':'Confirm Password')+'</label>'
+  +'<input type="password" id="pw-confirm" placeholder="••••••••" style="width:100%;padding:11px 14px;background:#f8fafc;border:1.5px solid var(--border2);border-radius:10px;color:var(--text);font-family:Tajawal,sans-serif;font-size:14px;outline:none"></div>'
+  +'<button class="btn-sub" onclick="changePassword()" style="width:100%">'+(T?'\u062d\u0641\u0638 \u0643\u0644\u0645\u0629 \u0627\u0644\u0645\u0631\u0648\u0631 \u0627\u0644\u062c\u062f\u064a\u062f\u0629':'Save New Password')+'</button>'
+  +'</div></div>';
+}
+
+window.changePassword=async function(){
+  var T=LANG==='ar';
+  var np=document.getElementById('pw-new').value;
+  var cp=document.getElementById('pw-confirm').value;
+  if(!np||np.length<6){toast(T?'\u0643\u0644\u0645\u0629 \u0627\u0644\u0645\u0631\u0648\u0631 \u064a\u062c\u0628 \u0623\u0646 \u062a\u0643\u0648\u0646 6 \u0623\u062d\u0631\u0641 \u0639\u0644\u0649 \u0627\u0644\u0623\u0642\u0644':'Min 6 characters','tw');return;}
+  if(np!==cp){toast(T?'\u0643\u0644\u0645\u062a\u0627 \u0627\u0644\u0645\u0631\u0648\u0631 \u063a\u064a\u0631 \u0645\u062a\u0637\u0627\u0628\u0642\u062a\u064a\u0646':'Passwords do not match','tw');return;}
+  try{
+    var {updatePassword}=await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
+    await updatePassword(auth.currentUser,np);
+    document.getElementById('pw-new').value='';
+    document.getElementById('pw-confirm').value='';
+    toast(T?'\u062a\u0645 \u062a\u063a\u064a\u064a\u0631 \u0643\u0644\u0645\u0629 \u0627\u0644\u0645\u0631\u0648\u0631 \u2713':'Password changed \u2713','ts');
+  }catch(e){
+    if(e.code==='auth/requires-recent-login'){
+      toast(T?'\u064a\u0631\u062c\u0649 \u062a\u0633\u062c\u064a\u0644 \u0627\u0644\u062e\u0631\u0648\u062c \u0648\u0627\u0644\u062f\u062e\u0648\u0644 \u0645\u062c\u062f\u062f\u0627\u064b':'Please sign out and sign in again','tw');
+    }else{toast(e.message,'td');}
+  }
+};
+function renderRoles(){
+  var pg=document.getElementById('pg-roles'),T=LANG==='ar';if(!pg)return;
+  if(ME.role!=='manager'&&ME.role!=='admin'){pg.innerHTML='';return;}
+  var staff=Object.values(ALL_P).filter(function(p){
+    if(ME.role==='manager'){var d=ALL_MD[ME.id]||[];return(p.role==='nurse'||p.role==='head_nurse')&&d.indexOf(p.dept)>=0;}
+    return p.role==='nurse'||p.role==='head_nurse';
+  });
+  var byDept={};
+  staff.forEach(function(p){var d=p.dept||T?'\u063a\u064a\u0631 \u0645\u062d\u062f\u062f':'Unassigned';if(!byDept[d])byDept[d]=[];byDept[d].push(p);});
+  var h='<div class="phdr"><div><div class="ptitle">\uD83D\uDC65 '+(T?'\u0625\u062f\u0627\u0631\u0629 \u0623\u062f\u0648\u0627\u0631 \u0627\u0644\u0645\u0648\u0638\u0641\u064a\u0646':'Staff Role Management')+'</div>';
+  h+='<div class="psub">'+(T?'\u062a\u063a\u064a\u064a\u0631 \u0627\u0644\u062f\u0648\u0631 \u0628\u064a\u0646 \u0645\u0645\u0631\u0636\u0629 \u0648\u0647\u064a\u062f \u0646\u064a\u0631\u0633':'Change role between Nurse and Head Nurse')+'</div></div></div>';
+  Object.keys(byDept).forEach(function(dept){
+    h+='<div class="balcard"><div class="baltitle">\uD83C\uDFE5 '+dept+' <span style="color:var(--muted);font-weight:400;font-size:12px">('+byDept[dept].length+')</span></div>';
+    byDept[dept].forEach(function(p){
+      var isHN=p.role==='head_nurse';
+      h+='<div class="brow">';
+      h+='<div style="display:flex;align-items:center;gap:10px">';
+      h+='<div class="mav">'+p.name.slice(0,2)+'</div>';
+      h+='<div><div style="font-weight:700;font-size:13px;color:var(--navy)">'+p.name+'</div>';
+      h+='<div style="font-size:11px;color:var(--muted)">'+p.dept+'</div></div></div>';
+      h+='<div style="display:flex;align-items:center;gap:10px">';
+      h+='<span class="stpl '+(isHN?'st-rv':'st-d')+'">'+(isHN?(T?'\u0647\u064a\u062f \u0646\u064a\u0631\u0633':'Head Nurse'):(T?'\u0645\u0645\u0631\u0636\u0629':'Nurse'))+'</span>';
+      h+='<button onclick="toggleRole(\''+p.id+'\',\''+p.role+'\')" style="padding:6px 14px;border-radius:8px;border:1.5px solid '+(isHN?'var(--amber)':'var(--blue)')+';background:'+(isHN?'var(--amber-lt)':'var(--blue-lt)')+';color:'+(isHN?'var(--amber)':'var(--blue)')+';font-family:Tajawal,sans-serif;font-size:12px;font-weight:700;cursor:pointer">';
+      h+=(isHN?(T?'\u2193 \u062a\u062d\u0648\u064a\u0644 \u0644\u0645\u0645\u0631\u0636\u0629':'\u2193 To Nurse'):(T?'\u2191 \u062a\u0639\u064a\u064a\u0646 \u0647\u064a\u062f \u0646\u064a\u0631\u0633':'\u2191 To Head Nurse'))+'</button>';
+      h+='</div></div>';
+    });
+    h+='</div>';
+  });
+  if(!staff.length)h+='<div class="balcard" style="text-align:center;color:var(--muted);padding:40px">'+(T?'\u0644\u0627 \u064a\u0648\u062c\u062f \u0645\u0648\u0638\u0641\u0648\u0646':'No staff found')+'</div>';
+  pg.innerHTML=h;
+}
+
+window.toggleRole=async function(uid,currentRole){
+  var T=LANG==='ar';
+  var newRole=currentRole==='head_nurse'?'nurse':'head_nurse';
+  var name=ALL_P[uid]&&ALL_P[uid].name||uid;
+  var msg=T?('\u062a\u063a\u064a\u064a\u0631 \u062f\u0648\u0631 '+name+' \u0625\u0644\u0649 '+(newRole==='head_nurse'?'\u0647\u064a\u062f \u0646\u064a\u0631\u0633':'\u0645\u0645\u0631\u0636\u0629')+'?'):('Change '+name+' to '+(newRole==='head_nurse'?'Head Nurse':'Nurse')+'?');
+  if(!confirm(msg))return;
+  await fsSet('user_profiles',uid,{role:newRole});
+  if(ALL_P[uid])ALL_P[uid].role=newRole;
+  toast(T?'\u062a\u0645 \u062a\u063a\u064a\u064a\u0631 \u0627\u0644\u062f\u0648\u0631 \u2713':'Role updated \u2713','ts');
+  renderRoles();
+};
   if(user){await loadMe(user.uid);}
   else{
     ME=null;
