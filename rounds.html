@@ -323,10 +323,11 @@ function seesAll(u){return isMultiDept(u);}
 function userDepts(u){
   if(!u)return[];
   if(u.role==='tech'||u.role==='head')return u.dept?[u.dept]:[];
-  const d=u.depts||[];
+  // sup/admin: no depts field at all = legacy account → treat as all departments
+  const d=(u.depts==null)?['*']:u.depts;
   return d.includes('*')?DEPT_AR.slice():d;
 }
-function seesAllDepts(u){return isMultiDept(u)&&(u.depts||[]).includes('*');}
+function seesAllDepts(u){return !!u&&isMultiDept(u)&&(u.depts==null||u.depts.includes('*'));}
 function canManageProblems(u){return !!u&&['head','sup','admin'].includes(u.role);}
 function canManageUsers(u){return !!u&&u.role==='admin';}
 function canExport(u){return !!u&&['head','sup','admin'].includes(u.role);}
@@ -380,7 +381,7 @@ const I18N={
   sec_trend:'اتجاه الرضا عبر الفترات',sec_strengths:'نقاط القوة والضعف حسب البند',sec_issue_status:'حالة المشاكل (الفترة الحالية)',bar_resolved:'تم الحل',bar_escalated:'مُصعّدة',bar_open:'مفتوحة',sec_by_dept:'حسب القسم (كل الفترات)',no_rounds_period:'لا توجد جولات في هذه الفترة.',no_rounds_yet:'لا توجد جولات مسجّلة بعد.',rounds_unit:'جولة',
   pl_daily:'اليوم',pl_weekly:'هذا الأسبوع',pl_monthly:'هذا الشهر',pl_quarterly:'هذا الربع',pl_yearly:'هذي السنة',week_prefix:'أسبوع',quarter_prefix:'ربع',
   um_title:'إدارة المستخدمين',um_sub:'أنشئي حسابات الموظفات وحدّدي دور كل وحدة وقسمها. لا أحد يدخل النظام إلا من تنشئينه هنا.',loading:'جارِ التحميل…',add_staff:'إضافة موظفة جديدة',f_name:'الاسم',f_name_ph:'الاسم الكامل',f_temp_pass:'كلمة المرور المؤقتة',f_pass_ph:'٦ أحرف على الأقل',f_role:'الدور',f_dept_allowed:'الأقسام المسموح بالاطّلاع عليها',depts_hint:'أشّري الأقسام اللي يقدر هذا الحساب يطّلع عليها، أو اختاري «كل الأقسام».',create_account:'➕ إنشاء الحساب',creating:'جارِ الإنشاء…',accounts_word:'الحسابات ({n})',th_name:'الاسم',th_email:'البريد',th_role:'الدور',th_dept2:'القسم',no_users:'لا يوجد مستخدمون بعد',you_label:'أنتِ',revoke_access:'إلغاء الوصول',users_note:'ملاحظة: «إلغاء الوصول» يمنع الموظفة من دخول النظام فوراً. لحذف الحساب نهائياً من قاعدة المصادقة، احذفيه من Firebase Console ← Authentication.',
-  th_status:'الحالة',st_active:'نشط',st_disabled:'موقوف',btn_disable:'إيقاف الوصول',btn_enable:'إعادة التفعيل',confirm_disable:'إيقاف وصول {name}؟ ما راح تقدر تدخل النظام، وتقدرين ترجعينها متى ما تبين.',toast_disabled:'تم إيقاف الحساب',toast_enabled:'تم تفعيل الحساب',err_email_active:'هذا البريد له حساب فعّال بالفعل في القائمة تحت',toast_access_restored:'تم استرجاع الحساب القديم وتفعيله',err_restore_pass:'هذا البريد له حساب قديم في نظام الدخول. اكتبي كلمة المرور الأصلية لاسترجاعه، أو احذفي الحساب من Firebase Console ← Authentication وأعيدي المحاولة.',hint_disabled_note:'الحساب الموقوف يبقى محفوظ — ترجعينه بضغطة «إعادة التفعيل» بدون ما تنشئينه من جديد.',err_fill_user:'أكملي الاسم والبريد وكلمة المرور',err_pass_short:'كلمة المرور ٦ أحرف على الأقل',err_pick_dept:'اختاري قسم واحد على الأقل أو «كل الأقسام»',toast_account_created:'تم إنشاء الحساب',confirm_revoke:'إلغاء وصول {name}؟ لن تتمكن من دخول النظام بعدها.',err_cant_revoke_self:'لا يمكنك إلغاء وصولك',toast_revoked:'تم إلغاء الوصول',err_delete:'تعذّر الحذف',um_locked_title:'غير مصرّح',um_locked_sub:'هذه الصفحة للإدارة فقط.',
+  btn_edit:'تعديل',edit_title:'تعديل بيانات الحساب',save_changes:'💾 حفظ التعديلات',btn_cancel:'إلغاء',toast_user_updated:'تم تحديث بيانات الحساب',self_role_note:'ما تقدرين تغيّرين دور حسابك أنتِ.',admin_all_note:'حساب الإدارة يطّلع على كل الأقسام تلقائياً.',th_status:'الحالة',st_active:'نشط',st_disabled:'موقوف',btn_disable:'إيقاف الوصول',btn_enable:'إعادة التفعيل',confirm_disable:'إيقاف وصول {name}؟ ما راح تقدر تدخل النظام، وتقدرين ترجعينها متى ما تبين.',toast_disabled:'تم إيقاف الحساب',toast_enabled:'تم تفعيل الحساب',err_email_active:'هذا البريد له حساب فعّال بالفعل في القائمة تحت',toast_access_restored:'تم استرجاع الحساب القديم وتفعيله',err_restore_pass:'هذا البريد له حساب قديم في نظام الدخول. اكتبي كلمة المرور الأصلية لاسترجاعه، أو احذفي الحساب من Firebase Console ← Authentication وأعيدي المحاولة.',hint_disabled_note:'الحساب الموقوف يبقى محفوظ — ترجعينه بضغطة «إعادة التفعيل» بدون ما تنشئينه من جديد.',err_fill_user:'أكملي الاسم والبريد وكلمة المرور',err_pass_short:'كلمة المرور ٦ أحرف على الأقل',err_pick_dept:'اختاري قسم واحد على الأقل أو «كل الأقسام»',toast_account_created:'تم إنشاء الحساب',confirm_revoke:'إلغاء وصول {name}؟ لن تتمكن من دخول النظام بعدها.',err_cant_revoke_self:'لا يمكنك إلغاء وصولك',toast_revoked:'تم إلغاء الوصول',err_delete:'تعذّر الحذف',um_locked_title:'غير مصرّح',um_locked_sub:'هذه الصفحة للإدارة فقط.',
   sc_5:'ممتاز',sc_4:'جيد جداً',sc_3:'جيد',sc_2:'مقبول',sc_1:'ضعيف',
   q_q3:'تعريف طاقم التمريض بأنفسهم',q_q4:'شرح واستئذان الفريق قبل الفحوصات والإجراءات (سحب دم، علامات حيوية، إعطاء دواء…)',q_q5:'لطف واهتمام فريق التمريض',q_q6:'سرعة الاستجابة لجرس الاستدعاء',q_q7:'مراعاة الفريق لاحتياجاتك الخاصة أو الشخصية',q_q8:'حرص الفريق على إطلاعك بما يجري'
  },
@@ -423,7 +424,7 @@ const I18N={
   sec_trend:'Satisfaction Trend Across Periods',sec_strengths:'Strengths & Weaknesses by Item',sec_issue_status:'Issue Status (current period)',bar_resolved:'Resolved',bar_escalated:'Escalated',bar_open:'Open',sec_by_dept:'By Department (all periods)',no_rounds_period:'No rounds in this period.',no_rounds_yet:'No rounds recorded yet.',rounds_unit:'rounds',
   pl_daily:'Today',pl_weekly:'This week',pl_monthly:'This month',pl_quarterly:'This quarter',pl_yearly:'This year',week_prefix:'Wk',quarter_prefix:'Q',
   um_title:'User Management',um_sub:"Create staff accounts and set each person's role and department. No one can access the system unless you create them here.",loading:'Loading…',add_staff:'Add New Staff',f_name:'Name',f_name_ph:'Full name',f_temp_pass:'Temporary password',f_pass_ph:'At least 6 characters',f_role:'Role',f_dept_allowed:'Departments allowed to view',depts_hint:'Check the departments this account can view, or choose "All Departments".',create_account:'➕ Create Account',creating:'Creating…',accounts_word:'Accounts ({n})',th_name:'Name',th_email:'Email',th_role:'Role',th_dept2:'Department',no_users:'No users yet',you_label:'You',revoke_access:'Revoke access',users_note:'Note: "Revoke access" blocks the staff member from signing in immediately. To permanently delete the account, remove it from Firebase Console → Authentication.',
-  th_status:'Status',st_active:'Active',st_disabled:'Disabled',btn_disable:'Disable access',btn_enable:'Re-enable',confirm_disable:'Disable access for {name}? They won\'t be able to sign in, and you can re-enable them anytime.',toast_disabled:'Account disabled',toast_enabled:'Account re-enabled',err_email_active:'This email already has an active account in the list below',toast_access_restored:'Existing account restored and re-enabled',err_restore_pass:'This email already has an account in the sign-in system. Enter its original password to restore it, or delete the account from Firebase Console → Authentication and try again.',hint_disabled_note:'A disabled account is kept — re-enable it with one click instead of creating it again.',err_fill_user:'Complete name, email, and password',err_pass_short:'Password must be at least 6 characters',err_pick_dept:'Choose at least one department or "All Departments"',toast_account_created:'Account created',confirm_revoke:"Revoke access for {name}? They won't be able to sign in afterwards.",err_cant_revoke_self:"You can't revoke your own access",toast_revoked:'Access revoked',err_delete:'Failed to delete',um_locked_title:'Not authorized',um_locked_sub:'This page is for administration only.',
+  btn_edit:'Edit',edit_title:'Edit account details',save_changes:'💾 Save changes',btn_cancel:'Cancel',toast_user_updated:'Account updated',self_role_note:"You can't change your own role.",admin_all_note:'An administration account always sees every department.',th_status:'Status',st_active:'Active',st_disabled:'Disabled',btn_disable:'Disable access',btn_enable:'Re-enable',confirm_disable:'Disable access for {name}? They won\'t be able to sign in, and you can re-enable them anytime.',toast_disabled:'Account disabled',toast_enabled:'Account re-enabled',err_email_active:'This email already has an active account in the list below',toast_access_restored:'Existing account restored and re-enabled',err_restore_pass:'This email already has an account in the sign-in system. Enter its original password to restore it, or delete the account from Firebase Console → Authentication and try again.',hint_disabled_note:'A disabled account is kept — re-enable it with one click instead of creating it again.',err_fill_user:'Complete name, email, and password',err_pass_short:'Password must be at least 6 characters',err_pick_dept:'Choose at least one department or "All Departments"',toast_account_created:'Account created',confirm_revoke:"Revoke access for {name}? They won't be able to sign in afterwards.",err_cant_revoke_self:"You can't revoke your own access",toast_revoked:'Access revoked',err_delete:'Failed to delete',um_locked_title:'Not authorized',um_locked_sub:'This page is for administration only.',
   sc_5:'Excellent',sc_4:'Very good',sc_3:'Good',sc_2:'Fair',sc_1:'Poor',
   q_q3:'Nursing staff introducing themselves',q_q4:'Explaining and asking permission before tests and procedures (blood draw, vitals, medication…)',q_q5:'Courtesy and attentiveness of the nursing team',q_q6:'Speed of response to the call bell',q_q7:'Attention to your special or personal needs',q_q8:'Keeping you informed about what is happening'
  }
@@ -1186,14 +1187,19 @@ async function loadUsers(){
   USERS=snap.docs.map(d=>({uid:d.id,...d.data()})).sort((a,b)=>(order[a.role]??9)-(order[b.role]??9));
 }
 async function viewUsers(){
-  const app=$('#app');
+  const app=$('#app');editUid=null;
   if(!canManageUsers(USER)){app.innerHTML=emptyCard('🔒',t('um_locked_title'),t('um_locked_sub'));return;}
   app.innerHTML=`<div class="page-head"><div><h2>${t('um_title')}</h2><p>${t('um_sub')}</p></div></div>
     <div id="usersBody"><div class="empty"><div class="ic">⏳</div><h3>${t('loading')}</h3></div></div>`;
   await loadUsers();renderUsers();
 }
+let editUid=null;
+function startEdit(uid){editUid=uid;renderUsers();window.scrollTo({top:0,behavior:'smooth'});}
+function cancelEdit(){editUid=null;renderUsers();}
 function renderUsers(){
   const box=$('#usersBody');if(!box)return;
+  const ed=editUid?USERS.find(u=>u.uid===editUid):null;
+  if(ed)return renderEditForm(box,ed);
   let html=`<div class="card card-pad" style="margin-bottom:20px">
     <div class="section-title" style="margin-top:0">${t('add_staff')}</div>
     <div class="grid3">
@@ -1219,9 +1225,12 @@ function renderUsers(){
       <td><span class="tag">${ROLE_IC[u.role]||''} ${roleLabel(u.role)}</span></td>
       <td>${seesAllDepts(u)?t('all_departments'):(isMultiDept(u)?t('n_departments',{n:num(userDepts(u).length)}):esc(deptLabel(u.dept||'')))}</td>
       <td>${u.active===false?'<span class="status st-esc">'+t('st_disabled')+'</span>':'<span class="status st-res">'+t('st_active')+'</span>'}</td>
-      <td>${u.uid===USER.uid?'<span class="hint">'+t('you_label')+'</span>':(u.active===false
+      <td><div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn btn-outline btn-sm" onclick="startEdit('${u.uid}')">${t('btn_edit')}</button>
+        ${u.uid===USER.uid?'<span class="hint" style="align-self:center">'+t('you_label')+'</span>':(u.active===false
           ?`<button class="btn btn-green btn-sm" onclick="enableUser('${u.uid}')">${t('btn_enable')}</button>`
-          :`<button class="btn btn-outline btn-sm" onclick="disableUser('${u.uid}','${esc((u.name||'').replace(/'/g,''))}')">${t('btn_disable')}</button>`)}</td>
+          :`<button class="btn btn-outline btn-sm" onclick="disableUser('${u.uid}','${esc((u.name||'').replace(/'/g,''))}')">${t('btn_disable')}</button>`)}
+      </div></td>
     </tr>`;
   });
   html+=`</tbody></table></div></div>
@@ -1229,17 +1238,65 @@ function renderUsers(){
   box.innerHTML=html;
   toggleDeptField();
 }
-function toggleDeptField(){
+function renderEditForm(box,u){
+  const self=u.uid===USER.uid;
+  box.innerHTML=`<div class="card card-pad" style="margin-bottom:20px">
+    <div class="section-title" style="margin-top:0">${t('edit_title')} — ${esc(u.email||'')}</div>
+    <div class="grid3">
+      <div><label class="fld req">${t('f_name')}</label><input type="text" id="nu_name" value="${esc(u.name||'')}"></div>
+      <div><label class="fld">${t('email')}</label><input type="text" value="${esc(u.email||'')}" disabled></div>
+    </div>
+    <div style="margin-top:14px"><label class="fld req">${t('f_role')}</label>
+      <select id="nu_role" onchange="toggleDeptField()" style="max-width:320px"${self?' disabled':''}>
+        ${['tech','head','sup','admin'].map(r=>`<option value="${r}"${u.role===r?' selected':''}>${roleLabel(r)}</option>`).join('')}
+      </select>
+      ${self?`<p class="hint">${t('self_role_note')}</p>`:''}</div>
+    <div id="nu_deptWrap" style="margin-top:14px"></div>
+    <div style="margin-top:16px;display:flex;gap:8px">
+      <button class="btn btn-primary btn-sm" id="saveUserBtn" onclick="saveEdit()">${t('save_changes')}</button>
+      <button class="btn btn-outline btn-sm" onclick="cancelEdit()">${t('btn_cancel')}</button>
+    </div>
+    <p class="hint" id="userMsg" style="min-height:16px;font-weight:700"></p>
+  </div>`;
+  toggleDeptField({dept:u.dept,depts:(u.depts==null&&(u.role==='sup'||u.role==='admin'))?['*']:u.depts,role:u.role});
+}
+async function saveEdit(){
+  const u=USERS.find(x=>x.uid===editUid);if(!u)return;
+  const name=$('#nu_name').value.trim();
+  const role=$('#nu_role').disabled?u.role:$('#nu_role').value;
+  const msg=m=>{const e=$('#userMsg');if(e){e.style.color='var(--coral)';e.textContent=m;}};
+  if(!name){msg(t('err_fill_user'));return;}
+  const upd={name,role};
+  const DEL=(typeof firebase!=='undefined'&&firebase.firestore)?firebase.firestore.FieldValue.delete():null;
+  if(role==='tech'||role==='head'){
+    upd.dept=$('#nu_dept').value; if(DEL)upd.depts=DEL;
+  }else{
+    const checked=[...document.querySelectorAll('#nu_depts input:checked')].map(i=>i.value);
+    if(!checked.length){msg(t('err_pick_dept'));return;}
+    upd.depts=checked.includes('*')?['*']:checked; if(DEL)upd.dept=DEL;
+  }
+  const b=$('#saveUserBtn');if(b){b.disabled=true;b.textContent=t('creating');}
+  try{
+    await db.collection(UC).doc(editUid).update(upd);
+    if(editUid===USER.uid)USER={...USER,...upd};
+    editUid=null;toast(t('toast_user_updated'),'ok');
+    await loadUsers();renderUsers();buildTabs();
+  }catch(e){console.error(e);msg(t('err_delete'));if(b){b.disabled=false;b.textContent=t('save_changes');}}
+}
+function toggleDeptField(pre){
   const role=$('#nu_role'),wrap=$('#nu_deptWrap');if(!role||!wrap)return;
   const r=role.value;
+  const curDept=pre&&pre.dept?pre.dept:null;
+  const curDepts=pre&&pre.depts?pre.depts:null;
   if(r==='tech'||r==='head'){
     wrap.innerHTML=`<label class="fld req">${t('f_dept')}</label>
-      <select id="nu_dept" style="max-width:460px">${DEPTS.map(d=>`<option value="${esc(d.ar)}">${esc(deptLabel(d.ar))}</option>`).join('')}</select>`;
+      <select id="nu_dept" style="max-width:460px">${DEPTS.map(d=>`<option value="${esc(d.ar)}"${curDept===d.ar?' selected':''}>${esc(deptLabel(d.ar))}</option>`).join('')}</select>`;
   }else{
+    const all=(curDepts==null)?false:curDepts.includes('*');
     wrap.innerHTML=`<label class="fld req">${t('f_dept_allowed')}</label>
       <div class="deptchecks" id="nu_depts">
-        <label class="dchk all"><input type="checkbox" value="*" onchange="toggleAllDepts(this)"> <b>${t('all_departments')}</b></label>
-        ${DEPTS.map(d=>`<label class="dchk"><input type="checkbox" value="${esc(d.ar)}"> ${esc(deptLabel(d.ar))}</label>`).join('')}
+        <label class="dchk all"><input type="checkbox" value="*"${all?' checked':''} onchange="toggleAllDepts(this)"> <b>${t('all_departments')}</b></label>
+        ${DEPTS.map(d=>`<label class="dchk"><input type="checkbox" value="${esc(d.ar)}"${(!all&&curDepts&&curDepts.includes(d.ar))?' checked':''}${all?' disabled':''}> ${esc(deptLabel(d.ar))}</label>`).join('')}
       </div>
       <p class="hint">${t('depts_hint')}</p>`;
   }
