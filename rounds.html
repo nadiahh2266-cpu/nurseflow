@@ -380,7 +380,7 @@ const I18N={
   sec_trend:'اتجاه الرضا عبر الفترات',sec_strengths:'نقاط القوة والضعف حسب البند',sec_issue_status:'حالة المشاكل (الفترة الحالية)',bar_resolved:'تم الحل',bar_escalated:'مُصعّدة',bar_open:'مفتوحة',sec_by_dept:'حسب القسم (كل الفترات)',no_rounds_period:'لا توجد جولات في هذه الفترة.',no_rounds_yet:'لا توجد جولات مسجّلة بعد.',rounds_unit:'جولة',
   pl_daily:'اليوم',pl_weekly:'هذا الأسبوع',pl_monthly:'هذا الشهر',pl_quarterly:'هذا الربع',pl_yearly:'هذي السنة',week_prefix:'أسبوع',quarter_prefix:'ربع',
   um_title:'إدارة المستخدمين',um_sub:'أنشئي حسابات الموظفات وحدّدي دور كل وحدة وقسمها. لا أحد يدخل النظام إلا من تنشئينه هنا.',loading:'جارِ التحميل…',add_staff:'إضافة موظفة جديدة',f_name:'الاسم',f_name_ph:'الاسم الكامل',f_temp_pass:'كلمة المرور المؤقتة',f_pass_ph:'٦ أحرف على الأقل',f_role:'الدور',f_dept_allowed:'الأقسام المسموح بالاطّلاع عليها',depts_hint:'أشّري الأقسام اللي يقدر هذا الحساب يطّلع عليها، أو اختاري «كل الأقسام».',create_account:'➕ إنشاء الحساب',creating:'جارِ الإنشاء…',accounts_word:'الحسابات ({n})',th_name:'الاسم',th_email:'البريد',th_role:'الدور',th_dept2:'القسم',no_users:'لا يوجد مستخدمون بعد',you_label:'أنتِ',revoke_access:'إلغاء الوصول',users_note:'ملاحظة: «إلغاء الوصول» يمنع الموظفة من دخول النظام فوراً. لحذف الحساب نهائياً من قاعدة المصادقة، احذفيه من Firebase Console ← Authentication.',
-  err_fill_user:'أكملي الاسم والبريد وكلمة المرور',err_pass_short:'كلمة المرور ٦ أحرف على الأقل',err_pick_dept:'اختاري قسم واحد على الأقل أو «كل الأقسام»',toast_account_created:'تم إنشاء الحساب',confirm_revoke:'إلغاء وصول {name}؟ لن تتمكن من دخول النظام بعدها.',err_cant_revoke_self:'لا يمكنك إلغاء وصولك',toast_revoked:'تم إلغاء الوصول',err_delete:'تعذّر الحذف',um_locked_title:'غير مصرّح',um_locked_sub:'هذه الصفحة للإدارة فقط.',
+  th_status:'الحالة',st_active:'نشط',st_disabled:'موقوف',btn_disable:'إيقاف الوصول',btn_enable:'إعادة التفعيل',confirm_disable:'إيقاف وصول {name}؟ ما راح تقدر تدخل النظام، وتقدرين ترجعينها متى ما تبين.',toast_disabled:'تم إيقاف الحساب',toast_enabled:'تم تفعيل الحساب',err_email_active:'هذا البريد له حساب فعّال بالفعل في القائمة تحت',toast_access_restored:'تم استرجاع الحساب القديم وتفعيله',err_restore_pass:'هذا البريد له حساب قديم في نظام الدخول. اكتبي كلمة المرور الأصلية لاسترجاعه، أو احذفي الحساب من Firebase Console ← Authentication وأعيدي المحاولة.',hint_disabled_note:'الحساب الموقوف يبقى محفوظ — ترجعينه بضغطة «إعادة التفعيل» بدون ما تنشئينه من جديد.',err_fill_user:'أكملي الاسم والبريد وكلمة المرور',err_pass_short:'كلمة المرور ٦ أحرف على الأقل',err_pick_dept:'اختاري قسم واحد على الأقل أو «كل الأقسام»',toast_account_created:'تم إنشاء الحساب',confirm_revoke:'إلغاء وصول {name}؟ لن تتمكن من دخول النظام بعدها.',err_cant_revoke_self:'لا يمكنك إلغاء وصولك',toast_revoked:'تم إلغاء الوصول',err_delete:'تعذّر الحذف',um_locked_title:'غير مصرّح',um_locked_sub:'هذه الصفحة للإدارة فقط.',
   sc_5:'ممتاز',sc_4:'جيد جداً',sc_3:'جيد',sc_2:'مقبول',sc_1:'ضعيف',
   q_q3:'تعريف طاقم التمريض بأنفسهم',q_q4:'شرح واستئذان الفريق قبل الفحوصات والإجراءات (سحب دم، علامات حيوية، إعطاء دواء…)',q_q5:'لطف واهتمام فريق التمريض',q_q6:'سرعة الاستجابة لجرس الاستدعاء',q_q7:'مراعاة الفريق لاحتياجاتك الخاصة أو الشخصية',q_q8:'حرص الفريق على إطلاعك بما يجري'
  },
@@ -423,7 +423,7 @@ const I18N={
   sec_trend:'Satisfaction Trend Across Periods',sec_strengths:'Strengths & Weaknesses by Item',sec_issue_status:'Issue Status (current period)',bar_resolved:'Resolved',bar_escalated:'Escalated',bar_open:'Open',sec_by_dept:'By Department (all periods)',no_rounds_period:'No rounds in this period.',no_rounds_yet:'No rounds recorded yet.',rounds_unit:'rounds',
   pl_daily:'Today',pl_weekly:'This week',pl_monthly:'This month',pl_quarterly:'This quarter',pl_yearly:'This year',week_prefix:'Wk',quarter_prefix:'Q',
   um_title:'User Management',um_sub:"Create staff accounts and set each person's role and department. No one can access the system unless you create them here.",loading:'Loading…',add_staff:'Add New Staff',f_name:'Name',f_name_ph:'Full name',f_temp_pass:'Temporary password',f_pass_ph:'At least 6 characters',f_role:'Role',f_dept_allowed:'Departments allowed to view',depts_hint:'Check the departments this account can view, or choose "All Departments".',create_account:'➕ Create Account',creating:'Creating…',accounts_word:'Accounts ({n})',th_name:'Name',th_email:'Email',th_role:'Role',th_dept2:'Department',no_users:'No users yet',you_label:'You',revoke_access:'Revoke access',users_note:'Note: "Revoke access" blocks the staff member from signing in immediately. To permanently delete the account, remove it from Firebase Console → Authentication.',
-  err_fill_user:'Complete name, email, and password',err_pass_short:'Password must be at least 6 characters',err_pick_dept:'Choose at least one department or "All Departments"',toast_account_created:'Account created',confirm_revoke:"Revoke access for {name}? They won't be able to sign in afterwards.",err_cant_revoke_self:"You can't revoke your own access",toast_revoked:'Access revoked',err_delete:'Failed to delete',um_locked_title:'Not authorized',um_locked_sub:'This page is for administration only.',
+  th_status:'Status',st_active:'Active',st_disabled:'Disabled',btn_disable:'Disable access',btn_enable:'Re-enable',confirm_disable:'Disable access for {name}? They won\'t be able to sign in, and you can re-enable them anytime.',toast_disabled:'Account disabled',toast_enabled:'Account re-enabled',err_email_active:'This email already has an active account in the list below',toast_access_restored:'Existing account restored and re-enabled',err_restore_pass:'This email already has an account in the sign-in system. Enter its original password to restore it, or delete the account from Firebase Console → Authentication and try again.',hint_disabled_note:'A disabled account is kept — re-enable it with one click instead of creating it again.',err_fill_user:'Complete name, email, and password',err_pass_short:'Password must be at least 6 characters',err_pick_dept:'Choose at least one department or "All Departments"',toast_account_created:'Account created',confirm_revoke:"Revoke access for {name}? They won't be able to sign in afterwards.",err_cant_revoke_self:"You can't revoke your own access",toast_revoked:'Access revoked',err_delete:'Failed to delete',um_locked_title:'Not authorized',um_locked_sub:'This page is for administration only.',
   sc_5:'Excellent',sc_4:'Very good',sc_3:'Good',sc_2:'Fair',sc_1:'Poor',
   q_q3:'Nursing staff introducing themselves',q_q4:'Explaining and asking permission before tests and procedures (blood draw, vitals, medication…)',q_q5:'Courtesy and attentiveness of the nursing team',q_q6:'Speed of response to the call bell',q_q7:'Attention to your special or personal needs',q_q8:'Keeping you informed about what is happening'
  }
@@ -495,6 +495,7 @@ async function handleAuth(fbUser){
         await auth.signOut(); return;
       }
     }
+    if(prof.active===false){ loginMsg(t('err_unauth')); await auth.signOut(); return; }
     USER={uid:fbUser.uid,email:fbUser.email,...prof};
     loginMsg(''); hideLogin(); subscribeRounds(); boot();
   }catch(e){console.error(e);loginMsg(t('err_load_acct'));}
@@ -1209,19 +1210,22 @@ function renderUsers(){
     <p class="hint" id="userMsg" style="min-height:16px;font-weight:700"></p>
   </div>`;
   html+=`<div class="section-title">${t('accounts_word',{n:num(USERS.length)})}</div>
-    <div class="card"><div style="overflow-x:auto"><table><thead><tr><th>${t('th_name')}</th><th>${t('th_email')}</th><th>${t('th_role')}</th><th>${t('th_dept2')}</th><th></th></tr></thead><tbody>`;
-  if(!USERS.length){html+=`<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px">${t('no_users')}</td></tr>`;}
+    <div class="card"><div style="overflow-x:auto"><table><thead><tr><th>${t('th_name')}</th><th>${t('th_email')}</th><th>${t('th_role')}</th><th>${t('th_dept2')}</th><th>${t('th_status')}</th><th></th></tr></thead><tbody>`;
+  if(!USERS.length){html+=`<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px">${t('no_users')}</td></tr>`;}
   USERS.forEach(u=>{
     html+=`<tr>
       <td><b>${esc(u.name||'')}</b></td>
       <td>${esc(u.email||'')}</td>
       <td><span class="tag">${ROLE_IC[u.role]||''} ${roleLabel(u.role)}</span></td>
       <td>${seesAllDepts(u)?t('all_departments'):(isMultiDept(u)?t('n_departments',{n:num(userDepts(u).length)}):esc(deptLabel(u.dept||'')))}</td>
-      <td>${u.uid===USER.uid?'<span class="hint">'+t('you_label')+'</span>':`<button class="btn btn-outline btn-sm" onclick="removeUser('${u.uid}','${esc((u.name||'').replace(/'/g,''))}')">${t('revoke_access')}</button>`}</td>
+      <td>${u.active===false?'<span class="status st-esc">'+t('st_disabled')+'</span>':'<span class="status st-res">'+t('st_active')+'</span>'}</td>
+      <td>${u.uid===USER.uid?'<span class="hint">'+t('you_label')+'</span>':(u.active===false
+          ?`<button class="btn btn-green btn-sm" onclick="enableUser('${u.uid}')">${t('btn_enable')}</button>`
+          :`<button class="btn btn-outline btn-sm" onclick="disableUser('${u.uid}','${esc((u.name||'').replace(/'/g,''))}')">${t('btn_disable')}</button>`)}</td>
     </tr>`;
   });
   html+=`</tbody></table></div></div>
-    <p class="hint" style="margin-top:14px">${t('users_note')}</p>`;
+    <p class="hint" style="margin-top:14px">${t('hint_disabled_note')}</p>`;
   box.innerHTML=html;
   toggleDeptField();
 }
@@ -1259,25 +1263,43 @@ async function addUser(){
     if(!checked.length){msg(t('err_pick_dept'));return;}
     profDepts=checked.includes('*')?['*']:checked;
   }
+  // already listed in this system? then it's a real duplicate
+  if(USERS.some(u=>(u.email||'').toLowerCase()===email)){msg(t('err_email_active'));return;}
+
   const btn=$('#addUserBtn');btn.disabled=true;btn.textContent=t('creating');
+  const prof={name,email,role,active:true,createdAt:new Date().toISOString(),createdBy:USER.email||''};
+  if(profDept!=null)prof.dept=profDept; else prof.depts=profDepts;
   try{
     const sec=firebase.apps.find(a=>a.name==='sec')||firebase.initializeApp(firebaseConfig,'sec');
-    const cred=await sec.auth().createUserWithEmailAndPassword(email,pass);
-    const uid=cred.user.uid;
+    let uid=null,restored=false;
+    try{
+      const cred=await sec.auth().createUserWithEmailAndPassword(email,pass);
+      uid=cred.user.uid;
+    }catch(e1){
+      if(e1&&e1.code==='auth/email-already-in-use'){
+        // sign-in account exists from before but has no profile here → restore it
+        try{
+          const cred=await sec.auth().signInWithEmailAndPassword(email,pass);
+          uid=cred.user.uid;restored=true;
+        }catch(e2){ throw {code:'restore-failed'}; }
+      } else { throw e1; }
+    }
     await sec.auth().signOut();
-    const prof={name,email,role,createdAt:new Date().toISOString(),createdBy:USER.email||''};
-    if(profDept!=null)prof.dept=profDept; else prof.depts=profDepts;
     await db.collection(UC).doc(uid).set(prof);
     $('#nu_name').value='';$('#nu_email').value='';$('#nu_pass').value='';
-    toast(t('toast_account_created'),'ok');
+    toast(t(restored?'toast_access_restored':'toast_account_created'),'ok');
     await loadUsers();renderUsers();
-  }catch(e){console.error(e);msg(authErr(e));}
-  finally{btn.disabled=false;btn.textContent=t('create_account');}
+  }catch(e){console.error(e);msg(e&&e.code==='restore-failed'?t('err_restore_pass'):authErr(e));}
+  finally{const b=$('#addUserBtn');if(b){b.disabled=false;b.textContent=t('create_account');}}
 }
-async function removeUser(uid,name){
+async function disableUser(uid,name){
   if(uid===USER.uid){toast(t('err_cant_revoke_self'),'err');return;}
-  if(!confirm(t('confirm_revoke',{name:name})))return;
-  try{await db.collection(UC).doc(uid).delete();toast(t('toast_revoked'),'ok');await loadUsers();renderUsers();}
+  if(!confirm(t('confirm_disable',{name:name})))return;
+  try{await db.collection(UC).doc(uid).set({active:false},{merge:true});toast(t('toast_disabled'),'ok');await loadUsers();renderUsers();}
+  catch(e){console.error(e);toast(t('err_delete'),'err');}
+}
+async function enableUser(uid){
+  try{await db.collection(UC).doc(uid).set({active:true},{merge:true});toast(t('toast_enabled'),'ok');await loadUsers();renderUsers();}
   catch(e){console.error(e);toast(t('err_delete'),'err');}
 }
 
