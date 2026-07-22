@@ -1,0 +1,1289 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>جولات رضا المرضى | مستشفى الجبيل العام</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<!-- Firebase (compat SDK) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<style>
+:root{
+  --ink:#0d3b45;        /* deep petrol */
+  --ink-2:#12525f;
+  --teal:#0e8a8a;       /* primary */
+  --teal-soft:#e2f2f1;
+  --bg:#f2f6f7;
+  --surface:#ffffff;
+  --line:#e2eaec;
+  --muted:#6b8189;
+  --text:#173238;
+  --coral:#e0523a;      /* problem / low */
+  --coral-soft:#fdeae6;
+  --amber:#e39a1f;      /* escalated */
+  --amber-soft:#fcf1dc;
+  --green:#1f9d6b;      /* resolved / high */
+  --green-soft:#e2f4ec;
+  --shadow:0 1px 2px rgba(13,59,69,.06),0 6px 20px rgba(13,59,69,.06);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:'Tajawal',system-ui,-apple-system,'Segoe UI',sans-serif;
+  background:var(--bg);color:var(--text);
+  font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased;
+}
+button{font-family:inherit;cursor:pointer}
+h1,h2,h3,h4{margin:0;font-weight:800;color:var(--ink)}
+.hidden{display:none !important}
+
+/* ---------- Header ---------- */
+header.top{
+  background:linear-gradient(105deg,var(--ink),var(--ink-2));
+  color:#fff;padding:0 20px;position:sticky;top:0;z-index:50;
+  box-shadow:0 4px 18px rgba(13,59,69,.18);
+}
+.top-inner{max-width:1180px;margin:0 auto;display:flex;align-items:center;gap:16px;min-height:64px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:12px;font-weight:800;font-size:19px}
+.brand .mark{
+  width:38px;height:38px;border-radius:11px;background:rgba(255,255,255,.14);
+  display:grid;place-items:center;font-size:20px;border:1px solid rgba(255,255,255,.2)
+}
+.brand small{display:block;font-weight:500;font-size:12px;opacity:.75;margin-top:-2px}
+.top-spacer{flex:1}
+.userchip{
+  display:flex;align-items:center;gap:9px;background:rgba(255,255,255,.12);
+  padding:6px 12px;border-radius:40px;font-size:13.5px;border:1px solid rgba(255,255,255,.16)
+}
+.userchip .av{width:26px;height:26px;border-radius:50%;background:var(--teal);display:grid;place-items:center;font-weight:700;font-size:12px}
+.userchip .role{opacity:.72;font-size:11.5px}
+.btn-ghost{background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2);padding:7px 12px;border-radius:9px;font-size:13px;font-weight:500}
+.dbstatus{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:5px 11px;border-radius:30px;border:1px solid rgba(255,255,255,.18)}
+.dbstatus::before{content:"";width:8px;height:8px;border-radius:50%;background:#9fb3b8}
+.dbstatus.cloud{background:rgba(31,157,107,.22)}
+.dbstatus.cloud::before{background:#4ade80;box-shadow:0 0 0 3px rgba(74,222,128,.25)}
+.dbstatus.local{background:rgba(255,255,255,.1)}
+.btn-ghost:hover{background:rgba(255,255,255,.2)}
+
+/* ---------- Nav ---------- */
+nav.tabs{background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:64px;z-index:40}
+.tabs-inner{max-width:1180px;margin:0 auto;display:flex;gap:4px;padding:0 16px;overflow-x:auto}
+.tab{
+  border:none;background:none;padding:15px 16px 12px;font-size:14.5px;font-weight:700;color:var(--muted);
+  border-bottom:3px solid transparent;white-space:nowrap;display:flex;align-items:center;gap:7px
+}
+.tab .badge{background:var(--coral);color:#fff;border-radius:20px;font-size:11px;padding:1px 7px;font-weight:700}
+.tab.active{color:var(--ink);border-bottom-color:var(--teal)}
+.tab:hover{color:var(--ink)}
+
+/* ---------- Layout ---------- */
+main{max-width:1180px;margin:0 auto;padding:24px 16px 60px}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:20px;flex-wrap:wrap}
+.page-head h2{font-size:23px}
+.page-head p{margin:2px 0 0;color:var(--muted);font-size:14px}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow)}
+.card-pad{padding:22px}
+
+/* ---------- Buttons ---------- */
+.btn{border:none;border-radius:11px;padding:12px 20px;font-size:14.5px;font-weight:700;display:inline-flex;align-items:center;gap:8px;transition:.15s}
+.btn-primary{background:var(--teal);color:#fff}
+.btn-primary:hover{background:#0b7676}
+.btn-outline{background:#fff;color:var(--ink);border:1.5px solid var(--line)}
+.btn-outline:hover{border-color:var(--teal);color:var(--teal)}
+.btn-coral{background:var(--coral);color:#fff}
+.btn-green{background:var(--green);color:#fff}
+.btn-sm{padding:8px 14px;font-size:13px;border-radius:9px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+
+/* ---------- Forms ---------- */
+label.fld{display:block;font-weight:700;font-size:13.5px;color:var(--ink);margin-bottom:7px}
+.req::after{content:" *";color:var(--coral)}
+input[type=text],input[type=number],select,textarea{
+  width:100%;padding:11px 13px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:14.5px;
+  background:#fbfdfd;color:var(--text);transition:.15s
+}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--teal);background:#fff;box-shadow:0 0 0 3px var(--teal-soft)}
+textarea{resize:vertical;min-height:70px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.seg{display:flex;gap:8px;flex-wrap:wrap}
+.seg-opt{flex:1;min-width:110px;border:1.5px solid var(--line);background:#fbfdfd;border-radius:10px;padding:11px;text-align:center;font-weight:700;font-size:14px;color:var(--text)}
+.seg-opt.on{border-color:var(--teal);background:var(--teal-soft);color:var(--ink)}
+.lockchip{display:flex;align-items:center;justify-content:space-between;gap:8px;border:1.5px dashed var(--line);background:#f3f7f8;border-radius:10px;padding:11px 13px;font-weight:800;color:var(--ink)}
+.lockchip span{opacity:.5;font-size:13px}
+.deptchecks{display:flex;flex-wrap:wrap;gap:8px;max-height:190px;overflow:auto;border:1.5px solid var(--line);border-radius:12px;padding:12px;background:#fbfdfd}
+.dchk{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600;color:var(--text);background:#fff;border:1px solid var(--line);border-radius:9px;padding:8px 11px;cursor:pointer;user-select:none}
+.dchk:hover{border-color:var(--teal)}
+.dchk input{width:16px;height:16px;accent-color:var(--teal);cursor:pointer}
+.dchk.all{background:var(--teal-soft);border-color:var(--teal);color:var(--ink)}
+.dchk input:disabled+*{opacity:.5}
+
+/* ---------- Rating scale ---------- */
+.qblock{border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:14px;background:#fbfdfd}
+.qblock.flagged{border-color:var(--coral);background:var(--coral-soft)}
+.qtitle{font-weight:700;font-size:14.5px;color:var(--ink);margin-bottom:12px;display:flex;gap:8px;align-items:flex-start}
+.qtitle .n{background:var(--ink);color:#fff;border-radius:8px;min-width:26px;height:26px;display:grid;place-items:center;font-size:12.5px;flex:none}
+.scale{display:flex;gap:7px}
+.dot{
+  flex:1;border:1.5px solid var(--line);background:#fff;border-radius:10px;padding:9px 4px;text-align:center;
+  font-size:12.5px;font-weight:700;color:var(--muted);transition:.12s;line-height:1.25
+}
+.dot .num{display:block;font-size:16px;margin-bottom:1px}
+.dot:hover{border-color:var(--teal)}
+.dot.sel-5{border-color:var(--green);background:var(--green-soft);color:#146b48}
+.dot.sel-4{border-color:var(--green);background:var(--green-soft);color:#146b48}
+.dot.sel-3{border-color:var(--amber);background:var(--amber-soft);color:#8a5f0e}
+.dot.sel-2{border-color:var(--coral);background:var(--coral-soft);color:#a83320}
+.dot.sel-1{border-color:var(--coral);background:var(--coral-soft);color:#a83320}
+.flag-note{margin-top:11px;font-size:13px;color:#a83320;font-weight:700;display:flex;align-items:center;gap:6px}
+
+/* ---------- Problem cards ---------- */
+.prob{border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-bottom:14px;background:#fff}
+.prob-head{padding:14px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.prob-src{font-weight:800;color:var(--ink);font-size:14.5px}
+.prob-body{padding:0 16px 16px}
+.status{border-radius:30px;padding:4px 12px;font-size:12px;font-weight:800;display:inline-flex;align-items:center;gap:5px}
+.st-open{background:var(--coral-soft);color:#a83320}
+.st-esc{background:var(--amber-soft);color:#8a5f0e}
+.st-res{background:var(--green-soft);color:#146b48}
+.pill{background:var(--teal-soft);color:var(--ink);border-radius:30px;padding:3px 11px;font-size:12px;font-weight:700}
+.choice{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+.choice .btn{flex:1;min-width:150px;justify-content:center}
+
+/* ---------- KPI ---------- */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(158px,1fr));gap:14px;margin-bottom:22px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:15px;padding:17px 18px;box-shadow:var(--shadow)}
+.kpi .lbl{font-size:12.5px;color:var(--muted);font-weight:700;margin-bottom:8px}
+.kpi .val{font-size:30px;font-weight:800;color:var(--ink);line-height:1}
+.kpi .sub{font-size:12px;color:var(--muted);margin-top:6px}
+.kpi.accent .val{color:var(--teal)}
+.kpi.good .val{color:var(--green)}
+.kpi.warn .val{color:var(--coral)}
+
+/* ---------- Chart ---------- */
+.chartwrap{padding:6px 4px 0}
+.bars{display:flex;align-items:flex-end;gap:10px;height:200px;padding-top:10px}
+.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;height:100%;justify-content:flex-end}
+.bar{width:100%;max-width:46px;border-radius:9px 9px 4px 4px;background:linear-gradient(var(--teal),#0b7676);position:relative;transition:.4s;min-height:3px}
+.bar span{position:absolute;top:-20px;left:0;right:0;text-align:center;font-size:12px;font-weight:800;color:var(--ink)}
+.bar-lbl{font-size:11.5px;color:var(--muted);font-weight:700;text-align:center}
+
+/* horizontal question bars */
+.qbar{margin-bottom:13px}
+.qbar-top{display:flex;justify-content:space-between;font-size:13px;font-weight:700;margin-bottom:5px}
+.qbar-top .sc{color:var(--muted)}
+.track{height:12px;background:#eef3f4;border-radius:20px;overflow:hidden}
+.fill{height:100%;border-radius:20px;transition:.5s}
+
+/* ---------- Table ---------- */
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th,td{text-align:right;padding:11px 12px;border-bottom:1px solid var(--line)}
+th{color:var(--muted);font-weight:700;font-size:12.5px;background:#f8fbfb}
+tbody tr:hover{background:#f8fbfb}
+
+/* ---------- Empty ---------- */
+.empty{text-align:center;padding:50px 20px;color:var(--muted)}
+.empty .ic{font-size:44px;margin-bottom:10px}
+.empty h3{color:var(--ink);margin-bottom:6px}
+
+/* ---------- Modal / login ---------- */
+.overlay{position:fixed;inset:0;background:rgba(13,59,69,.55);backdrop-filter:blur(4px);display:grid;place-items:center;z-index:100;padding:20px}
+.modal{background:#fff;border-radius:20px;max-width:440px;width:100%;padding:30px;box-shadow:0 30px 80px rgba(0,0,0,.3)}
+.modal h2{font-size:22px;margin-bottom:6px}
+.modal p.lead{color:var(--muted);margin:0 0 22px;font-size:14px}
+.rolepick{display:grid;gap:10px;margin-bottom:18px}
+.role-opt{border:1.5px solid var(--line);border-radius:13px;padding:14px 16px;display:flex;align-items:center;gap:13px;text-align:right}
+[dir="ltr"] th,[dir="ltr"] td{text-align:left}
+[dir="ltr"] .role-opt{text-align:left}
+[dir="ltr"] input,[dir="ltr"] textarea,[dir="ltr"] select{text-align:left}
+[dir="ltr"] .bar-lbl{direction:ltr}
+.role-opt .ic{width:42px;height:42px;border-radius:11px;background:var(--teal-soft);display:grid;place-items:center;font-size:21px;flex:none}
+.role-opt .t{font-weight:800;color:var(--ink);font-size:15px}
+.role-opt .d{font-size:12.5px;color:var(--muted)}
+.role-opt.on{border-color:var(--teal);background:var(--teal-soft)}
+
+/* ---------- Toast ---------- */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:13px 22px;border-radius:12px;font-weight:700;font-size:14px;opacity:0;transition:.3s;z-index:200;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#toast.ok{background:var(--green)}
+#toast.err{background:var(--coral)}
+
+.section-title{font-size:16px;font-weight:800;color:var(--ink);margin:26px 0 14px;display:flex;align-items:center;gap:9px}
+.section-title::before{content:"";width:4px;height:18px;background:var(--teal);border-radius:4px}
+.hint{font-size:12.5px;color:var(--muted);margin-top:6px}
+.divider{height:1px;background:var(--line);margin:22px 0}
+.row-between{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.tag{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;color:var(--muted);background:#eef3f4;border-radius:20px;padding:3px 10px}
+
+@media(max-width:720px){
+  .grid2,.grid3{grid-template-columns:1fr}
+  .page-head h2{font-size:20px}
+  .kpi .val{font-size:25px}
+  .scale{flex-wrap:wrap}
+  .dot{min-width:56px}
+}
+</style>
+</head>
+<body>
+
+<!-- ============ LOGIN ============ -->
+<div class="overlay" id="login">
+  <div class="modal">
+    <h2 id="lg_title">نظام جولات رضا المرضى</h2>
+    <p class="lead" id="lg_sub">مستشفى الجبيل العام · جميع الأقسام</p>
+    <label class="fld req" id="lg_email_l">البريد الإلكتروني</label>
+    <input type="text" id="loginEmail" placeholder="name@example.com" autocomplete="username" style="margin-bottom:16px">
+    <label class="fld req" id="lg_pass_l">كلمة المرور</label>
+    <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password" style="margin-bottom:20px" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="btn btn-primary" id="loginBtn" style="width:100%;justify-content:center" onclick="doLogin()">تسجيل الدخول</button>
+    <p class="hint" id="lg_note" style="text-align:center;margin-top:16px">الدخول للموظفات المصرّح لهنّ فقط. للحصول على حساب راجعي الإدارة.</p>
+    <p class="hint" id="loginMsg" style="text-align:center;color:var(--coral);font-weight:700;min-height:18px"></p>
+  </div>
+</div>
+
+<!-- ============ HEADER ============ -->
+<header class="top">
+  <div class="top-inner">
+    <div class="brand">
+      <div class="mark">🏥</div>
+      <div><span id="brandTitle">جولات رضا المرضى</span><small id="brandSub">مستشفى الجبيل العام · رضا المرضى وجودة التمريض</small></div>
+    </div>
+    <div class="top-spacer"></div>
+    <button class="btn-ghost" id="langBtn" onclick="toggleLang()" title="Language / اللغة" style="font-weight:800">EN</button>
+    <span id="dbstatus" class="dbstatus" title="status"></span>
+    <div class="userchip" id="userchip"></div>
+    <button class="btn-ghost" id="logoutBtn" onclick="logout()">تسجيل الخروج</button>
+  </div>
+</header>
+
+<nav class="tabs">
+  <div class="tabs-inner" id="tabs"></div>
+</nav>
+
+<main id="app"></main>
+
+<div id="toast"></div>
+
+<script>
+/* ================= STATE ================= */
+const LS_ROUNDS='jhn_rounds_v1', LS_USER='jhn_user_v1';
+let USER=null, ROUNDS=[];
+
+/* rated questions (1-5) */
+const QRATED=[{k:'q3',n:3},{k:'q4',n:4},{k:'q5',n:5},{k:'q6',n:6},{k:'q7',n:7},{k:'q8',n:8}];
+const SCALE=[{v:5},{v:4},{v:3},{v:2},{v:1}];
+const THRESHOLD=2; // <= 2 يُعتبر مشكلة تلقائية
+
+/* ================= UTIL ================= */
+const $=s=>document.querySelector(s);
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+/* ========================================================================
+   إعدادات Firebase — الصقي إعدادات مشروعك هنا (نفس مشروع NurseFlow يصلح)
+   Firebase Console ← Project settings ← Your apps ← Config
+   إذا تركتيها فاضية، النظام يشتغل بالوضع المحلي (بدون مزامنة).
+   ======================================================================== */
+const firebaseConfig = {
+  apiKey:            "AIzaSyDC2cmBlwZDoOdCJXgQ7dc9X6MBqmlMf5w",
+  authDomain:        "nurseflow-jhn.firebaseapp.com",
+  projectId:         "nurseflow-jhn",
+  storageBucket:     "nurseflow-jhn.firebasestorage.app",
+  messagingSenderId: "1005946269057",
+  appId:             "1:1005946269057:web:7f27d61f49187448d28c80"
+};
+const RC='rounds', UC='users';
+const USE_FIREBASE = firebaseConfig.projectId && !firebaseConfig.projectId.includes('PASTE');
+
+/* ---- roles & permissions ---- */
+const ROLE   ={tech:'فني رعاية المرضى',head:'رئيس القسم',sup:'مشرف الأقسام',admin:'الإدارة'};
+const ROLE_IC={tech:'🩺',head:'🧑‍⚕️',sup:'👩‍⚕️',admin:'🏛️'};
+const DEPTS=[
+ {ar:'جناح الرجال (باطني/جراحي)',en:'Male Medical/Surgical'},
+ {ar:'جناح النساء (باطني/جراحي)',en:'Female Medical/Surgical'},
+ {ar:'العناية المركزة للبالغين والأطفال',en:'Adult-Pediatric ICU'},
+ {ar:'عناية حديثي الولادة',en:'NICU'},
+ {ar:'جناح الأطفال',en:'Pediatric Ward (PW)'},
+ {ar:'جناح النساء والولادة',en:'Obstetrics Ward (OBW)'},
+ {ar:'جناح التوليد',en:'Labor & Delivery (L&D)'},
+ {ar:'وحدة العناية التمريضية',en:'Nursing Care Unit (NCU)'},
+ {ar:'الطوارئ',en:'Emergency (ER)'},
+ {ar:'غسيل الكلى',en:'Hemodialysis'},
+ {ar:'غرف العمليات',en:'Operating Rooms (OR)'},
+ {ar:'الإجراءات الطبية والجراحية',en:'Medical & Surgical Procedures'},
+ {ar:'العيادات الخارجية',en:'Outpatient Clinics (OPD)'}
+];
+const DEPT_AR=DEPTS.map(d=>d.ar);
+function deptLabel(ar){const d=DEPTS.find(x=>x.ar===ar);return d?(LANG==='en'?d.en:d.ar):(ar||'');}
+function isMultiDept(u){return !!u&&(u.role==='sup'||u.role==='admin');}
+function seesAll(u){return isMultiDept(u);}
+function userDepts(u){
+  if(!u)return[];
+  if(u.role==='tech'||u.role==='head')return u.dept?[u.dept]:[];
+  const d=u.depts||[];
+  return d.includes('*')?DEPT_AR.slice():d;
+}
+function seesAllDepts(u){return isMultiDept(u)&&(u.depts||[]).includes('*');}
+function canManageProblems(u){return !!u&&['head','sup','admin'].includes(u.role);}
+function canManageUsers(u){return !!u&&u.role==='admin';}
+function canExport(u){return !!u&&['head','sup','admin'].includes(u.role);}
+function canDoRounds(u){return !!u&&u.role==='tech';}
+function inScope(u,r){return !!r&&userDepts(u).includes(r.dept);}
+function scopedRounds(){return ROUNDS.filter(r=>inScope(USER,r));}
+
+/* ================= i18n ================= */
+const LS_LANG='jhn_lang_v1';
+let LANG=(function(){try{return localStorage.getItem(LS_LANG)||'ar';}catch(e){return 'ar';}})();
+function saveLang(){try{localStorage.setItem(LS_LANG,LANG);}catch(e){}}
+function num(n){if(n==null)return n;if(LANG==='en')return String(n);return String(n).replace(/[0-9]/g,d=>'٠١٢٣٤٥٦٧٨٩'[d]);}
+function roleLabel(r){return t('role_'+r);}
+const I18N={
+ ar:{
+  app_title:'جولات رضا المرضى',app_sub:'مستشفى الجبيل العام · رضا المرضى وجودة التمريض',
+  logout:'تسجيل الخروج',lang_btn:'EN',
+  status_cloud:'متصل بالسحابة',status_local:'غير متصل',
+  role_tech:'فني رعاية المرضى',role_head:'رئيس القسم',role_sup:'مشرف الأقسام',role_admin:'الإدارة',
+  all_departments:'كل الأقسام',n_departments:'{n} أقسام',
+  tab_new:'جولة جديدة',tab_myrounds:'جولات قسمي',tab_problems:'المشاكل',tab_all_all:'كل الجولات',tab_all_dept:'جولات القسم',tab_dash:'الداشبورد',tab_users:'المستخدمون',
+  login_title:'نظام جولات رضا المرضى',login_sub:'مستشفى الجبيل العام · جميع الأقسام',
+  email:'البريد الإلكتروني',password:'كلمة المرور',login_btn:'تسجيل الدخول',login_note:'الدخول للموظفات المصرّح لهنّ فقط. للحصول على حساب راجعي الإدارة.',login_signingin:'جارِ الدخول…',
+  err_fill_login:'اكتبي البريد وكلمة المرور',err_noserver:'لا يوجد اتصال بالخادم',err_login_generic:'تعذّر تسجيل الدخول',
+  e_invalid_email:'صيغة البريد غير صحيحة',e_user_not_found:'لا يوجد حساب بهذا البريد',e_wrong_pass:'كلمة المرور غير صحيحة',e_invalid_cred:'البريد أو كلمة المرور غير صحيحة',e_too_many:'محاولات كثيرة، انتظري قليلاً ثم أعيدي المحاولة',e_disabled:'هذا الحساب موقوف',e_in_use:'هذا البريد مستخدم لحساب موجود',e_weak:'كلمة المرور قصيرة (٦ أحرف على الأقل)',
+  err_fb_load:'تعذّر تحميل Firebase — تأكدي من اتصال الإنترنت.',err_server:'تعذّر الاتصال بالخادم.',err_unauth:'حسابك غير مُصرّح له بعد. راجعي الإدارة.',err_load_acct:'تعذّر تحميل بيانات الحساب.',toast_admin_created:'تم إنشاء حساب الإدارة',toast_cloud_lost:'انقطع الاتصال بالسحابة',toast_cloud_savefail:'تعذّر الحفظ في السحابة',
+  nr_title:'جولة جديدة',nr_sub:'قيّمي كل بند من ١ (ضعيف) إلى ٥ (ممتاز). أي بند بتقييم ٢ أو أقل يُرصد كمشكلة تلقائياً.',
+  sec_round_info:'بيانات الجولة',f_dept:'القسم',f_room:'رقم الغرفة',f_room_ph:'مثال: ٢١٤',f_asked:'تم سؤال',opt_patient:'مريض',opt_companion:'مرافق',
+  sec_eval:'تقييم خدمات التمريض',sec_overall:'التقييم العام والملاحظات',q12:'التقييم العام لخدمات مستشفى الجبيل العام',
+  f_liked:'أبرز الجوانب التي أعجبتك أو لم تعجبك',f_liked_ph:'ملاحظات المريض...',f_sugg:'ملاحظات ومقترحات لتحسين الخدمة',f_sugg_ph:'مقترحات...',f_nurse:'اسم ممرض/ة قدّم خدمة استثنائية',f_nurse_ph:'اسم الممرض/ة (اختياري)',
+  next_review:'التالي: مراجعة المشاكل ←',live_notstarted:'لم يبدأ التقييم بعد',live_avg:'متوسط الرضا',live_flagged:'{n} مشكلة مرصودة',live_noflag:'لا مشاكل مرصودة ✅',
+  flag_note:'⚠️ رُصدت كمشكلة — بتنحل أو تُصعّد في الخطوة التالية',
+  ps_title:'مراجعة المشاكل ومعالجتها',room_word:'غرفة',back_eval:'→ رجوع للتقييم',
+  no_issues_title:'ما فيه مشاكل مرصودة',no_issues_sub:'كل التقييمات فوق حد الرصد. تقدرين تحفظين الجولة مباشرة.',save_round:'حفظ الجولة',
+  ps_intro:'رُصدت {n} مشكلة. لكل مشكلة: إما تحلينها وتكتبين خطة العمل، أو تصعّدينها للمسؤول.',rating_word:'التقييم',
+  f_probdesc:'وصف المشكلة كما ذكرها المريض',f_probdesc_ph:'تفاصيل المشكلة...',btn_resolved_now:'✔ حليتها الآن',btn_escalate:'⬆ تصعيد للمسؤول',
+  st_resolved:'✓ تم الحل',st_escalated:'⬆ مُصعّدة',st_open:'● مفتوحة',
+  ap_resolved_label:'خطة العمل (Action Plan) — تم حل المشكلة ميدانياً',ap_resolved_ph:'وش الإجراء اللي سويتيه لحل المشكلة؟',esc_reason_label:'سبب التصعيد / ملاحظة للمسؤول',esc_reason_ph:'ليش تحتاج تدخّل المسؤول؟',
+  sum_resolved:'تم الحل',sum_escalated:'مُصعّدة',sum_remaining:'متبقّي {n} بدون قرار',
+  err_decide:'كل مشكلة لازم تُحل أو تُصعّد قبل الحفظ',toast_saved:'تم حفظ الجولة',toast_saved_esc:' · {n} مشكلة صُعّدت للمسؤولين',err_complete:'أكملي القسم ورقم الغرفة والشخص المُقيّم',err_rateall:'قيّمي كل بنود التمريض قبل المتابعة',
+  mr_title:'جولات قسمي',mr_sub:'جولات قسمك ومتابعة مشاكلها.',all_title_all:'كل الجولات',all_title_dept:'جولات القسم',all_sub_all:'كل الجولات المسجّلة في النظام.',all_sub_dept:'جولات قسمك المسجّلة.',
+  export_csv:'⬇ تصدير CSV',err_noperm_export:'لا تملكين صلاحية التصدير',toast_exported:'تم تصدير الملف',no_rounds_title:'ما فيه جولات بعد',no_rounds_tech:'ابدئي بجولة جديدة من التبويب الأول.',no_rounds_mgr:'ما تسجّلت جولات في نطاقك بعد.',
+  th_date:'التاريخ',th_dept:'القسم',th_room:'الغرفة',th_asked:'تم سؤال',th_tech:'الفني',th_sat:'الرضا',th_issues:'المشاكل',
+  badge_open:'{n} مفتوحة',badge_allresolved:'كلها محلولة',badge_noissues:'لا مشاكل',details_btn:'تفاصيل',
+  rd_title:'تفاصيل الجولة',by_word:'بواسطة',back:'→ رجوع',kpi_avgsat:'متوسط الرضا',kpi_overall:'التقييم العام',kpi_issues:'المشاكل',sec_ratings:'التقييمات',lbl_liked:'أبرز الجوانب',lbl_sugg:'مقترحات',exc_service:'🌟 خدمة استثنائية: {name}',sec_issues_plans:'المشاكل وخطط العمل',issue_word:'مشكلة',lbl_desc:'الوصف',lbl_tech_plan:'خطة الفني',lbl_esc_reason:'سبب التصعيد',lbl_mgr_plan:'خطة المسؤول',
+  pr_title:'المشاكل',pr_sub:'المشاكل المصعّدة تحتاج خطة عمل. المحلولة معروضة للمتابعة. أي مسؤول يقدر يكتب الخطة ويقفل.',kpi_needaction:'تحتاج إجراء',kpi_escalated:'مصعّدة',kpi_resolved:'تم حلها',kpi_inscope:'في نطاقك',
+  sec_needaction:'تحتاج إجراء ({n})',no_esc_title:'ما فيه مشاكل مصعّدة',no_esc_sub:'كل شي تحت السيطرة. المصعّد الجديد بيظهر هنا.',esc_by:'صعّدها',lbl_patient_desc:'وصف المريض',lbl_tech_note:'ملاحظة الفني',ap_label:'خطة العمل (Action Plan)',ap_ph:'وش الإجراء التصحيحي؟ ومين المسؤول عن التنفيذ؟',btn_save_close:'✔ حفظ الخطة وإقفال المشكلة',sec_resolved:'تم حلها ({n})',by_the_plan:'خطة العمل',
+  err_noperm_close:'لا تملكين صلاحية إقفال المشاكل',err_write_plan:'اكتبي خطة العمل قبل الإقفال',toast_issue_closed:'تم إقفال المشكلة',
+  dash_title:'داشبورد رضا المرضى',dash_sub:'مؤشرات الرضا وحالة المشاكل حسب الفترة الزمنية.',f_period:'الفترة',p_daily:'يومي',p_weekly:'أسبوعي',p_monthly:'شهري',p_quarterly:'ربع سنوي',p_yearly:'سنوي',all_my_depts:'كل أقسامي',
+  nodata_title:'لا توجد بيانات',nodata_sub:'ما تسجّلت جولات في نطاقك بعد.',kpi_avgsat_period:'متوسط الرضا ({period})',sat_pct:'{n}% رضا',no_rounds_word:'لا جولات',kpi_roundscount:'عدد الجولات',in_current_period:'في الفترة الحالية',kpi_flagged_issues:'مشاكل مرصودة',open_word:'مفتوحة: {n}',kpi_resolve_rate:'نسبة الحل',resolved_of:'تم حل {a} من {b}',
+  sec_trend:'اتجاه الرضا عبر الفترات',sec_strengths:'نقاط القوة والضعف حسب البند',sec_issue_status:'حالة المشاكل (الفترة الحالية)',bar_resolved:'تم الحل',bar_escalated:'مُصعّدة',bar_open:'مفتوحة',sec_by_dept:'حسب القسم (كل الفترات)',no_rounds_period:'لا توجد جولات في هذه الفترة.',no_rounds_yet:'لا توجد جولات مسجّلة بعد.',rounds_unit:'جولة',
+  pl_daily:'اليوم',pl_weekly:'هذا الأسبوع',pl_monthly:'هذا الشهر',pl_quarterly:'هذا الربع',pl_yearly:'هذي السنة',week_prefix:'أسبوع',quarter_prefix:'ربع',
+  um_title:'إدارة المستخدمين',um_sub:'أنشئي حسابات الموظفات وحدّدي دور كل وحدة وقسمها. لا أحد يدخل النظام إلا من تنشئينه هنا.',loading:'جارِ التحميل…',add_staff:'إضافة موظفة جديدة',f_name:'الاسم',f_name_ph:'الاسم الكامل',f_temp_pass:'كلمة المرور المؤقتة',f_pass_ph:'٦ أحرف على الأقل',f_role:'الدور',f_dept_allowed:'الأقسام المسموح بالاطّلاع عليها',depts_hint:'أشّري الأقسام اللي يقدر هذا الحساب يطّلع عليها، أو اختاري «كل الأقسام».',create_account:'➕ إنشاء الحساب',creating:'جارِ الإنشاء…',accounts_word:'الحسابات ({n})',th_name:'الاسم',th_email:'البريد',th_role:'الدور',th_dept2:'القسم',no_users:'لا يوجد مستخدمون بعد',you_label:'أنتِ',revoke_access:'إلغاء الوصول',users_note:'ملاحظة: «إلغاء الوصول» يمنع الموظفة من دخول النظام فوراً. لحذف الحساب نهائياً من قاعدة المصادقة، احذفيه من Firebase Console ← Authentication.',
+  err_fill_user:'أكملي الاسم والبريد وكلمة المرور',err_pass_short:'كلمة المرور ٦ أحرف على الأقل',err_pick_dept:'اختاري قسم واحد على الأقل أو «كل الأقسام»',toast_account_created:'تم إنشاء الحساب',confirm_revoke:'إلغاء وصول {name}؟ لن تتمكن من دخول النظام بعدها.',err_cant_revoke_self:'لا يمكنك إلغاء وصولك',toast_revoked:'تم إلغاء الوصول',err_delete:'تعذّر الحذف',um_locked_title:'غير مصرّح',um_locked_sub:'هذه الصفحة للإدارة فقط.',
+  sc_5:'ممتاز',sc_4:'جيد جداً',sc_3:'جيد',sc_2:'مقبول',sc_1:'ضعيف',
+  q_q3:'تعريف طاقم التمريض بأنفسهم',q_q4:'شرح واستئذان الفريق قبل الفحوصات والإجراءات (سحب دم، علامات حيوية، إعطاء دواء…)',q_q5:'لطف واهتمام فريق التمريض',q_q6:'سرعة الاستجابة لجرس الاستدعاء',q_q7:'مراعاة الفريق لاحتياجاتك الخاصة أو الشخصية',q_q8:'حرص الفريق على إطلاعك بما يجري'
+ },
+ en:{
+  app_title:'Patient Satisfaction Rounds',app_sub:'Jubail General Hospital · Patient Satisfaction & Nursing Quality',
+  logout:'Sign out',lang_btn:'ع',
+  status_cloud:'Cloud connected',status_local:'Offline',
+  role_tech:'Patient Care Technician',role_head:'Department Head',role_sup:'Departments Supervisor',role_admin:'Administration',
+  all_departments:'All Departments',n_departments:'{n} departments',
+  tab_new:'New Round',tab_myrounds:'My Rounds',tab_problems:'Issues',tab_all_all:'All Rounds',tab_all_dept:'Department Rounds',tab_dash:'Dashboard',tab_users:'Users',
+  login_title:'Patient Satisfaction Rounds',login_sub:'Jubail General Hospital · All Departments',
+  email:'Email',password:'Password',login_btn:'Sign in',login_note:'Access is limited to authorized staff. Contact administration for an account.',login_signingin:'Signing in…',
+  err_fill_login:'Enter your email and password',err_noserver:'No server connection',err_login_generic:'Sign-in failed',
+  e_invalid_email:'Invalid email format',e_user_not_found:'No account with this email',e_wrong_pass:'Incorrect password',e_invalid_cred:'Incorrect email or password',e_too_many:'Too many attempts, wait a moment and try again',e_disabled:'This account is disabled',e_in_use:'This email is already in use',e_weak:'Password too short (at least 6 characters)',
+  err_fb_load:'Failed to load Firebase — check your internet connection.',err_server:'Failed to connect to the server.',err_unauth:'Your account is not authorized yet. Contact administration.',err_load_acct:'Failed to load account data.',toast_admin_created:'Administrator account created',toast_cloud_lost:'Cloud connection lost',toast_cloud_savefail:'Failed to save to cloud',
+  nr_title:'New Round',nr_sub:'Rate each item from 1 (Poor) to 5 (Excellent). Any item rated 2 or below is automatically flagged as an issue.',
+  sec_round_info:'Round Details',f_dept:'Department',f_room:'Room Number',f_room_ph:'e.g. 214',f_asked:'Surveyed',opt_patient:'Patient',opt_companion:'Companion',
+  sec_eval:'Nursing Services Evaluation',sec_overall:'Overall Rating & Comments',q12:'Overall rating of Jubail General Hospital services',
+  f_liked:'Aspects you liked or disliked',f_liked_ph:"Patient's remarks...",f_sugg:'Comments & suggestions to improve the service',f_sugg_ph:'Suggestions...',f_nurse:'Name of a nurse who gave exceptional service',f_nurse_ph:"Nurse's name (optional)",
+  next_review:'Next: Review Issues →',live_notstarted:'Evaluation not started yet',live_avg:'Satisfaction average',live_flagged:'{n} issue(s) flagged',live_noflag:'No issues flagged ✅',
+  flag_note:'⚠️ Flagged as an issue — resolve or escalate it in the next step',
+  ps_title:'Review & Handle Issues',room_word:'Room',back_eval:'← Back to evaluation',
+  no_issues_title:'No issues flagged',no_issues_sub:'All ratings are above the threshold. You can save the round directly.',save_round:'Save Round',
+  ps_intro:'{n} issue(s) flagged. For each one: resolve it and write an action plan, or escalate it to the manager.',rating_word:'Rating',
+  f_probdesc:'Issue description as stated by the patient',f_probdesc_ph:'Issue details...',btn_resolved_now:'✔ Resolved now',btn_escalate:'⬆ Escalate to manager',
+  st_resolved:'✓ Resolved',st_escalated:'⬆ Escalated',st_open:'● Open',
+  ap_resolved_label:'Action Plan — issue resolved on site',ap_resolved_ph:'What did you do to resolve the issue?',esc_reason_label:'Escalation reason / note to manager',esc_reason_ph:'Why does this need the manager?',
+  sum_resolved:'Resolved',sum_escalated:'Escalated',sum_remaining:'{n} still undecided',
+  err_decide:'Every issue must be resolved or escalated before saving',toast_saved:'Round saved',toast_saved_esc:' · {n} issue(s) escalated to managers',err_complete:'Complete the department, room number, and surveyed person',err_rateall:'Rate all nursing items before continuing',
+  mr_title:'My Department Rounds',mr_sub:"Your department's rounds and issue tracking.",all_title_all:'All Rounds',all_title_dept:'Department Rounds',all_sub_all:'All rounds recorded in the system.',all_sub_dept:"Your department's recorded rounds.",
+  export_csv:'⬇ Export CSV',err_noperm_export:"You don't have export permission",toast_exported:'File exported',no_rounds_title:'No rounds yet',no_rounds_tech:'Start a new round from the first tab.',no_rounds_mgr:'No rounds recorded in your scope yet.',
+  th_date:'Date',th_dept:'Department',th_room:'Room',th_asked:'Surveyed',th_tech:'Technician',th_sat:'Satisfaction',th_issues:'Issues',
+  badge_open:'{n} open',badge_allresolved:'All resolved',badge_noissues:'No issues',details_btn:'Details',
+  rd_title:'Round Details',by_word:'by',back:'← Back',kpi_avgsat:'Avg. Satisfaction',kpi_overall:'Overall Rating',kpi_issues:'Issues',sec_ratings:'Ratings',lbl_liked:'Highlights',lbl_sugg:'Suggestions',exc_service:'🌟 Exceptional service: {name}',sec_issues_plans:'Issues & Action Plans',issue_word:'Issue',lbl_desc:'Description',lbl_tech_plan:"Technician's plan",lbl_esc_reason:'Escalation reason',lbl_mgr_plan:"Manager's plan",
+  pr_title:'Issues',pr_sub:'Escalated issues need an action plan. Resolved ones are shown for follow-up. Any manager can write the plan and close.',kpi_needaction:'Needs action',kpi_escalated:'Escalated',kpi_resolved:'Resolved',kpi_inscope:'in your scope',
+  sec_needaction:'Needs Action ({n})',no_esc_title:'No escalated issues',no_esc_sub:'All under control. New escalations appear here.',esc_by:'escalated by',lbl_patient_desc:"Patient's description",lbl_tech_note:"Technician's note",ap_label:'Action Plan',ap_ph:"What's the corrective action, and who is responsible?",btn_save_close:'✔ Save plan & close issue',sec_resolved:'Resolved ({n})',by_the_plan:'Action plan',
+  err_noperm_close:"You don't have permission to close issues",err_write_plan:'Write the action plan before closing',toast_issue_closed:'Issue closed',
+  dash_title:'Patient Satisfaction Dashboard',dash_sub:'Satisfaction metrics and issue status by time period.',f_period:'Period',p_daily:'Daily',p_weekly:'Weekly',p_monthly:'Monthly',p_quarterly:'Quarterly',p_yearly:'Yearly',all_my_depts:'All my departments',
+  nodata_title:'No data',nodata_sub:'No rounds recorded in your scope yet.',kpi_avgsat_period:'Avg. Satisfaction ({period})',sat_pct:'{n}% satisfaction',no_rounds_word:'No rounds',kpi_roundscount:'Rounds',in_current_period:'in current period',kpi_flagged_issues:'Flagged issues',open_word:'open: {n}',kpi_resolve_rate:'Resolution rate',resolved_of:'{a} of {b} resolved',
+  sec_trend:'Satisfaction Trend Across Periods',sec_strengths:'Strengths & Weaknesses by Item',sec_issue_status:'Issue Status (current period)',bar_resolved:'Resolved',bar_escalated:'Escalated',bar_open:'Open',sec_by_dept:'By Department (all periods)',no_rounds_period:'No rounds in this period.',no_rounds_yet:'No rounds recorded yet.',rounds_unit:'rounds',
+  pl_daily:'Today',pl_weekly:'This week',pl_monthly:'This month',pl_quarterly:'This quarter',pl_yearly:'This year',week_prefix:'Wk',quarter_prefix:'Q',
+  um_title:'User Management',um_sub:"Create staff accounts and set each person's role and department. No one can access the system unless you create them here.",loading:'Loading…',add_staff:'Add New Staff',f_name:'Name',f_name_ph:'Full name',f_temp_pass:'Temporary password',f_pass_ph:'At least 6 characters',f_role:'Role',f_dept_allowed:'Departments allowed to view',depts_hint:'Check the departments this account can view, or choose "All Departments".',create_account:'➕ Create Account',creating:'Creating…',accounts_word:'Accounts ({n})',th_name:'Name',th_email:'Email',th_role:'Role',th_dept2:'Department',no_users:'No users yet',you_label:'You',revoke_access:'Revoke access',users_note:'Note: "Revoke access" blocks the staff member from signing in immediately. To permanently delete the account, remove it from Firebase Console → Authentication.',
+  err_fill_user:'Complete name, email, and password',err_pass_short:'Password must be at least 6 characters',err_pick_dept:'Choose at least one department or "All Departments"',toast_account_created:'Account created',confirm_revoke:"Revoke access for {name}? They won't be able to sign in afterwards.",err_cant_revoke_self:"You can't revoke your own access",toast_revoked:'Access revoked',err_delete:'Failed to delete',um_locked_title:'Not authorized',um_locked_sub:'This page is for administration only.',
+  sc_5:'Excellent',sc_4:'Very good',sc_3:'Good',sc_2:'Fair',sc_1:'Poor',
+  q_q3:'Nursing staff introducing themselves',q_q4:'Explaining and asking permission before tests and procedures (blood draw, vitals, medication…)',q_q5:'Courtesy and attentiveness of the nursing team',q_q6:'Speed of response to the call bell',q_q7:'Attention to your special or personal needs',q_q8:'Keeping you informed about what is happening'
+ }
+};
+function t(k,vars){let s=(I18N[LANG]&&I18N[LANG][k]!=null)?I18N[LANG][k]:(I18N.ar[k]!=null?I18N.ar[k]:k);if(vars)for(const p in vars)s=s.split('{'+p+'}').join(vars[p]);return s;}
+function qLabel(q){return t('q_'+q.k);}
+function applyLang(){
+  document.documentElement.lang=LANG;
+  document.documentElement.dir=(LANG==='ar')?'rtl':'ltr';
+  const lb=$('#langBtn');if(lb)lb.textContent=t('lang_btn');
+  const bt=$('#brandTitle');if(bt)bt.textContent=t('app_title');
+  const bs=$('#brandSub');if(bs)bs.textContent=t('app_sub');
+  const lo=$('#logoutBtn');if(lo)lo.textContent=t('logout');
+  setStatus(cloud);
+  if(USER){boot();} else {renderLogin();}
+}
+function toggleLang(){LANG=(LANG==='ar')?'en':'ar';saveLang();applyLang();}
+
+let db=null, auth=null, cloud=false, roundsSubbed=false;
+
+/* ---- data layer (cloud only) ---- */
+function saveLocal(){try{localStorage.setItem(LS_ROUNDS,JSON.stringify(ROUNDS));}catch(e){}}
+const DB={
+  save(round){
+    const i=ROUNDS.findIndex(r=>r.id===round.id);
+    if(i>=0)ROUNDS[i]=round; else ROUNDS.unshift(round);           // optimistic
+    ROUNDS.sort((a,b)=>new Date(b.ts)-new Date(a.ts));
+    if(cloud){db.collection(RC).doc(round.id).set(round).catch(e=>{console.error(e);toast(t('toast_cloud_savefail'),'err');});}
+    else{saveLocal();}
+  },
+  remove(id){
+    ROUNDS=ROUNDS.filter(r=>r.id!==id);
+    if(cloud){db.collection(RC).doc(id).delete().catch(e=>console.error(e));}
+    else{saveLocal();}
+  }
+};
+
+function setStatus(ok){const el=$('#dbstatus');if(!el)return;el.className='dbstatus '+(ok?'cloud':'local');el.textContent=ok?t('status_cloud'):t('status_local');}
+function loginMsg(m){const el=$('#loginMsg');if(el)el.textContent=m||'';}
+function showLogin(){const l=$('#login');if(l)l.classList.remove('hidden');}
+function hideLogin(){const l=$('#login');if(l)l.classList.add('hidden');}
+
+function initDB(){
+  if(!(USE_FIREBASE && window.firebase)){setStatus(false);loginMsg(t('err_fb_load'));return;}
+  try{
+    firebase.initializeApp(firebaseConfig);
+    db=firebase.firestore(); auth=firebase.auth();
+    setStatus(true);
+    auth.onAuthStateChanged(handleAuth);
+  }catch(e){console.error('Firebase init failed:',e);setStatus(false);loginMsg(t('err_server'));}
+}
+
+/* runs on login/logout */
+async function handleAuth(fbUser){
+  if(!fbUser){USER=null;current='';ROUNDS=[];unsubscribeRounds();showLogin();return;}
+  try{
+    const snap=await db.collection(UC).doc(fbUser.uid).get();
+    let prof=snap.exists?snap.data():null;
+    if(!prof){
+      let firstEver=false;
+      try{ const any=await db.collection(UC).limit(1).get(); firstEver=any.empty; }
+      catch(err){ loginMsg(t('err_unauth')); await auth.signOut(); return; }
+      if(firstEver){ // first user ever → admin
+        prof={name:(fbUser.email||'admin').split('@')[0],email:(fbUser.email||'').toLowerCase(),role:'admin',depts:['*'],createdAt:new Date().toISOString()};
+        await db.collection(UC).doc(fbUser.uid).set(prof);
+        toast(t('toast_admin_created'),'ok');
+      }else{
+        loginMsg(t('err_unauth'));
+        await auth.signOut(); return;
+      }
+    }
+    USER={uid:fbUser.uid,email:fbUser.email,...prof};
+    loginMsg(''); hideLogin(); subscribeRounds(); boot();
+  }catch(e){console.error(e);loginMsg(t('err_load_acct'));}
+}
+
+let roundsUnsubs=[];
+const ROUNDS_BY_DEPT={};
+function unsubscribeRounds(){
+  roundsUnsubs.forEach(u=>{try{u();}catch(e){}});
+  roundsUnsubs=[];roundsSubbed=false;
+  for(const k in ROUNDS_BY_DEPT)delete ROUNDS_BY_DEPT[k];
+}
+function subscribeRounds(){
+  if(roundsSubbed)return; roundsSubbed=true; cloud=true;
+  const errH=e=>{console.error(e);toast(t('toast_cloud_lost'),'err');};
+  if(seesAllDepts(USER)){
+    // full access → one listener, no filter
+    roundsUnsubs.push(db.collection(RC).onSnapshot(snap=>onData(snap.docs.map(d=>d.data())),errH));
+  }else{
+    // scoped roles → one listener per allowed department (matches security rules)
+    const ds=userDepts(USER);
+    ds.forEach(d=>{
+      roundsUnsubs.push(db.collection(RC).where('dept','==',d).onSnapshot(snap=>{
+        ROUNDS_BY_DEPT[d]=snap.docs.map(x=>x.data());
+        const all=[];ds.forEach(k=>{(ROUNDS_BY_DEPT[k]||[]).forEach(r=>all.push(r));});
+        onData(all);
+      },errH));
+    });
+  }
+}
+
+function onData(rounds){
+  ROUNDS=rounds.slice().sort((a,b)=>new Date(b.ts)-new Date(a.ts));
+  if(!USER)return;
+  buildTabs();
+  const ae=document.activeElement;
+  const typing=ae&&/INPUT|TEXTAREA|SELECT/.test(ae.tagName||'');
+  if(current!=='new'&&current!=='users'&&!typing)render();
+}
+function toast(msg,type=''){const t=$('#toast');t.textContent=msg;t.className='show '+type;setTimeout(()=>t.className='',2600);}
+function esc(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function initials(n){return (n||'?').trim().slice(0,2);}
+
+/* ---- problem helpers ---- */
+function allProblems(){
+  const out=[];
+  ROUNDS.forEach(r=>r.problems.forEach(p=>out.push({...p,round:r})));
+  return out;
+}
+function scopedProblems(){
+  const out=[];
+  scopedRounds().forEach(r=>r.problems.forEach(p=>out.push({...p,round:r})));
+  return out;
+}
+function escalatedInScope(){return scopedProblems().filter(p=>p.status==='escalated');}
+
+/* ---- scoring ---- */
+function roundAvg(r){
+  const vals=QRATED.map(q=>r.ratings[q.k]).filter(v=>v);
+  if(!vals.length)return null;
+  return vals.reduce((a,b)=>a+b,0)/vals.length;
+}
+function pct(avg){return avg==null?null:Math.round(avg/5*100);}
+
+/* ================= LOGIN ================= */
+async function doLogin(){
+  const email=$('#loginEmail').value.trim();
+  const pass=$('#loginPass').value;
+  if(!email||!pass){loginMsg(t('err_fill_login'));return;}
+  if(!auth){loginMsg(t('err_noserver'));return;}
+  const btn=$('#loginBtn');btn.disabled=true;btn.textContent=t('login_signingin');loginMsg('');
+  try{await auth.signInWithEmailAndPassword(email,pass);}
+  catch(e){loginMsg(authErr(e));}
+  finally{btn.disabled=false;btn.textContent=t('login_btn');}
+}
+function authErr(e){
+  const m={'auth/invalid-email':'e_invalid_email','auth/user-not-found':'e_user_not_found',
+    'auth/wrong-password':'e_wrong_pass','auth/invalid-credential':'e_invalid_cred',
+    'auth/too-many-requests':'e_too_many','auth/user-disabled':'e_disabled',
+    'auth/email-already-in-use':'e_in_use','auth/weak-password':'e_weak'};
+  return t(m[e&&e.code]||'err_login_generic');
+}
+function logout(){current='';USER=null;if(auth){auth.signOut();}showLogin();}
+
+/* ================= TABS ================= */
+let TABS=[],current='';
+function buildTabs(){
+  if(!USER){TABS=[];return;}
+  const r=USER.role;
+  if(r==='tech'){
+    TABS=[{id:'new',lbl:t('tab_new'),ic:'➕'},{id:'myrounds',lbl:t('tab_myrounds'),ic:'📋'}];
+  }else if(r==='head'){
+    TABS=[{id:'problems',lbl:t('tab_problems'),ic:'⚠️',badge:()=>escalatedInScope().length},
+          {id:'all',lbl:t('tab_all_dept'),ic:'📋'},{id:'dash',lbl:t('tab_dash'),ic:'📊'}];
+  }else if(r==='sup'){
+    TABS=[{id:'problems',lbl:t('tab_problems'),ic:'⚠️',badge:()=>escalatedInScope().length},
+          {id:'all',lbl:t('tab_all_all'),ic:'📋'},{id:'dash',lbl:t('tab_dash'),ic:'📊'}];
+  }else{ // admin
+    TABS=[{id:'dash',lbl:t('tab_dash'),ic:'📊'},
+          {id:'problems',lbl:t('tab_problems'),ic:'⚠️',badge:()=>escalatedInScope().length},
+          {id:'all',lbl:t('tab_all_all'),ic:'📋'},{id:'users',lbl:t('tab_users'),ic:'👥'}];
+  }
+  const wrap=$('#tabs');if(!wrap)return;wrap.innerHTML='';
+  TABS.forEach(tb=>{
+    const b=document.createElement('button');
+    b.className='tab'+(tb.id===current?' active':'');
+    const bc=tb.badge?tb.badge():0;
+    b.innerHTML=`<span>${tb.ic}</span> ${tb.lbl}`+(bc>0?` <span class="badge">${bc}</span>`:'');
+    b.onclick=()=>{current=tb.id;render();};
+    wrap.appendChild(b);
+  });
+}
+function boot(){
+  const deptTxt=seesAllDepts(USER)?t('all_departments'):(isMultiDept(USER)?t('n_departments',{n:num(userDepts(USER).length)}):deptLabel(USER.dept||''));
+  $('#userchip').innerHTML=`<span class="av">${esc(initials(USER.name))}</span>
+     <span>${esc(USER.name)}<span class="role"> · ${roleLabel(USER.role)}${deptTxt?' · '+esc(deptTxt):''}</span></span>`;
+  if(!current)current = USER.role==='tech'?'new' : (USER.role==='admin'?'dash':'problems');
+  render();
+}
+function render(){
+  buildTabs();
+  const v={new:viewNew,myrounds:viewMyRounds,all:viewAll,problems:viewProblems,dash:viewDash,users:viewUsers}[current];
+  $('#app').innerHTML='';
+  if(v)v(); else if(TABS[0]){current=TABS[0].id;render();}
+}
+
+/* ================= NEW ROUND ================= */
+let draft=null;
+function newDraft(){return{dept:(USER&&USER.dept&&USER.dept!=='all')?USER.dept:'',room:'',ptype:'',ratings:{},liked:'',suggestions:'',nurse:'',problems:[]};}
+function viewNew(){
+  if(!draft)draft=newDraft();
+  const app=$('#app');
+  app.innerHTML=`
+  <div class="page-head">
+    <div><h2>${t('nr_title')}</h2><p>${t('nr_sub')}</p></div>
+  </div>
+  <div class="card card-pad">
+    <div class="section-title">${t('sec_round_info')}</div>
+    <div class="grid3">
+      <div>
+        <label class="fld">${t('f_dept')}</label>
+        <div class="lockchip">${esc(deptLabel(draft.dept)||'—')} <span>🔒</span></div>
+      </div>
+      <div>
+        <label class="fld req">${t('f_room')}</label>
+        <input type="text" id="room" value="${esc(draft.room)}" placeholder="${t('f_room_ph')}">
+      </div>
+      <div>
+        <label class="fld req">${t('f_asked')}</label>
+        <div class="seg" id="ptypeSeg">
+          <div class="seg-opt${draft.ptype==='مريض'?' on':''}" data-v="مريض">${t('opt_patient')}</div>
+          <div class="seg-opt${draft.ptype==='مرافق'?' on':''}" data-v="مرافق">${t('opt_companion')}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title">${t('sec_eval')}</div>
+    <div id="qlist"></div>
+
+    <div class="section-title">${t('sec_overall')}</div>
+    <div class="qblock" style="background:#fbfdfd;border-color:var(--line)">
+      <div class="qtitle"><span class="n">${num(12)}</span> ${t('q12')}</div>
+      <div class="scale" id="overallScale"></div>
+    </div>
+    <div class="grid2" style="margin-top:14px">
+      <div>
+        <label class="fld">${t('f_liked')}</label>
+        <textarea id="liked" placeholder="${t('f_liked_ph')}">${esc(draft.liked)}</textarea>
+      </div>
+      <div>
+        <label class="fld">${t('f_sugg')}</label>
+        <textarea id="suggestions" placeholder="${t('f_sugg_ph')}">${esc(draft.suggestions)}</textarea>
+      </div>
+    </div>
+    <div style="margin-top:14px">
+      <label class="fld">${t('f_nurse')}</label>
+      <input type="text" id="nurse" value="${esc(draft.nurse)}" placeholder="${t('f_nurse_ph')}">
+    </div>
+
+    <div class="divider"></div>
+    <div class="row-between">
+      <div class="hint" id="liveScore"></div>
+      <button class="btn btn-primary" onclick="goProblems()">${t('next_review')}</button>
+    </div>
+  </div>`;
+
+  // ptype segment (dept is locked to the technician's department)
+  $('#ptypeSeg').onclick=e=>{const o=e.target.closest('.seg-opt');if(!o)return;draft.ptype=o.dataset.v;paintSeg('ptypeSeg',o);};
+  $('#room').oninput=e=>draft.room=e.target.value;
+  $('#liked').oninput=e=>draft.liked=e.target.value;
+  $('#suggestions').oninput=e=>draft.suggestions=e.target.value;
+  $('#nurse').oninput=e=>draft.nurse=e.target.value;
+
+  renderQuestions();
+  renderScale('overallScale','overall');
+  updateLive();
+}
+function paintSeg(id,el){document.querySelectorAll('#'+id+' .seg-opt').forEach(o=>o.classList.remove('on'));el.classList.add('on');}
+function arNum(n){return num(n);}
+function probLabel(p){return p&&p.qkey?t('q_'+p.qkey):((p&&p.label)||t('issue_word'));}
+function ptypeLabel(v){return v==='مريض'?t('opt_patient'):v==='مرافق'?t('opt_companion'):(v||'');}
+function renderLogin(){
+  const set=(id,key)=>{const e=$('#'+id);if(e)e.textContent=t(key);};
+  set('lg_title','login_title');set('lg_sub','login_sub');set('lg_email_l','email');set('lg_pass_l','password');set('loginBtn','login_btn');set('lg_note','login_note');
+}
+
+function renderQuestions(){
+  const box=$('#qlist');box.innerHTML='';
+  QRATED.forEach(q=>{
+    const cur=draft.ratings[q.k];
+    const flagged=cur&&cur<=THRESHOLD;
+    const d=document.createElement('div');
+    d.className='qblock'+(flagged?' flagged':'');
+    d.innerHTML=`<div class="qtitle"><span class="n">${arNum(q.n)}</span> ${qLabel(q)}</div>
+      <div class="scale" data-k="${q.k}"></div>
+      ${flagged?'<div class="flag-note">'+t('flag_note')+'</div>':''}`;
+    box.appendChild(d);
+    renderScale(d.querySelector('.scale'),q.k);
+  });
+}
+function renderScale(target,key){
+  const el=typeof target==='string'?$('#'+target):target;
+  el.innerHTML='';
+  const cur=draft.ratings[key];
+  SCALE.forEach(s=>{
+    const b=document.createElement('div');
+    b.className='dot'+(cur===s.v?' sel-'+s.v:'');
+    b.innerHTML=`<span class="num">${arNum(s.v)}</span>${t('sc_'+s.v)}`;
+    b.onclick=()=>{draft.ratings[key]=s.v;if(key==='overall'){renderScale('overallScale','overall');}else{renderQuestions();}updateLive();};
+    el.appendChild(b);
+  });
+}
+function updateLive(){
+  const avg=roundAvg(draft);
+  const flagged=QRATED.filter(q=>draft.ratings[q.k]&&draft.ratings[q.k]<=THRESHOLD).length;
+  const el=$('#liveScore');if(!el)return;
+  if(avg==null){el.textContent=t('live_notstarted');return;}
+  el.innerHTML=t('live_avg')+`: <b style="color:var(--ink)">${avg.toFixed(1)}/5 (${pct(avg)}%)</b>`+
+    (flagged?` · <span style="color:var(--coral);font-weight:700">`+t('live_flagged',{n:arNum(flagged)})+`</span>`:' · '+t('live_noflag'));
+}
+
+/* ---- problems review step ---- */
+function goProblems(){
+  if(!draft.dept||!draft.room.trim()||!draft.ptype){toast(t('err_complete'),'err');return;}
+  const answered=QRATED.filter(q=>draft.ratings[q.k]).length;
+  if(answered<QRATED.length){toast(t('err_rateall'),'err');return;}
+  // (re)build auto problems from low ratings, keep existing decisions
+  const prev={};draft.problems.forEach(p=>{if(p.qkey)prev[p.qkey]=p;});
+  draft.problems=[];
+  QRATED.forEach(q=>{
+    if(draft.ratings[q.k]<=THRESHOLD){
+      const old=prev[q.k];
+      draft.problems.push(old||{id:uid(),qkey:q.k,label:I18N.ar['q_'+q.k],score:draft.ratings[q.k],note:'',status:'open',actionTech:'',actionSup:'',escalatedTo:'',handledBy:''});
+      // refresh score in case changed
+      draft.problems[draft.problems.length-1].score=draft.ratings[q.k];
+    }
+  });
+  renderProblemStep();
+}
+function renderProblemStep(){
+  const app=$('#app');
+  const probs=draft.problems;
+  app.innerHTML=`
+  <div class="page-head">
+    <div><h2>${t('ps_title')}</h2><p>${esc(deptLabel(draft.dept))} · ${t('room_word')} ${esc(draft.room)} · ${esc(ptypeLabel(draft.ptype))}</p></div>
+    <button class="btn btn-outline btn-sm" onclick="viewNew()">${t('back_eval')}</button>
+  </div>`;
+
+  if(!probs.length){
+    app.innerHTML+=`<div class="card card-pad"><div class="empty">
+      <div class="ic">✅</div><h3>${t('no_issues_title')}</h3>
+      <p>${t('no_issues_sub')}</p>
+      <button class="btn btn-primary" style="margin-top:14px" onclick="commitRound()">${t('save_round')}</button>
+    </div></div>`;
+    return;
+  }
+
+  let html='<div class="card card-pad">';
+  html+=`<div class="hint" style="margin-bottom:16px">`+t('ps_intro',{n:'<b style="color:var(--coral)">'+arNum(probs.length)+'</b>'})+`</div>`;
+  probs.forEach((p,i)=>{
+    html+=`<div class="prob" id="prob_${p.id}">
+      <div class="prob-head">
+        <span class="pill">${arNum(i+1)}</span>
+        <span class="prob-src">${esc(probLabel(p))}</span>
+        <span class="tag">${t('rating_word')}: ${arNum(p.score)}/5</span>
+        <div style="flex:1"></div>
+        <span class="status ${statusClass(p.status)}">${statusLabel(p.status)}</span>
+      </div>
+      <div class="prob-body">
+        <label class="fld">${t('f_probdesc')}</label>
+        <textarea data-f="note" data-id="${p.id}" placeholder="${t('f_probdesc_ph')}">${esc(p.note)}</textarea>
+        <div class="choice">
+          <button class="btn ${p.status==='resolved'?'btn-green':'btn-outline'} btn-sm" onclick="chooseResolve('${p.id}')">${t('btn_resolved_now')}</button>
+          <button class="btn ${p.status==='escalated'?'btn-coral':'btn-outline'} btn-sm" onclick="chooseEscalate('${p.id}')">${t('btn_escalate')}</button>
+        </div>
+        <div id="detail_${p.id}" style="margin-top:12px"></div>
+      </div>
+    </div>`;
+  });
+  html+=`<div class="divider"></div>
+    <div class="row-between">
+      <div class="hint" id="probSummary"></div>
+      <button class="btn btn-primary" onclick="commitRound()">${t('save_round')}</button>
+    </div></div>`;
+  app.innerHTML+=html;
+
+  probs.forEach(p=>renderProbDetail(p));
+  document.querySelectorAll('[data-f=note]').forEach(t=>t.oninput=e=>{
+    const p=draft.problems.find(x=>x.id===e.target.dataset.id);p.note=e.target.value;
+  });
+  updateProbSummary();
+}
+function statusClass(s){return s==='resolved'?'st-res':s==='escalated'?'st-esc':'st-open';}
+function statusLabel(s){return s==='resolved'?t('st_resolved'):s==='escalated'?t('st_escalated'):t('st_open');}
+function renderProbDetail(p){
+  const box=$('#detail_'+p.id);if(!box)return;
+  if(p.status==='resolved'){
+    box.innerHTML=`<div style="background:var(--green-soft);border-radius:11px;padding:13px 15px">
+      <label class="fld" style="color:#146b48">${t('ap_resolved_label')}</label>
+      <textarea data-f="actionTech" data-id="${p.id}" placeholder="${t('ap_resolved_ph')}">${esc(p.actionTech)}</textarea>
+    </div>`;
+  }else if(p.status==='escalated'){
+    box.innerHTML=`<div style="background:var(--amber-soft);border-radius:11px;padding:13px 15px">
+      <label class="fld" style="color:#8a5f0e">${t('esc_reason_label')}</label>
+      <textarea data-f="escalatedTo" data-id="${p.id}" placeholder="${t('esc_reason_ph')}">${esc(p.escalatedTo)}</textarea>
+    </div>`;
+  }else{box.innerHTML='';}
+  box.querySelectorAll('textarea').forEach(t=>t.oninput=e=>{
+    const pr=draft.problems.find(x=>x.id===e.target.dataset.id);pr[e.target.dataset.f]=e.target.value;
+  });
+}
+function chooseResolve(id){const p=draft.problems.find(x=>x.id===id);p.status='resolved';p.escalatedTo='';refreshProb(p);}
+function chooseEscalate(id){const p=draft.problems.find(x=>x.id===id);p.status='escalated';p.actionTech='';refreshProb(p);}
+function refreshProb(p){
+  const card=$('#prob_'+p.id);
+  card.querySelector('.status').className='status '+statusClass(p.status);
+  card.querySelector('.status').textContent=statusLabel(p.status);
+  const btns=card.querySelectorAll('.choice .btn');
+  btns[0].className='btn '+(p.status==='resolved'?'btn-green':'btn-outline')+' btn-sm';
+  btns[1].className='btn '+(p.status==='escalated'?'btn-coral':'btn-outline')+' btn-sm';
+  renderProbDetail(p);updateProbSummary();
+}
+function updateProbSummary(){
+  const el=$('#probSummary');if(!el)return;
+  const undecided=draft.problems.filter(p=>p.status==='open').length;
+  const res=draft.problems.filter(p=>p.status==='resolved').length;
+  const esc2=draft.problems.filter(p=>p.status==='escalated').length;
+  el.innerHTML=t('sum_resolved')+`: <b style="color:var(--green)">${arNum(res)}</b> · `+t('sum_escalated')+`: <b style="color:var(--amber)">${arNum(esc2)}</b>`+
+    (undecided?` · <span style="color:var(--coral)">`+t('sum_remaining',{n:arNum(undecided)})+`</span>`:'');
+}
+function commitRound(){
+  const undecided=draft.problems.filter(p=>p.status==='open').length;
+  if(undecided){toast(t('err_decide'),'err');return;}
+  // finalize resolved problems metadata
+  draft.problems.forEach(p=>{
+    if(p.status==='resolved'){p.handledBy=USER.name;p.resolvedTs=new Date().toISOString();}
+    if(p.status==='escalated'){p.escalatedBy=USER.name;}
+  });
+  const round={
+    id:uid(),ts:new Date().toISOString(),
+    dept:draft.dept,room:draft.room.trim(),ptype:draft.ptype,tech:USER.name,
+    ratings:{...draft.ratings},liked:draft.liked.trim(),suggestions:draft.suggestions.trim(),nurse:draft.nurse.trim(),
+    problems:draft.problems
+  };
+  DB.save(round);
+  const esc2=draft.problems.filter(p=>p.status==='escalated').length;
+  draft=null;
+  toast(t('toast_saved')+(esc2?t('toast_saved_esc',{n:arNum(esc2)}):''),'ok');
+  current='myrounds';render();
+}
+
+/* ================= ROUNDS LISTS ================= */
+function viewMyRounds(){roundsList(scopedRounds(),t('mr_title'),t('mr_sub'));}
+function viewAll(){roundsList(scopedRounds(),seesAll(USER)?t('all_title_all'):t('all_title_dept'),seesAll(USER)?t('all_sub_all'):t('all_sub_dept'));}
+function roundsList(list,title,sub){
+  const app=$('#app');
+  app.innerHTML=`<div class="page-head"><div><h2>${title}</h2><p>${sub}</p></div>
+    ${list.length&&canExport(USER)?'<button class="btn btn-outline btn-sm" onclick="exportCSV()">'+t('export_csv')+'</button>':''}</div>`;
+  if(!list.length){app.innerHTML+=emptyCard('📋',t('no_rounds_title'),USER.role==='tech'?t('no_rounds_tech'):t('no_rounds_mgr'));return;}
+  let html=`<div class="card"><div style="overflow-x:auto"><table><thead><tr><th>${t('th_date')}</th><th>${t('th_dept')}</th><th>${t('th_room')}</th><th>${t('th_asked')}</th><th>${t('th_tech')}</th><th>${t('th_sat')}</th><th>${t('th_issues')}</th><th></th></tr></thead><tbody>`;
+  list.forEach(r=>{
+    const avg=roundAvg(r);const p=r.problems;
+    const openN=p.filter(x=>x.status!=='resolved').length;
+    const badge=p.length? (openN? `<span class="status st-esc">`+t('badge_open',{n:arNum(openN)})+`</span>` : `<span class="status st-res">`+t('badge_allresolved')+`</span>`) : `<span class="tag">`+t('badge_noissues')+`</span>`;
+    html+=`<tr>
+      <td>${fmtDate(r.ts)}</td><td>${esc(deptLabel(r.dept))}</td><td>${esc(r.room)}</td><td>${esc(ptypeLabel(r.ptype))}</td><td>${esc(r.tech||'')}</td>
+      <td><b style="color:${avgColor(avg)}">${avg?avg.toFixed(1):'—'}/5</b></td>
+      <td>${badge}</td>
+      <td><button class="btn btn-outline btn-sm" onclick="openRound('${r.id}')">${t('details_btn')}</button></td>
+    </tr>`;
+  });
+  html+='</tbody></table></div></div>';
+  app.innerHTML+=html;
+}
+function avgColor(a){return a==null?'var(--muted)':a>=4?'var(--green)':a>=3?'var(--amber)':'var(--coral)';}
+
+function openRound(id){
+  const r=ROUNDS.find(x=>x.id===id);if(!r)return;
+  const avg=roundAvg(r);
+  const app=$('#app');
+  app.innerHTML=`<div class="page-head"><div><h2>${t('rd_title')}</h2>
+    <p>${fmtDate(r.ts)} · ${esc(deptLabel(r.dept))} · ${t('room_word')} ${esc(r.room)} · ${esc(ptypeLabel(r.ptype))} · ${t('by_word')} ${esc(r.tech)}</p></div>
+    <button class="btn btn-outline btn-sm" onclick="render()">${t('back')}</button></div>`;
+  let html=`<div class="card card-pad">
+    <div class="kpis" style="margin-bottom:0">
+      <div class="kpi accent"><div class="lbl">${t('kpi_avgsat')}</div><div class="val">${avg?avg.toFixed(1):'—'}<span style="font-size:16px">/5</span></div><div class="sub">${avg?pct(avg)+'%':''}</div></div>
+      <div class="kpi"><div class="lbl">${t('kpi_overall')}</div><div class="val">${r.ratings.overall?arNum(r.ratings.overall):'—'}<span style="font-size:16px">/5</span></div></div>
+      <div class="kpi ${r.problems.length?'warn':'good'}"><div class="lbl">${t('kpi_issues')}</div><div class="val">${arNum(r.problems.length)}</div></div>
+    </div>
+    <div class="section-title">${t('sec_ratings')}</div>`;
+  QRATED.forEach(q=>{const v=r.ratings[q.k];html+=qbarHTML(qLabel(q),v);});
+  if(r.liked)html+=`<div style="margin-top:6px"><label class="fld">${t('lbl_liked')}</label><div class="hint" style="color:var(--text)">${esc(r.liked)}</div></div>`;
+  if(r.suggestions)html+=`<div style="margin-top:12px"><label class="fld">${t('lbl_sugg')}</label><div class="hint" style="color:var(--text)">${esc(r.suggestions)}</div></div>`;
+  if(r.nurse)html+=`<div style="margin-top:12px"><span class="tag">${t('exc_service',{name:esc(r.nurse)})}</span></div>`;
+  html+='</div>';
+
+  if(r.problems.length){
+    html+='<div class="section-title">'+t('sec_issues_plans')+'</div>';
+    r.problems.forEach(p=>html+=problemFullCard(p,r));
+  }
+  app.innerHTML+=html;
+}
+function qbarHTML(label,v){
+  const p=v?v/5*100:0;const col=v>=4?'var(--green)':v>=3?'var(--amber)':v?'var(--coral)':'#ccc';
+  return `<div class="qbar"><div class="qbar-top"><span>${esc(label)}</span><span class="sc">${v?v+'/5':'—'}</span></div>
+    <div class="track"><div class="fill" style="width:${p}%;background:${col}"></div></div></div>`;
+}
+function problemFullCard(p,r){
+  return `<div class="prob">
+    <div class="prob-head">
+      <span class="prob-src">${esc(probLabel(p))}</span>
+      ${p.score?`<span class="tag">${t('rating_word')}: ${arNum(p.score)}/5</span>`:''}
+      <div style="flex:1"></div>
+      <span class="status ${statusClass(p.status)}">${statusLabel(p.status)}</span>
+    </div>
+    <div class="prob-body">
+      ${p.note?`<div class="hint" style="color:var(--text);margin-bottom:8px"><b>${t('lbl_desc')}:</b> ${esc(p.note)}</div>`:''}
+      ${p.actionTech?`<div style="background:var(--green-soft);border-radius:10px;padding:11px 13px;margin-bottom:8px"><b style="color:#146b48">${t('lbl_tech_plan')}:</b> ${esc(p.actionTech)}<div class="hint">${t('by_word')} ${esc(p.handledBy||r.tech)}</div></div>`:''}
+      ${p.escalatedTo?`<div style="background:var(--amber-soft);border-radius:10px;padding:11px 13px;margin-bottom:8px"><b style="color:#8a5f0e">${t('lbl_esc_reason')}:</b> ${esc(p.escalatedTo)}</div>`:''}
+      ${p.actionSup?`<div style="background:var(--teal-soft);border-radius:10px;padding:11px 13px"><b style="color:var(--ink)">${t('lbl_mgr_plan')}:</b> ${esc(p.actionSup)}<div class="hint">${t('by_word')} ${esc(p.supName||'')}${p.supRole?' · '+roleLabel(p.supRole):''}</div></div>`:''}
+    </div></div>`;
+}
+
+/* ================= PROBLEMS (managers) ================= */
+function viewProblems(){
+  const app=$('#app');
+  const all=scopedProblems();
+  const pending=all.filter(p=>p.status==='escalated');
+  const done=all.filter(p=>p.status==='resolved');
+  app.innerHTML=`<div class="page-head"><div><h2>${t('pr_title')}</h2>
+    <p>${t('pr_sub')}</p></div></div>`;
+
+  app.innerHTML+=`<div class="kpis" style="margin-bottom:22px">
+    <div class="kpi warn"><div class="lbl">${t('kpi_needaction')}</div><div class="val">${num(pending.length)}</div><div class="sub">${t('kpi_escalated')}</div></div>
+    <div class="kpi good"><div class="lbl">${t('kpi_resolved')}</div><div class="val">${num(done.length)}</div><div class="sub">${t('kpi_inscope')}</div></div>
+  </div>`;
+
+  app.innerHTML+=`<div class="section-title">${t('sec_needaction',{n:num(pending.length)})}</div>`;
+  if(!pending.length){app.innerHTML+=emptyCard('✅',t('no_esc_title'),t('no_esc_sub'));}
+  else{
+    let html='';
+    pending.forEach(item=>{
+      const r=item.round;
+      html+=`<div class="card card-pad" style="margin-bottom:14px">
+        <div class="row-between" style="margin-bottom:10px">
+          <div><span class="prob-src">${esc(probLabel(item))}</span>
+            <div class="hint">${esc(deptLabel(r.dept))} · ${t('room_word')} ${esc(r.room)} · ${fmtDate(r.ts)} · ${t('esc_by')} ${esc(item.escalatedBy||r.tech)}</div></div>
+          <span class="status st-esc">${t('st_escalated')}</span>
+        </div>
+        ${item.note?`<div class="hint" style="color:var(--text);margin-bottom:6px"><b>${t('lbl_patient_desc')}:</b> ${esc(item.note)}</div>`:''}
+        ${item.escalatedTo?`<div style="background:var(--amber-soft);border-radius:10px;padding:10px 13px;margin-bottom:12px"><b style="color:#8a5f0e">${t('lbl_tech_note')}:</b> ${esc(item.escalatedTo)}</div>`:''}
+        <label class="fld req" style="color:var(--ink)">${t('ap_label')}</label>
+        <textarea id="sup_${item.id}" placeholder="${t('ap_ph')}"></textarea>
+        <div style="margin-top:12px"><button class="btn btn-green btn-sm" onclick="resolveProblem('${r.id}','${item.id}')">${t('btn_save_close')}</button></div>
+      </div>`;
+    });
+    app.innerHTML+=html;
+  }
+
+  if(done.length){
+    app.innerHTML+=`<div class="section-title">${t('sec_resolved',{n:num(done.length)})}</div>`;
+    let html='';
+    done.slice(0,60).forEach(item=>{
+      const r=item.round;
+      const by=item.actionSup?(esc(item.supName||'')+(item.supRole?' · '+roleLabel(item.supRole):'')):(t('role_tech')+' '+esc(item.handledBy||r.tech||''));
+      const plan=item.actionSup||item.actionTech||'';
+      html+=`<div class="prob"><div class="prob-head">
+          <span class="prob-src">${esc(probLabel(item))}</span>
+          <span class="tag">${esc(deptLabel(r.dept))} · ${t('room_word')} ${esc(r.room)}</span>
+          <div style="flex:1"></div><span class="status st-res">${t('st_resolved')}</span></div>
+        <div class="prob-body">
+          ${item.note?`<div class="hint" style="color:var(--text);margin-bottom:6px"><b>${t('lbl_desc')}:</b> ${esc(item.note)}</div>`:''}
+          ${plan?`<div style="background:var(--green-soft);border-radius:10px;padding:10px 13px"><b style="color:#146b48">${t('by_the_plan')}:</b> ${esc(plan)}<div class="hint">${t('by_word')} ${by} · ${fmtDate(r.ts)}</div></div>`:''}
+        </div></div>`;
+    });
+    app.innerHTML+=html;
+  }
+}
+function resolveProblem(roundId,probId){
+  if(!canManageProblems(USER)){toast(t('err_noperm_close'),'err');return;}
+  const plan=$('#sup_'+probId).value.trim();
+  if(!plan){toast(t('err_write_plan'),'err');return;}
+  const r=ROUNDS.find(x=>x.id===roundId);if(!r)return;
+  const p=r.problems.find(x=>x.id===probId);if(!p)return;
+  p.actionSup=plan;p.supName=USER.name;p.supRole=USER.role;p.status='resolved';p.resolvedTs=new Date().toISOString();
+  DB.save(r);toast(t('toast_issue_closed'),'ok');render();
+}
+
+/* ================= DASHBOARD ================= */
+let dashPeriod='monthly',dashDept='all';
+function viewDash(){
+  const app=$('#app');
+  if(!isMultiDept(USER))dashDept=USER.dept; // single-department roles see only their dept
+  const myDepts=userDepts(USER);
+  const deptSelect = isMultiDept(USER)? `<div style="min-width:220px">
+        <label class="fld">${t('f_dept')}</label>
+        <select id="dashDept">
+          <option value="all"${dashDept==='all'?' selected':''}>${t('all_my_depts')}</option>
+          ${myDepts.map(d=>`<option value="${esc(d)}"${dashDept===d?' selected':''}>${esc(deptLabel(d))}</option>`).join('')}
+        </select>
+      </div>` : `<div><label class="fld">${t('f_dept')}</label><div class="lockchip" style="min-width:150px">${esc(deptLabel(USER.dept||''))} <span>🔒</span></div></div>`;
+  app.innerHTML=`<div class="page-head"><div><h2>${t('dash_title')}</h2><p>${t('dash_sub')}</p></div></div>
+  <div class="card card-pad" style="margin-bottom:20px">
+    <div class="row-between">
+      <div>
+        <label class="fld">${t('f_period')}</label>
+        <div class="seg" id="periodSeg">
+          ${['daily','weekly','monthly','quarterly','yearly'].map(v=>`<div class="seg-opt${dashPeriod===v?' on':''}" data-v="${v}" style="min-width:auto">${t('p_'+v)}</div>`).join('')}
+        </div>
+      </div>
+      ${deptSelect}
+    </div>
+  </div>
+  <div id="dashBody"></div>`;
+  $('#periodSeg').onclick=e=>{const o=e.target.closest('.seg-opt');if(!o)return;dashPeriod=o.dataset.v;renderDash();};
+  const ds=$('#dashDept');if(ds)ds.onchange=e=>{dashDept=e.target.value;renderDash();};
+  renderDash();
+}
+function renderDash(){
+  document.querySelectorAll('#periodSeg .seg-opt').forEach(o=>o.classList.toggle('on',o.dataset.v===dashPeriod));
+  let data=scopedRounds();
+  if(isMultiDept(USER)&&dashDept!=='all')data=data.filter(r=>r.dept===dashDept);
+  const buckets=makeBuckets(dashPeriod,data);
+  const cur=buckets[buckets.length-1]; // current period
+  const curRounds=cur?cur.rounds:[];
+  const probs=[];curRounds.forEach(r=>r.problems.forEach(p=>probs.push(p)));
+  const resolved=probs.filter(p=>p.status==='resolved').length;
+  const escc=probs.filter(p=>p.status==='escalated').length;
+  const openc=probs.filter(p=>p.status==='open').length;
+  const avg=periodAvg(curRounds);
+  const resRate=probs.length?Math.round(resolved/probs.length*100):null;
+
+  const box=$('#dashBody');
+  if(!data.length){box.innerHTML=emptyCard('📊',t('nodata_title'),t('nodata_sub'));return;}
+
+  let html=`<div class="kpis">
+    <div class="kpi accent"><div class="lbl">${t('kpi_avgsat_period',{period:periodLabel(dashPeriod)})}</div><div class="val">${avg?avg.toFixed(1):'—'}<span style="font-size:16px">/5</span></div><div class="sub">${avg?t('sat_pct',{n:pct(avg)}):t('no_rounds_word')}</div></div>
+    <div class="kpi"><div class="lbl">${t('kpi_roundscount')}</div><div class="val">${num(curRounds.length)}</div><div class="sub">${t('in_current_period')}</div></div>
+    <div class="kpi warn"><div class="lbl">${t('kpi_flagged_issues')}</div><div class="val">${num(probs.length)}</div><div class="sub">${t('open_word',{n:num(openc+escc)})}</div></div>
+    <div class="kpi good"><div class="lbl">${t('kpi_resolve_rate')}</div><div class="val">${resRate==null?'—':num(resRate)+'%'}</div><div class="sub">${t('resolved_of',{a:num(resolved),b:num(probs.length)})}</div></div>
+  </div>`;
+
+  // trend chart
+  html+=`<div class="card card-pad" style="margin-bottom:20px">
+    <div class="section-title" style="margin-top:0">${t('sec_trend')}</div>
+    <div class="chartwrap"><div class="bars">${trendBars(buckets)}</div></div></div>`;
+
+  // two columns
+  html+=`<div class="grid2">`;
+  // per-question strengths/weaknesses (over current period, fallback all)
+  const scope=curRounds.length?curRounds:data;
+  html+=`<div class="card card-pad"><div class="section-title" style="margin-top:0">${t('sec_strengths')}</div>${questionAverages(scope)}</div>`;
+  // problems + department breakdown
+  html+=`<div class="card card-pad"><div class="section-title" style="margin-top:0">${t('sec_issue_status')}</div>
+    ${probStatusBar(t('bar_resolved'),resolved,probs.length,'var(--green)')}
+    ${probStatusBar(t('bar_escalated'),escc,probs.length,'var(--amber)')}
+    ${probStatusBar(t('bar_open'),openc,probs.length,'var(--coral)')}
+    <div class="divider"></div>
+    <div class="section-title" style="margin-top:0">${t('sec_by_dept')}</div>
+    ${deptBreakdown()}
+  </div>`;
+  html+='</div>';
+
+  box.innerHTML=html;
+}
+function probStatusBar(lbl,n,total,col){
+  const p=total?n/total*100:0;
+  return `<div class="qbar"><div class="qbar-top"><span>${lbl}</span><span class="sc">${num(n)}${total?' / '+num(total):''}</span></div>
+    <div class="track"><div class="fill" style="width:${p}%;background:${col}"></div></div></div>`;
+}
+function questionAverages(rounds){
+  if(!rounds.length)return '<div class="hint">'+t('no_rounds_period')+'</div>';
+  return QRATED.map(q=>{
+    const vals=rounds.map(r=>r.ratings[q.k]).filter(v=>v);
+    const a=vals.length?vals.reduce((x,y)=>x+y,0)/vals.length:0;
+    const col=a>=4?'var(--green)':a>=3?'var(--amber)':'var(--coral)';
+    const lb=qLabel(q);
+    return `<div class="qbar"><div class="qbar-top"><span>${esc(lb.length>42?lb.slice(0,42)+'…':lb)}</span><span class="sc">${a.toFixed(1)}</span></div>
+      <div class="track"><div class="fill" style="width:${a/5*100}%;background:${col}"></div></div></div>`;
+  }).join('');
+}
+function deptBreakdown(){
+  const rows=userDepts(USER).map(d=>({d,rs:scopedRounds().filter(r=>r.dept===d)})).filter(x=>x.rs.length).sort((a,b)=>b.rs.length-a.rs.length);
+  if(!rows.length)return '<div class="hint">'+t('no_rounds_yet')+'</div>';
+  return rows.map(({d,rs})=>{
+    const a=periodAvg(rs);
+    return `<div class="row-between" style="padding:8px 0;border-bottom:1px solid var(--line)">
+      <span style="font-weight:700">${esc(deptLabel(d))}</span>
+      <span><span class="tag">${num(rs.length)} ${LANG==='en'&&rs.length===1?'round':t('rounds_unit')}</span> <b style="color:${avgColor(a)}">${a?a.toFixed(1)+'/5':'—'}</b></span></div>`;
+  }).join('');
+}
+function periodAvg(rounds){
+  const avgs=rounds.map(roundAvg).filter(v=>v!=null);
+  if(!avgs.length)return null;
+  return avgs.reduce((a,b)=>a+b,0)/avgs.length;
+}
+function trendBars(buckets){
+  const max=5;
+  return buckets.map(b=>{
+    const a=periodAvg(b.rounds);
+    const h=a?(a/max*100):0;
+    const col=a==null?'#dde6e7':a>=4?'linear-gradient(var(--green),#178a5b)':a>=3?'linear-gradient(var(--amber),#c98410)':'linear-gradient(var(--coral),#c23f28)';
+    return `<div class="bar-col"><div class="bar" style="height:${h}%;background:${col}">${a?`<span>${a.toFixed(1)}</span>`:''}</div><div class="bar-lbl">${b.label}</div></div>`;
+  }).join('');
+}
+
+/* ---- bucket generation ---- */
+function dloc(){return LANG==='en'?'en-GB':'ar-SA-u-nu-latn';}
+function makeBuckets(period,data){
+  const now=new Date();const buckets=[];
+  const cfg={daily:{n:14},weekly:{n:8},monthly:{n:6},quarterly:{n:4},yearly:{n:3}}[period];
+  for(let i=cfg.n-1;i>=0;i--){
+    let start,end,label;
+    if(period==='daily'){
+      const d=new Date(now);d.setDate(now.getDate()-i);d.setHours(0,0,0,0);
+      start=new Date(d);end=new Date(d);end.setHours(23,59,59,999);
+      label=d.toLocaleDateString(dloc(),{day:'numeric',month:'numeric'});
+    }else if(period==='weekly'){
+      const d=new Date(now);d.setDate(now.getDate()-i*7);const dow=d.getDay();
+      start=new Date(d);start.setDate(d.getDate()-dow);start.setHours(0,0,0,0);
+      end=new Date(start);end.setDate(start.getDate()+6);end.setHours(23,59,59,999);
+      label=t('week_prefix')+' '+start.toLocaleDateString(dloc(),{day:'numeric',month:'numeric'});
+    }else if(period==='monthly'){
+      const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+      start=new Date(d);end=new Date(d.getFullYear(),d.getMonth()+1,0,23,59,59,999);
+      label=d.toLocaleDateString(dloc(),{month:'short',year:'2-digit'});
+    }else if(period==='quarterly'){
+      const q=Math.floor(now.getMonth()/3)-i;const yr=now.getFullYear()+Math.floor(q/4);const qi=((q%4)+4)%4;
+      start=new Date(yr,qi*3,1);end=new Date(yr,qi*3+3,0,23,59,59,999);
+      label=t('quarter_prefix')+(LANG==='en'?'':' ')+num(qi+1)+' '+num(String(yr).slice(2));
+    }else{
+      const yr=now.getFullYear()-i;start=new Date(yr,0,1);end=new Date(yr,11,31,23,59,59,999);
+      label=num(yr);
+    }
+    const rounds=data.filter(r=>{const tt=new Date(r.ts);return tt>=start&&tt<=end;});
+    buckets.push({label,rounds});
+  }
+  return buckets;
+}
+function periodLabel(p){return t('pl_'+p);}
+
+/* ================= HELPERS ================= */
+function emptyCard(ic,h,p){return `<div class="card card-pad"><div class="empty"><div class="ic">${ic}</div><h3>${h}</h3><p>${p}</p></div></div>`;}
+function fmtDate(ts){const d=new Date(ts);const L=LANG==='en'?'en-GB':'ar-SA-u-nu-latn';return d.toLocaleDateString(L,{day:'numeric',month:'numeric',year:'2-digit'})+' · '+d.toLocaleTimeString(L,{hour:'2-digit',minute:'2-digit'});}
+
+function exportCSV(){
+  if(!canExport(USER)){toast(t('err_noperm_export'),'err');return;}
+  const H_ar=['التاريخ','القسم','الغرفة','تم سؤال','الفني','q3','q4','q5','q6','q7','q8','التقييم العام','متوسط','عدد المشاكل','محلولة','مصعّدة','أبرز الجوانب','المقترحات','ممرض متميز'];
+  const H_en=['Date','Department','Room','Asked','Technician','q3','q4','q5','q6','q7','q8','Overall','Average','Issues','Resolved','Escalated','What they liked','Suggestions','Outstanding nurse'];
+  const rows=[LANG==='en'?H_en:H_ar];
+  scopedRounds().forEach(r=>{
+    const res=r.problems.filter(p=>p.status==='resolved').length;
+    const es=r.problems.filter(p=>p.status==='escalated').length;
+    rows.push([fmtDate(r.ts),deptLabel(r.dept),r.room,ptypeLabel(r.ptype),r.tech,r.ratings.q3||'',r.ratings.q4||'',r.ratings.q5||'',r.ratings.q6||'',r.ratings.q7||'',r.ratings.q8||'',r.ratings.overall||'',(roundAvg(r)||0).toFixed(1),r.problems.length,res,es,r.liked||'',r.suggestions||'',r.nurse||'']);
+  });
+  const csv='\uFEFF'+rows.map(row=>row.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=(LANG==='en'?'patient_satisfaction_rounds':'جولات_رضا_المرضى')+'.csv';a.click();
+  toast(t('toast_exported'),'ok');
+}
+
+/* ================= USER MANAGEMENT (admin) ================= */
+let USERS=[];
+async function loadUsers(){
+  if(!cloud){USERS=[];return;}
+  const snap=await db.collection(UC).get();
+  const order={admin:0,sup:1,head:2,tech:3};
+  USERS=snap.docs.map(d=>({uid:d.id,...d.data()})).sort((a,b)=>(order[a.role]??9)-(order[b.role]??9));
+}
+async function viewUsers(){
+  const app=$('#app');
+  if(!canManageUsers(USER)){app.innerHTML=emptyCard('🔒',t('um_locked_title'),t('um_locked_sub'));return;}
+  app.innerHTML=`<div class="page-head"><div><h2>${t('um_title')}</h2><p>${t('um_sub')}</p></div></div>
+    <div id="usersBody"><div class="empty"><div class="ic">⏳</div><h3>${t('loading')}</h3></div></div>`;
+  await loadUsers();renderUsers();
+}
+function renderUsers(){
+  const box=$('#usersBody');if(!box)return;
+  let html=`<div class="card card-pad" style="margin-bottom:20px">
+    <div class="section-title" style="margin-top:0">${t('add_staff')}</div>
+    <div class="grid3">
+      <div><label class="fld req">${t('f_name')}</label><input type="text" id="nu_name" placeholder="${t('f_name_ph')}"></div>
+      <div><label class="fld req">${t('email')}</label><input type="text" id="nu_email" placeholder="name@example.com" autocomplete="off"></div>
+      <div><label class="fld req">${t('f_temp_pass')}</label><input type="text" id="nu_pass" placeholder="${t('f_pass_ph')}" autocomplete="off"></div>
+    </div>
+    <div style="margin-top:14px"><label class="fld req">${t('f_role')}</label>
+      <select id="nu_role" onchange="toggleDeptField()" style="max-width:320px">
+        ${['tech','head','sup','admin'].map(r=>`<option value="${r}">${roleLabel(r)}</option>`).join('')}
+      </select></div>
+    <div id="nu_deptWrap" style="margin-top:14px"></div>
+    <div style="margin-top:16px"><button class="btn btn-primary btn-sm" id="addUserBtn" onclick="addUser()">${t('create_account')}</button></div>
+    <p class="hint" id="userMsg" style="min-height:16px;font-weight:700"></p>
+  </div>`;
+  html+=`<div class="section-title">${t('accounts_word',{n:num(USERS.length)})}</div>
+    <div class="card"><div style="overflow-x:auto"><table><thead><tr><th>${t('th_name')}</th><th>${t('th_email')}</th><th>${t('th_role')}</th><th>${t('th_dept2')}</th><th></th></tr></thead><tbody>`;
+  if(!USERS.length){html+=`<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px">${t('no_users')}</td></tr>`;}
+  USERS.forEach(u=>{
+    html+=`<tr>
+      <td><b>${esc(u.name||'')}</b></td>
+      <td>${esc(u.email||'')}</td>
+      <td><span class="tag">${ROLE_IC[u.role]||''} ${roleLabel(u.role)}</span></td>
+      <td>${seesAllDepts(u)?t('all_departments'):(isMultiDept(u)?t('n_departments',{n:num(userDepts(u).length)}):esc(deptLabel(u.dept||'')))}</td>
+      <td>${u.uid===USER.uid?'<span class="hint">'+t('you_label')+'</span>':`<button class="btn btn-outline btn-sm" onclick="removeUser('${u.uid}','${esc((u.name||'').replace(/'/g,''))}')">${t('revoke_access')}</button>`}</td>
+    </tr>`;
+  });
+  html+=`</tbody></table></div></div>
+    <p class="hint" style="margin-top:14px">${t('users_note')}</p>`;
+  box.innerHTML=html;
+  toggleDeptField();
+}
+function toggleDeptField(){
+  const role=$('#nu_role'),wrap=$('#nu_deptWrap');if(!role||!wrap)return;
+  const r=role.value;
+  if(r==='tech'||r==='head'){
+    wrap.innerHTML=`<label class="fld req">${t('f_dept')}</label>
+      <select id="nu_dept" style="max-width:460px">${DEPTS.map(d=>`<option value="${esc(d.ar)}">${esc(deptLabel(d.ar))}</option>`).join('')}</select>`;
+  }else{
+    wrap.innerHTML=`<label class="fld req">${t('f_dept_allowed')}</label>
+      <div class="deptchecks" id="nu_depts">
+        <label class="dchk all"><input type="checkbox" value="*" onchange="toggleAllDepts(this)"> <b>${t('all_departments')}</b></label>
+        ${DEPTS.map(d=>`<label class="dchk"><input type="checkbox" value="${esc(d.ar)}"> ${esc(deptLabel(d.ar))}</label>`).join('')}
+      </div>
+      <p class="hint">${t('depts_hint')}</p>`;
+  }
+}
+function toggleAllDepts(cb){
+  const box=$('#nu_depts');if(!box)return;
+  box.querySelectorAll('input[type=checkbox]').forEach(i=>{if(i.value!=='*'){i.disabled=cb.checked;if(cb.checked)i.checked=false;}});
+}
+async function addUser(){
+  const name=$('#nu_name').value.trim();
+  const email=$('#nu_email').value.trim().toLowerCase();
+  const pass=$('#nu_pass').value;
+  const role=$('#nu_role').value;
+  const msg=m=>{const e=$('#userMsg');if(e){e.style.color='var(--coral)';e.textContent=m;}};
+  if(!name||!email||!pass){msg(t('err_fill_user'));return;}
+  if(pass.length<6){msg(t('err_pass_short'));return;}
+  let profDept=null,profDepts=null;
+  if(role==='tech'||role==='head'){profDept=$('#nu_dept').value;}
+  else{
+    const checked=[...document.querySelectorAll('#nu_depts input:checked')].map(i=>i.value);
+    if(!checked.length){msg(t('err_pick_dept'));return;}
+    profDepts=checked.includes('*')?['*']:checked;
+  }
+  const btn=$('#addUserBtn');btn.disabled=true;btn.textContent=t('creating');
+  try{
+    const sec=firebase.apps.find(a=>a.name==='sec')||firebase.initializeApp(firebaseConfig,'sec');
+    const cred=await sec.auth().createUserWithEmailAndPassword(email,pass);
+    const uid=cred.user.uid;
+    await sec.auth().signOut();
+    const prof={name,email,role,createdAt:new Date().toISOString(),createdBy:USER.email||''};
+    if(profDept!=null)prof.dept=profDept; else prof.depts=profDepts;
+    await db.collection(UC).doc(uid).set(prof);
+    $('#nu_name').value='';$('#nu_email').value='';$('#nu_pass').value='';
+    toast(t('toast_account_created'),'ok');
+    await loadUsers();renderUsers();
+  }catch(e){console.error(e);msg(authErr(e));}
+  finally{btn.disabled=false;btn.textContent=t('create_account');}
+}
+async function removeUser(uid,name){
+  if(uid===USER.uid){toast(t('err_cant_revoke_self'),'err');return;}
+  if(!confirm(t('confirm_revoke',{name:name})))return;
+  try{await db.collection(UC).doc(uid).delete();toast(t('toast_revoked'),'ok');await loadUsers();renderUsers();}
+  catch(e){console.error(e);toast(t('err_delete'),'err');}
+}
+
+/* ================= INIT ================= */
+applyLang();
+initDB(); // Firebase auth listener drives login/boot
+</script>
+</body>
+</html>
