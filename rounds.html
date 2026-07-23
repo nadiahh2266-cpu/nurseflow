@@ -331,6 +331,7 @@ function seesAllDepts(u){return !!u&&isMultiDept(u)&&(u.depts==null||u.depts.inc
 function canManageProblems(u){return !!u&&['head','sup','admin'].includes(u.role);}
 function canManageUsers(u){return !!u&&u.role==='admin';}
 function canExport(u){return !!u&&['head','sup','admin'].includes(u.role);}
+function canSeeStaff(u){return !!u&&['head','sup','admin'].includes(u.role);}
 function canDoRounds(u){return !!u&&u.role==='tech';}
 function inScope(u,r){return !!r&&userDepts(u).includes(r.dept);}
 function scopedRounds(){return ROUNDS.filter(r=>inScope(USER,r));}
@@ -348,14 +349,14 @@ const I18N={
   status_cloud:'متصل بالسحابة',status_local:'غير متصل',
   role_tech:'فني رعاية المرضى',role_head:'رئيس القسم',role_sup:'مشرف الأقسام',role_admin:'الإدارة',
   all_departments:'كل الأقسام',n_departments:'{n} أقسام',
-  tab_new:'جولة جديدة',tab_myrounds:'جولات قسمي',tab_problems:'المشاكل',tab_all_all:'كل الجولات',tab_all_dept:'جولات القسم',tab_dash:'الداشبورد',tab_users:'المستخدمون',
+  tab_new:'جولة جديدة',tab_myrounds:'جولات قسمي',tab_problems:'المشاكل',tab_all_all:'كل الجولات',tab_all_dept:'جولات القسم',tab_dash:'الداشبورد',st_title:'إنتاجية الفريق',st_sub:'جولات كل موظفة ومعدّلها اليومي ومستوى الرضا في جولاتها.',st_kpi_staff:'موظفات نشطات',st_kpi_rounds:'إجمالي الجولات',st_kpi_avg_per:'متوسط الجولات للموظفة',st_kpi_top:'الأعلى إنتاجية',st_th_name:'الموظفة',st_th_rounds:'الجولات',st_th_perday:'المعدل اليومي',st_th_days:'أيام العمل',st_th_sat:'متوسط الرضا',st_th_issues:'مشاكل رصدتها',st_th_res:'حلّتها',st_th_esc:'صعّدتها',st_th_last:'آخر جولة',st_none:'ما فيه جولات في هذه الفترة',st_none_sub:'غيّري الفترة أو القسم.',st_inactive:'بدون جولات في الفترة',st_detail:'تفصيل يومي — {name}',st_back:'رجوع للقائمة',st_day:'اليوم',st_rounds_day:'الجولات',st_sat_day:'متوسط الرضا',st_no_days:'ما فيه أيام مسجّلة في هذه الفترة.',st_click_hint:'اضغطي على أي موظفة لعرض تفصيلها اليومي.',st_staff_note:'القائمة تشمل الموظفات في أقسامك. اللي ما سوّت جولات تظهر في الآخر.',tab_staff:'الإنتاجية',tab_users:'المستخدمون',
   login_title:'نظام جولات رضا المرضى',login_sub:'مستشفى الجبيل العام · جميع الأقسام',
   email:'البريد الإلكتروني',password:'كلمة المرور',login_btn:'تسجيل الدخول',login_note:'الدخول للموظفات المصرّح لهنّ فقط. للحصول على حساب راجعي الإدارة.',login_signingin:'جارِ الدخول…',
   err_fill_login:'اكتبي البريد وكلمة المرور',err_noserver:'لا يوجد اتصال بالخادم',err_login_generic:'تعذّر تسجيل الدخول',
   e_invalid_email:'صيغة البريد غير صحيحة',e_user_not_found:'لا يوجد حساب بهذا البريد',e_wrong_pass:'كلمة المرور غير صحيحة',e_invalid_cred:'البريد أو كلمة المرور غير صحيحة',e_too_many:'محاولات كثيرة، انتظري قليلاً ثم أعيدي المحاولة',e_disabled:'هذا الحساب موقوف',e_in_use:'هذا البريد مستخدم لحساب موجود',e_weak:'كلمة المرور قصيرة (٦ أحرف على الأقل)',
   err_fb_load:'تعذّر تحميل Firebase — تأكدي من اتصال الإنترنت.',err_server:'تعذّر الاتصال بالخادم.',err_unauth:'حسابك غير مُصرّح له بعد. راجعي الإدارة.',err_load_acct:'تعذّر تحميل بيانات الحساب.',toast_admin_created:'تم إنشاء حساب الإدارة',toast_cloud_lost:'انقطع الاتصال بالسحابة',toast_cloud_savefail:'تعذّر الحفظ في السحابة',
   nr_title:'جولة جديدة',nr_sub:'قيّمي كل بند من ١ (ضعيف) إلى ٥ (ممتاز). أي بند بتقييم ٢ أو أقل يُرصد كمشكلة تلقائياً.',
-  sec_round_info:'بيانات الجولة',f_dept:'القسم',f_room:'رقم الغرفة',f_room_ph:'مثال: ٢١٤',f_asked:'تم سؤال',opt_patient:'مريض',opt_companion:'مرافق',
+  sec_round_info:'بيانات الجولة',f_dept:'القسم',f_pname:'اسم المريض',f_pname_ph:'اختياري',f_mrn:'رقم الملف',f_mrn_ph:'اختياري',th_pname:'اسم المريض',th_mrn:'رقم الملف',optional_word:'(اختياري)',f_room:'رقم الغرفة',f_room_ph:'مثال: ٢١٤',f_asked:'تم سؤال',opt_patient:'مريض',opt_companion:'مرافق',
   sec_eval:'تقييم خدمات التمريض',sec_overall:'التقييم العام والملاحظات',q12:'التقييم العام لخدمات مستشفى الجبيل العام',
   f_liked:'أبرز الجوانب التي أعجبتك أو لم تعجبك',f_liked_ph:'ملاحظات المريض...',f_sugg:'ملاحظات ومقترحات لتحسين الخدمة',f_sugg_ph:'مقترحات...',f_nurse:'اسم ممرض/ة قدّم خدمة استثنائية',f_nurse_ph:'اسم الممرض/ة (اختياري)',
   next_review:'التالي: مراجعة المشاكل ←',live_notstarted:'لم يبدأ التقييم بعد',live_avg:'متوسط الرضا',live_flagged:'{n} مشكلة مرصودة',live_noflag:'لا مشاكل مرصودة ✅',
@@ -369,7 +370,7 @@ const I18N={
   sum_resolved:'تم الحل',sum_escalated:'مُصعّدة',sum_remaining:'متبقّي {n} بدون قرار',
   err_decide:'كل مشكلة لازم تُحل أو تُصعّد قبل الحفظ',toast_saved:'تم حفظ الجولة',toast_saved_esc:' · {n} مشكلة صُعّدت للمسؤولين',err_complete:'أكملي القسم ورقم الغرفة والشخص المُقيّم',err_rateall:'قيّمي كل بنود التمريض قبل المتابعة',
   mr_title:'جولات قسمي',mr_sub:'جولات قسمك ومتابعة مشاكلها.',all_title_all:'كل الجولات',all_title_dept:'جولات القسم',all_sub_all:'كل الجولات المسجّلة في النظام.',all_sub_dept:'جولات قسمك المسجّلة.',
-  export_csv:'⬇ تصدير CSV',err_noperm_export:'لا تملكين صلاحية التصدير',toast_exported:'تم تصدير الملف',no_rounds_title:'ما فيه جولات بعد',no_rounds_tech:'ابدئي بجولة جديدة من التبويب الأول.',no_rounds_mgr:'ما تسجّلت جولات في نطاقك بعد.',
+  export_csv:'⬇ تصدير Excel',exporting:'جارِ التجهيز…',err_export_lib:'تعذّر تحميل مكتبة Excel — تأكدي من الاتصال بالإنترنت',sh_rounds:'الجولات',sh_issues:'المشاكل',sh_summary:'الملخص',xl_title:'تقرير جولات رضا المرضى',xl_generated:'تاريخ التقرير',xl_scope:'النطاق',xl_count:'عدد الجولات',xl_avg:'متوسط الرضا العام',xl_issues_total:'إجمالي المشاكل',xl_issues_open:'مشاكل مفتوحة/مصعّدة',xl_issues_done:'مشاكل محلولة',xl_by_dept:'المتوسط حسب القسم',xl_by_q:'المتوسط حسب البند',xl_item:'البند',xl_avg_short:'المتوسط',th_overall:'التقييم العام',th_avg:'المتوسط',th_nissues:'عدد المشاكل',th_resolved_n:'محلولة',th_esc_n:'مصعّدة',th_liked:'أبرز الجوانب',th_sugg:'المقترحات',th_nurse:'ممرض متميز',th_status2:'الحالة',th_issue:'المشكلة',th_desc:'وصف المريض',th_plan:'خطة العمل',th_by:'بواسطة',no_data_export:'ما فيه بيانات للتصدير',err_noperm_export:'لا تملكين صلاحية التصدير',toast_exported:'تم تصدير الملف',no_rounds_title:'ما فيه جولات بعد',no_rounds_tech:'ابدئي بجولة جديدة من التبويب الأول.',no_rounds_mgr:'ما تسجّلت جولات في نطاقك بعد.',
   th_date:'التاريخ',th_dept:'القسم',th_room:'الغرفة',th_asked:'تم سؤال',th_tech:'الفني',th_sat:'الرضا',th_issues:'المشاكل',
   badge_open:'{n} مفتوحة',badge_allresolved:'كلها محلولة',badge_noissues:'لا مشاكل',details_btn:'تفاصيل',
   rd_title:'تفاصيل الجولة',by_word:'بواسطة',back:'→ رجوع',kpi_avgsat:'متوسط الرضا',kpi_overall:'التقييم العام',kpi_issues:'المشاكل',sec_ratings:'التقييمات',lbl_liked:'أبرز الجوانب',lbl_sugg:'مقترحات',exc_service:'🌟 خدمة استثنائية: {name}',sec_issues_plans:'المشاكل وخطط العمل',issue_word:'مشكلة',lbl_desc:'الوصف',lbl_tech_plan:'خطة الفني',lbl_esc_reason:'سبب التصعيد',lbl_mgr_plan:'خطة المسؤول',
@@ -391,14 +392,14 @@ const I18N={
   status_cloud:'Cloud connected',status_local:'Offline',
   role_tech:'Patient Care Technician',role_head:'Department Head',role_sup:'Departments Supervisor',role_admin:'Administration',
   all_departments:'All Departments',n_departments:'{n} departments',
-  tab_new:'New Round',tab_myrounds:'My Rounds',tab_problems:'Issues',tab_all_all:'All Rounds',tab_all_dept:'Department Rounds',tab_dash:'Dashboard',tab_users:'Users',
+  tab_new:'New Round',tab_myrounds:'My Rounds',tab_problems:'Issues',tab_all_all:'All Rounds',tab_all_dept:'Department Rounds',tab_dash:'Dashboard',st_title:'Team Productivity',st_sub:'Rounds per staff member, daily rate, and the satisfaction level in their rounds.',st_kpi_staff:'Active staff',st_kpi_rounds:'Total rounds',st_kpi_avg_per:'Avg. rounds per person',st_kpi_top:'Top performer',st_th_name:'Staff member',st_th_rounds:'Rounds',st_th_perday:'Per day',st_th_days:'Active days',st_th_sat:'Avg. satisfaction',st_th_issues:'Issues found',st_th_res:'Resolved',st_th_esc:'Escalated',st_th_last:'Last round',st_none:'No rounds in this period',st_none_sub:'Try a different period or department.',st_inactive:'No rounds this period',st_detail:'Daily breakdown — {name}',st_back:'Back to list',st_day:'Day',st_rounds_day:'Rounds',st_sat_day:'Avg. satisfaction',st_no_days:'No days recorded in this period.',st_click_hint:'Tap any staff member to see their daily breakdown.',st_staff_note:'The list covers staff in your departments. Anyone with no rounds appears at the bottom.',tab_staff:'Productivity',tab_users:'Users',
   login_title:'Patient Satisfaction Rounds',login_sub:'Jubail General Hospital · All Departments',
   email:'Email',password:'Password',login_btn:'Sign in',login_note:'Access is limited to authorized staff. Contact administration for an account.',login_signingin:'Signing in…',
   err_fill_login:'Enter your email and password',err_noserver:'No server connection',err_login_generic:'Sign-in failed',
   e_invalid_email:'Invalid email format',e_user_not_found:'No account with this email',e_wrong_pass:'Incorrect password',e_invalid_cred:'Incorrect email or password',e_too_many:'Too many attempts, wait a moment and try again',e_disabled:'This account is disabled',e_in_use:'This email is already in use',e_weak:'Password too short (at least 6 characters)',
   err_fb_load:'Failed to load Firebase — check your internet connection.',err_server:'Failed to connect to the server.',err_unauth:'Your account is not authorized yet. Contact administration.',err_load_acct:'Failed to load account data.',toast_admin_created:'Administrator account created',toast_cloud_lost:'Cloud connection lost',toast_cloud_savefail:'Failed to save to cloud',
   nr_title:'New Round',nr_sub:'Rate each item from 1 (Poor) to 5 (Excellent). Any item rated 2 or below is automatically flagged as an issue.',
-  sec_round_info:'Round Details',f_dept:'Department',f_room:'Room Number',f_room_ph:'e.g. 214',f_asked:'Surveyed',opt_patient:'Patient',opt_companion:'Companion',
+  sec_round_info:'Round Details',f_dept:'Department',f_pname:'Patient name',f_pname_ph:'Optional',f_mrn:'File no.',f_mrn_ph:'Optional',th_pname:'Patient name',th_mrn:'File no.',optional_word:'(optional)',f_room:'Room Number',f_room_ph:'e.g. 214',f_asked:'Surveyed',opt_patient:'Patient',opt_companion:'Companion',
   sec_eval:'Nursing Services Evaluation',sec_overall:'Overall Rating & Comments',q12:'Overall rating of Jubail General Hospital services',
   f_liked:'Aspects you liked or disliked',f_liked_ph:"Patient's remarks...",f_sugg:'Comments & suggestions to improve the service',f_sugg_ph:'Suggestions...',f_nurse:'Name of a nurse who gave exceptional service',f_nurse_ph:"Nurse's name (optional)",
   next_review:'Next: Review Issues →',live_notstarted:'Evaluation not started yet',live_avg:'Satisfaction average',live_flagged:'{n} issue(s) flagged',live_noflag:'No issues flagged ✅',
@@ -412,7 +413,7 @@ const I18N={
   sum_resolved:'Resolved',sum_escalated:'Escalated',sum_remaining:'{n} still undecided',
   err_decide:'Every issue must be resolved or escalated before saving',toast_saved:'Round saved',toast_saved_esc:' · {n} issue(s) escalated to managers',err_complete:'Complete the department, room number, and surveyed person',err_rateall:'Rate all nursing items before continuing',
   mr_title:'My Department Rounds',mr_sub:"Your department's rounds and issue tracking.",all_title_all:'All Rounds',all_title_dept:'Department Rounds',all_sub_all:'All rounds recorded in the system.',all_sub_dept:"Your department's recorded rounds.",
-  export_csv:'⬇ Export CSV',err_noperm_export:"You don't have export permission",toast_exported:'File exported',no_rounds_title:'No rounds yet',no_rounds_tech:'Start a new round from the first tab.',no_rounds_mgr:'No rounds recorded in your scope yet.',
+  export_csv:'⬇ Export to Excel',exporting:'Preparing…',err_export_lib:'Could not load the Excel library — check your internet connection',sh_rounds:'Rounds',sh_issues:'Issues',sh_summary:'Summary',xl_title:'Patient Satisfaction Rounds Report',xl_generated:'Report date',xl_scope:'Scope',xl_count:'Total rounds',xl_avg:'Overall average satisfaction',xl_issues_total:'Total issues',xl_issues_open:'Open / escalated',xl_issues_done:'Resolved',xl_by_dept:'Average by department',xl_by_q:'Average by item',xl_item:'Item',xl_avg_short:'Average',th_overall:'Overall rating',th_avg:'Average',th_nissues:'Issues',th_resolved_n:'Resolved',th_esc_n:'Escalated',th_liked:'What they liked',th_sugg:'Suggestions',th_nurse:'Outstanding nurse',th_status2:'Status',th_issue:'Issue',th_desc:'Patient description',th_plan:'Action plan',th_by:'By',no_data_export:'Nothing to export',err_noperm_export:"You don't have export permission",toast_exported:'File exported',no_rounds_title:'No rounds yet',no_rounds_tech:'Start a new round from the first tab.',no_rounds_mgr:'No rounds recorded in your scope yet.',
   th_date:'Date',th_dept:'Department',th_room:'Room',th_asked:'Surveyed',th_tech:'Technician',th_sat:'Satisfaction',th_issues:'Issues',
   badge_open:'{n} open',badge_allresolved:'All resolved',badge_noissues:'No issues',details_btn:'Details',
   rd_title:'Round Details',by_word:'by',back:'← Back',kpi_avgsat:'Avg. Satisfaction',kpi_overall:'Overall Rating',kpi_issues:'Issues',sec_ratings:'Ratings',lbl_liked:'Highlights',lbl_sugg:'Suggestions',exc_service:'🌟 Exceptional service: {name}',sec_issues_plans:'Issues & Action Plans',issue_word:'Issue',lbl_desc:'Description',lbl_tech_plan:"Technician's plan",lbl_esc_reason:'Escalation reason',lbl_mgr_plan:"Manager's plan",
@@ -590,14 +591,15 @@ function buildTabs(){
     TABS=[{id:'new',lbl:t('tab_new'),ic:'➕'},{id:'myrounds',lbl:t('tab_myrounds'),ic:'📋'}];
   }else if(r==='head'){
     TABS=[{id:'problems',lbl:t('tab_problems'),ic:'⚠️',badge:()=>escalatedInScope().length},
-          {id:'all',lbl:t('tab_all_dept'),ic:'📋'},{id:'dash',lbl:t('tab_dash'),ic:'📊'}];
+          {id:'all',lbl:t('tab_all_dept'),ic:'📋'},{id:'staff',lbl:t('tab_staff'),ic:'👩‍⚕️'},{id:'dash',lbl:t('tab_dash'),ic:'📊'}];
   }else if(r==='sup'){
     TABS=[{id:'problems',lbl:t('tab_problems'),ic:'⚠️',badge:()=>escalatedInScope().length},
-          {id:'all',lbl:t('tab_all_all'),ic:'📋'},{id:'dash',lbl:t('tab_dash'),ic:'📊'}];
+          {id:'all',lbl:t('tab_all_all'),ic:'📋'},{id:'staff',lbl:t('tab_staff'),ic:'👩‍⚕️'},{id:'dash',lbl:t('tab_dash'),ic:'📊'}];
   }else{ // admin
     TABS=[{id:'dash',lbl:t('tab_dash'),ic:'📊'},
           {id:'problems',lbl:t('tab_problems'),ic:'⚠️',badge:()=>escalatedInScope().length},
-          {id:'all',lbl:t('tab_all_all'),ic:'📋'},{id:'users',lbl:t('tab_users'),ic:'👥'}];
+          {id:'all',lbl:t('tab_all_all'),ic:'📋'},{id:'staff',lbl:t('tab_staff'),ic:'👩‍⚕️'},
+          {id:'users',lbl:t('tab_users'),ic:'👥'}];
   }
   const wrap=$('#tabs');if(!wrap)return;wrap.innerHTML='';
   TABS.forEach(tb=>{
@@ -618,14 +620,14 @@ function boot(){
 }
 function render(){
   buildTabs();
-  const v={new:viewNew,myrounds:viewMyRounds,all:viewAll,problems:viewProblems,dash:viewDash,users:viewUsers}[current];
+  const v={new:viewNew,myrounds:viewMyRounds,all:viewAll,problems:viewProblems,dash:viewDash,staff:viewStaff,users:viewUsers}[current];
   $('#app').innerHTML='';
   if(v)v(); else if(TABS[0]){current=TABS[0].id;render();}
 }
 
 /* ================= NEW ROUND ================= */
 let draft=null;
-function newDraft(){return{dept:(USER&&USER.dept&&USER.dept!=='all')?USER.dept:'',room:'',ptype:'',ratings:{},liked:'',suggestions:'',nurse:'',problems:[]};}
+function newDraft(){return{dept:(USER&&USER.dept&&USER.dept!=='all')?USER.dept:'',room:'',pname:'',mrn:'',ptype:'',ratings:{},liked:'',suggestions:'',nurse:'',problems:[]};}
 function viewNew(){
   if(!draft)draft=newDraft();
   const app=$('#app');
@@ -651,6 +653,17 @@ function viewNew(){
           <div class="seg-opt${draft.ptype==='مرافق'?' on':''}" data-v="مرافق">${t('opt_companion')}</div>
         </div>
       </div>
+    </div>
+    <div class="grid3" style="margin-top:14px">
+      <div>
+        <label class="fld">${t('f_pname')} <span class="hint" style="font-weight:600">${t('optional_word')}</span></label>
+        <input type="text" id="pname" value="${esc(draft.pname||'')}" placeholder="${t('f_pname_ph')}">
+      </div>
+      <div>
+        <label class="fld">${t('f_mrn')} <span class="hint" style="font-weight:600">${t('optional_word')}</span></label>
+        <input type="text" id="mrn" value="${esc(draft.mrn||'')}" placeholder="${t('f_mrn_ph')}">
+      </div>
+      <div></div>
     </div>
 
     <div class="section-title">${t('sec_eval')}</div>
@@ -686,6 +699,8 @@ function viewNew(){
   // ptype segment (dept is locked to the technician's department)
   $('#ptypeSeg').onclick=e=>{const o=e.target.closest('.seg-opt');if(!o)return;draft.ptype=o.dataset.v;paintSeg('ptypeSeg',o);};
   $('#room').oninput=e=>draft.room=e.target.value;
+  const pn=$('#pname');if(pn)pn.oninput=e=>draft.pname=e.target.value;
+  const mr=$('#mrn');if(mr)mr.oninput=e=>draft.mrn=e.target.value;
   $('#liked').oninput=e=>draft.liked=e.target.value;
   $('#suggestions').oninput=e=>draft.suggestions=e.target.value;
   $('#nurse').oninput=e=>draft.nurse=e.target.value;
@@ -857,7 +872,7 @@ function commitRound(){
   });
   const round={
     id:uid(),ts:new Date().toISOString(),
-    dept:draft.dept,room:draft.room.trim(),ptype:draft.ptype,tech:USER.name,
+    dept:draft.dept,room:draft.room.trim(),pname:(draft.pname||'').trim(),mrn:(draft.mrn||'').trim(),ptype:draft.ptype,tech:USER.name,techUid:USER.uid||'',
     ratings:{...draft.ratings},liked:draft.liked.trim(),suggestions:draft.suggestions.trim(),nurse:draft.nurse.trim(),
     problems:draft.problems
   };
@@ -876,13 +891,13 @@ function roundsList(list,title,sub){
   app.innerHTML=`<div class="page-head"><div><h2>${title}</h2><p>${sub}</p></div>
     ${list.length&&canExport(USER)?'<button class="btn btn-outline btn-sm" onclick="exportCSV()">'+t('export_csv')+'</button>':''}</div>`;
   if(!list.length){app.innerHTML+=emptyCard('📋',t('no_rounds_title'),USER.role==='tech'?t('no_rounds_tech'):t('no_rounds_mgr'));return;}
-  let html=`<div class="card"><div style="overflow-x:auto"><table><thead><tr><th>${t('th_date')}</th><th>${t('th_dept')}</th><th>${t('th_room')}</th><th>${t('th_asked')}</th><th>${t('th_tech')}</th><th>${t('th_sat')}</th><th>${t('th_issues')}</th><th></th></tr></thead><tbody>`;
+  let html=`<div class="card"><div style="overflow-x:auto"><table><thead><tr><th>${t('th_date')}</th><th>${t('th_dept')}</th><th>${t('th_room')}</th><th>${t('th_pname')}</th><th>${t('th_mrn')}</th><th>${t('th_asked')}</th><th>${t('th_tech')}</th><th>${t('th_sat')}</th><th>${t('th_issues')}</th><th></th></tr></thead><tbody>`;
   list.forEach(r=>{
     const avg=roundAvg(r);const p=r.problems;
     const openN=p.filter(x=>x.status!=='resolved').length;
     const badge=p.length? (openN? `<span class="status st-esc">`+t('badge_open',{n:arNum(openN)})+`</span>` : `<span class="status st-res">`+t('badge_allresolved')+`</span>`) : `<span class="tag">`+t('badge_noissues')+`</span>`;
     html+=`<tr>
-      <td>${fmtDate(r.ts)}</td><td>${esc(deptLabel(r.dept))}</td><td>${esc(r.room)}</td><td>${esc(ptypeLabel(r.ptype))}</td><td>${esc(r.tech||'')}</td>
+      <td>${fmtDate(r.ts)}</td><td>${esc(deptLabel(r.dept))}</td><td>${esc(r.room)}</td><td>${r.pname?esc(r.pname):'<span class="hint">—</span>'}</td><td>${r.mrn?esc(r.mrn):'<span class="hint">—</span>'}</td><td>${esc(ptypeLabel(r.ptype))}</td><td>${esc(r.tech||'')}</td>
       <td><b style="color:${avgColor(avg)}">${avg?avg.toFixed(1):'—'}/5</b></td>
       <td>${badge}</td>
       <td><button class="btn btn-outline btn-sm" onclick="openRound('${r.id}')">${t('details_btn')}</button></td>
@@ -898,7 +913,8 @@ function openRound(id){
   const avg=roundAvg(r);
   const app=$('#app');
   app.innerHTML=`<div class="page-head"><div><h2>${t('rd_title')}</h2>
-    <p>${fmtDate(r.ts)} · ${esc(deptLabel(r.dept))} · ${t('room_word')} ${esc(r.room)} · ${esc(ptypeLabel(r.ptype))} · ${t('by_word')} ${esc(r.tech)}</p></div>
+    <p>${fmtDate(r.ts)} · ${esc(deptLabel(r.dept))} · ${t('room_word')} ${esc(r.room)} · ${esc(ptypeLabel(r.ptype))} · ${t('by_word')} ${esc(r.tech)}</p>
+    ${(r.pname||r.mrn)?`<p style="margin-top:2px">${r.pname?`<b>${t('th_pname')}:</b> ${esc(r.pname)}`:''}${(r.pname&&r.mrn)?' · ':''}${r.mrn?`<b>${t('th_mrn')}:</b> ${esc(r.mrn)}`:''}</p>`:''}</div>
     <button class="btn btn-outline btn-sm" onclick="render()">${t('back')}</button></div>`;
   let html=`<div class="card card-pad">
     <div class="kpis" style="margin-bottom:0">
@@ -1162,20 +1178,399 @@ function periodLabel(p){return t('pl_'+p);}
 function emptyCard(ic,h,p){return `<div class="card card-pad"><div class="empty"><div class="ic">${ic}</div><h3>${h}</h3><p>${p}</p></div></div>`;}
 function fmtDate(ts){const d=new Date(ts);const L=LANG==='en'?'en-GB':'ar-SA-u-nu-latn';return d.toLocaleDateString(L,{day:'numeric',month:'numeric',year:'2-digit'})+' · '+d.toLocaleTimeString(L,{hour:'2-digit',minute:'2-digit'});}
 
-function exportCSV(){
-  if(!canExport(USER)){toast(t('err_noperm_export'),'err');return;}
-  const H_ar=['التاريخ','القسم','الغرفة','تم سؤال','الفني','q3','q4','q5','q6','q7','q8','التقييم العام','متوسط','عدد المشاكل','محلولة','مصعّدة','أبرز الجوانب','المقترحات','ممرض متميز'];
-  const H_en=['Date','Department','Room','Asked','Technician','q3','q4','q5','q6','q7','q8','Overall','Average','Issues','Resolved','Escalated','What they liked','Suggestions','Outstanding nurse'];
-  const rows=[LANG==='en'?H_en:H_ar];
-  scopedRounds().forEach(r=>{
-    const res=r.problems.filter(p=>p.status==='resolved').length;
-    const es=r.problems.filter(p=>p.status==='escalated').length;
-    rows.push([fmtDate(r.ts),deptLabel(r.dept),r.room,ptypeLabel(r.ptype),r.tech,r.ratings.q3||'',r.ratings.q4||'',r.ratings.q5||'',r.ratings.q6||'',r.ratings.q7||'',r.ratings.q8||'',r.ratings.overall||'',(roundAvg(r)||0).toFixed(1),r.problems.length,res,es,r.liked||'',r.suggestions||'',r.nurse||'']);
+/* ================= TEAM PRODUCTIVITY ================= */
+let stPeriod='monthly',stDept='all',stOpen=null,STAFF=[],staffLoaded=false;
+
+// staff directory, scoped the same way rounds are (matches the security rules)
+async function loadStaff(){
+  if(!cloud){STAFF=[];staffLoaded=true;return;}
+  try{
+    if(canManageUsers(USER)){
+      const snap=await db.collection(UC).get();
+      STAFF=snap.docs.map(d=>({uid:d.id,...d.data()}));
+    }else{
+      const seen={};
+      for(const d of userDepts(USER)){
+        const snap=await db.collection(UC).where('dept','==',d).get();
+        snap.docs.forEach(x=>{seen[x.id]={uid:x.id,...x.data()};});
+      }
+      STAFF=Object.values(seen);
+    }
+  }catch(e){console.error(e);STAFF=[];}   // no directory access → derive names from rounds only
+  staffLoaded=true;
+}
+
+function stRange(period){
+  const now=new Date();let start,days;
+  if(period==='daily'){start=new Date(now);start.setHours(0,0,0,0);days=1;}
+  else if(period==='weekly'){start=new Date(now);start.setDate(now.getDate()-now.getDay());start.setHours(0,0,0,0);days=7;}
+  else if(period==='monthly'){start=new Date(now.getFullYear(),now.getMonth(),1);days=Math.round((now-start)/864e5)+1;}
+  else if(period==='quarterly'){const q=Math.floor(now.getMonth()/3);start=new Date(now.getFullYear(),q*3,1);days=Math.round((now-start)/864e5)+1;}
+  else {start=new Date(now.getFullYear(),0,1);days=Math.round((now-start)/864e5)+1;}
+  return {start,days:Math.max(1,days)};
+}
+function dayKey(ts){const d=new Date(ts);const p=n=>String(n).padStart(2,'0');return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate());}
+
+function staffStats(){
+  const {start}=stRange(stPeriod);
+  let data=scopedRounds().filter(r=>new Date(r.ts)>=start);
+  if(stDept!=='all')data=data.filter(r=>r.dept===stDept);
+  const map={};
+  const keyOf=r=>r.techUid||('name:'+(r.tech||'—'));
+  data.forEach(r=>{
+    const k=keyOf(r);
+    if(!map[k])map[k]={key:k,name:r.tech||'—',dept:r.dept,rounds:[],days:{},issues:0,res:0,esc:0};
+    const m=map[k];
+    m.rounds.push(r);m.dept=r.dept;
+    m.days[dayKey(r.ts)]=(m.days[dayKey(r.ts)]||0)+1;
+    m.issues+=r.problems.length;
+    m.res+=r.problems.filter(p=>p.status==='resolved').length;
+    m.esc+=r.problems.filter(p=>p.status==='escalated').length;
   });
-  const csv='\uFEFF'+rows.map(row=>row.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
-  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=(LANG==='en'?'patient_satisfaction_rounds':'جولات_رضا_المرضى')+'.csv';a.click();
-  toast(t('toast_exported'),'ok');
+  // staff in scope who recorded nothing this period
+  STAFF.filter(u=>u.role==='tech'&&u.active!==false&&u.dept&&(stDept==='all'?userDepts(USER).includes(u.dept):u.dept===stDept))
+    .forEach(u=>{ if(!map[u.uid]&&!Object.values(map).some(m=>m.name===u.name))
+      map[u.uid]={key:u.uid,name:u.name||'—',dept:u.dept,rounds:[],days:{},issues:0,res:0,esc:0}; });
+  return Object.values(map).map(m=>{
+    const dl=Object.keys(m.days).length;
+    return {...m,n:m.rounds.length,activeDays:dl,
+      perDay:dl?m.rounds.length/dl:0,
+      avg:periodAvg(m.rounds),
+      last:m.rounds.length?m.rounds.map(r=>r.ts).sort().slice(-1)[0]:null};
+  }).sort((a,b)=>b.n-a.n||(a.name>b.name?1:-1));
+}
+
+async function viewStaff(){
+  const app=$('#app');
+  if(!canSeeStaff(USER)){app.innerHTML=emptyCard('🔒',t('um_locked_title'),t('um_locked_sub'));return;}
+  if(!isMultiDept(USER))stDept=USER.dept;
+  const myDepts=userDepts(USER);
+  const deptSelect = isMultiDept(USER)? `<div style="min-width:220px">
+        <label class="fld">${t('f_dept')}</label>
+        <select id="stDept">
+          <option value="all"${stDept==='all'?' selected':''}>${t('all_my_depts')}</option>
+          ${myDepts.map(d=>`<option value="${esc(d)}"${stDept===d?' selected':''}>${esc(deptLabel(d))}</option>`).join('')}
+        </select></div>`
+    : `<div><label class="fld">${t('f_dept')}</label><div class="lockchip" style="min-width:150px">${esc(deptLabel(USER.dept||''))} <span>🔒</span></div></div>`;
+  app.innerHTML=`<div class="page-head"><div><h2>${t('st_title')}</h2><p>${t('st_sub')}</p></div></div>
+  <div class="card card-pad" style="margin-bottom:20px">
+    <div class="row-between">
+      <div><label class="fld">${t('f_period')}</label>
+        <div class="seg" id="stSeg">
+          ${['daily','weekly','monthly','quarterly','yearly'].map(v=>`<div class="seg-opt${stPeriod===v?' on':''}" data-v="${v}" style="min-width:auto">${t('p_'+v)}</div>`).join('')}
+        </div>
+      </div>
+      ${deptSelect}
+    </div>
+  </div>
+  <div id="stBody"></div>`;
+  $('#stSeg').onclick=e=>{const o=e.target.closest('.seg-opt');if(!o)return;stPeriod=o.dataset.v;stOpen=null;renderStaff();};
+  const ds=$('#stDept');if(ds)ds.onchange=e=>{stDept=e.target.value;stOpen=null;renderStaff();};
+  renderStaff();
+  if(!staffLoaded){await loadStaff();if(current==='staff')renderStaff();}
+}
+
+function renderStaff(){
+  const box=$('#stBody');if(!box)return;
+  document.querySelectorAll('#stSeg .seg-opt').forEach(o=>o.classList.toggle('on',o.dataset.v===stPeriod));
+  const rows=staffStats();
+  if(stOpen)return renderStaffDetail(box,rows);
+  const active=rows.filter(r=>r.n>0);
+  const total=active.reduce((a,b)=>a+b.n,0);
+  if(!rows.length){box.innerHTML=emptyCard('👩‍⚕️',t('st_none'),t('st_none_sub'));return;}
+  const top=active[0];
+  let html=`<div class="kpis" style="margin-bottom:22px">
+    <div class="kpi accent"><div class="lbl">${t('st_kpi_staff')}</div><div class="val">${num(active.length)}</div><div class="sub">${t('p_'+stPeriod)}</div></div>
+    <div class="kpi"><div class="lbl">${t('st_kpi_rounds')}</div><div class="val">${num(total)}</div><div class="sub">${t('in_current_period')}</div></div>
+    <div class="kpi"><div class="lbl">${t('st_kpi_avg_per')}</div><div class="val">${active.length?(total/active.length).toFixed(1):'—'}</div><div class="sub">${t('rounds_unit')}</div></div>
+    <div class="kpi good"><div class="lbl">${t('st_kpi_top')}</div><div class="val" style="font-size:17px">${top?esc(top.name):'—'}</div><div class="sub">${top?num(top.n)+' '+t('rounds_unit'):''}</div></div>
+  </div>`;
+  html+=`<div class="hint" style="margin-bottom:10px">${t('st_click_hint')}</div>
+    <div class="card"><div style="overflow-x:auto"><table><thead><tr>
+      <th>${t('st_th_name')}</th><th>${t('th_dept')}</th><th>${t('st_th_rounds')}</th><th>${t('st_th_days')}</th>
+      <th>${t('st_th_perday')}</th><th>${t('st_th_sat')}</th><th>${t('st_th_issues')}</th><th>${t('st_th_res')}</th>
+      <th>${t('st_th_esc')}</th><th>${t('st_th_last')}</th></tr></thead><tbody>`;
+  rows.forEach(r=>{
+    const dim=r.n===0?' style="opacity:.55"':'';
+    html+=`<tr${dim} onclick="openStaff('${r.key.replace(/'/g,"")}')" style="cursor:pointer">
+      <td><b>${esc(r.name)}</b></td>
+      <td>${esc(deptLabel(r.dept||''))}</td>
+      <td><b style="font-size:15px">${num(r.n)}</b></td>
+      <td>${num(r.activeDays)}</td>
+      <td>${r.perDay?r.perDay.toFixed(1):'—'}</td>
+      <td>${r.avg?`<b style="color:${avgColor(r.avg)}">${r.avg.toFixed(1)}</b>`:'—'}</td>
+      <td>${num(r.issues)}</td>
+      <td>${r.res?'<span class="status st-res">'+num(r.res)+'</span>':num(0)}</td>
+      <td>${r.esc?'<span class="status st-esc">'+num(r.esc)+'</span>':num(0)}</td>
+      <td>${r.last?fmtDate(r.last):`<span class="hint">${t('st_inactive')}</span>`}</td>
+    </tr>`;
+  });
+  html+=`</tbody></table></div></div><p class="hint" style="margin-top:12px">${t('st_staff_note')}</p>`;
+  box.innerHTML=html;
+}
+function openStaff(k){stOpen=k;renderStaff();window.scrollTo({top:0,behavior:'smooth'});}
+function closeStaff(){stOpen=null;renderStaff();}
+
+function renderStaffDetail(box,rows){
+  const p=rows.find(r=>r.key===stOpen);
+  if(!p){stOpen=null;return renderStaff();}
+  const days=Object.keys(p.days).sort();
+  let html=`<div class="page-head"><div><h2 style="font-size:20px">${t('st_detail',{name:esc(p.name)})}</h2>
+    <p>${esc(deptLabel(p.dept||''))} · ${num(p.n)} ${t('rounds_unit')} · ${t('p_'+stPeriod)}</p></div>
+    <button class="btn btn-outline btn-sm" onclick="closeStaff()">← ${t('st_back')}</button></div>`;
+  if(!days.length){box.innerHTML=html+emptyCard('📅',t('st_no_days'),t('st_none_sub'));return;}
+  const max=Math.max(...days.map(d=>p.days[d]));
+  html+=`<div class="card card-pad" style="margin-bottom:20px">
+    <div class="chartwrap"><div class="bars">${days.map(d=>{
+      const n=p.days[d];const h=max?(n/max*100):0;
+      return `<div class="bar-col"><div class="bar" style="height:${h}%;background:linear-gradient(var(--teal),#0a6d6d)"><span>${num(n)}</span></div>
+        <div class="bar-lbl">${d.slice(5).replace('-','/')}</div></div>`;
+    }).join('')}</div></div></div>`;
+  html+=`<div class="card"><div style="overflow-x:auto"><table><thead><tr>
+    <th>${t('st_day')}</th><th>${t('st_rounds_day')}</th><th>${t('st_sat_day')}</th><th>${t('st_th_issues')}</th></tr></thead><tbody>`;
+  days.slice().reverse().forEach(d=>{
+    const rs=p.rounds.filter(r=>dayKey(r.ts)===d);
+    const a=periodAvg(rs);
+    const iss=rs.reduce((x,r)=>x+r.problems.length,0);
+    html+=`<tr><td><b>${d}</b></td><td><b>${num(rs.length)}</b></td>
+      <td>${a?`<b style="color:${avgColor(a)}">${a.toFixed(1)}</b>`:'—'}</td><td>${num(iss)}</td></tr>`;
+  });
+  html+=`</tbody></table></div></div>`;
+  box.innerHTML=html;
+}
+
+/* ---- Excel export (styled .xlsx via ExcelJS, loaded on demand) ---- */
+const XL={ink:'FF0D3B45',teal:'FF0E8A8A',tealSoft:'FFE2F2F1',line:'FFD9E4E6',white:'FFFFFFFF',
+  green:'FF1F9D6B',greenSoft:'FFE4F6EE',amber:'FFE39A1F',amberSoft:'FFFDF1DC',coral:'FFE0523A',coralSoft:'FFFCE7E2',
+  band:'FFF7FAFA',muted:'FF6B8189'};
+function xlLoad(){
+  return new Promise((res,rej)=>{
+    if(window.ExcelJS)return res(window.ExcelJS);
+    const sc=document.createElement('script');
+    sc.src='https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js';
+    sc.onload=()=>window.ExcelJS?res(window.ExcelJS):rej(new Error('no lib'));
+    sc.onerror=()=>rej(new Error('load fail'));
+    document.head.appendChild(sc);
+  });
+}
+// real Excel date serial → sorts & filters as a date in every environment
+function xlDate(ts){const d=new Date(ts);const off=d.getTimezoneOffset()*60000;return (d.getTime()-off)/86400000+25569;}
+function xlBorder(c){const e={style:'thin',color:{argb:XL.line}};return {top:e,left:e,bottom:e,right:e};}
+function xlHeadRow(ws,row,h){
+  row.height=h||30;
+  row.eachCell(c=>{
+    c.fill={type:'pattern',pattern:'solid',fgColor:{argb:XL.ink}};
+    c.font={bold:true,color:{argb:XL.white},size:11};
+    c.alignment={vertical:'middle',horizontal:'center',wrapText:true};
+    c.border=xlBorder();
+  });
+}
+function xlScoreColor(v){return v>=4?[XL.greenSoft,XL.green]:v>=3?[XL.amberSoft,'FF8A5F0E']:[XL.coralSoft,XL.coral];}
+async function exportCSV(){ // kept name: called from the toolbar button
+  if(!canExport(USER)){toast(t('err_noperm_export'),'err');return;}
+  const list=scopedRounds();
+  if(!list.length){toast(t('no_data_export'),'err');return;}
+  toast(t('exporting'),'');
+  let EJS;
+  try{ EJS=await xlLoad(); }catch(e){ console.error(e); toast(t('err_export_lib'),'err'); return; }
+
+  const rtl=(LANG==='ar');
+  const wb=new EJS.Workbook();
+  wb.creator='Patient Satisfaction Rounds';wb.created=new Date();
+
+  /* ============ SHEET 1 — rounds ============ */
+  const ws=wb.addWorksheet(t('sh_rounds'),{views:[{rightToLeft:rtl,state:'frozen',ySplit:1}],
+    pageSetup:{paperSize:9,orientation:'landscape',fitToPage:true,fitToWidth:1,fitToHeight:0}});
+  const qCols=QRATED.map(q=>({header:qLabel(q),key:q.k,width:17}));
+  ws.columns=[
+    {header:t('th_date'),key:'date',width:19},
+    {header:t('th_dept'),key:'dept',width:28},
+    {header:t('th_room'),key:'room',width:10},
+    {header:t('th_pname'),key:'pname',width:22},
+    {header:t('th_mrn'),key:'mrn',width:14},
+    {header:t('th_asked'),key:'ptype',width:11},
+    {header:t('th_tech'),key:'tech',width:18},
+    ...qCols,
+    {header:t('th_overall'),key:'overall',width:13},
+    {header:t('th_avg'),key:'avg',width:11},
+    {header:t('th_nissues'),key:'np',width:11},
+    {header:t('th_resolved_n'),key:'nr',width:11},
+    {header:t('th_esc_n'),key:'ne',width:11},
+    {header:t('th_liked'),key:'liked',width:34},
+    {header:t('th_sugg'),key:'sugg',width:34},
+    {header:t('th_nurse'),key:'nurse',width:20}
+  ];
+  xlHeadRow(ws,ws.getRow(1),62);   // rated-item questions are long → taller header
+  list.forEach((r,i)=>{
+    const row=ws.addRow({date:xlDate(r.ts),dept:deptLabel(r.dept),room:r.room,pname:r.pname||'',mrn:r.mrn||'',ptype:ptypeLabel(r.ptype),tech:r.tech||'',
+      q3:r.ratings.q3||null,q4:r.ratings.q4||null,q5:r.ratings.q5||null,q6:r.ratings.q6||null,q7:r.ratings.q7||null,q8:r.ratings.q8||null,
+      overall:r.ratings.overall||null,avg:roundAvg(r)?Number(roundAvg(r).toFixed(2)):null,
+      np:r.problems.length,nr:r.problems.filter(p=>p.status==='resolved').length,
+      ne:r.problems.filter(p=>p.status==='escalated').length,
+      liked:r.liked||'',sugg:r.suggestions||'',nurse:r.nurse||''});
+    row.height=20;
+    row.eachCell({includeEmpty:true},c=>{
+      c.border=xlBorder();
+      c.alignment={vertical:'middle',horizontal:'center',wrapText:false};
+      if(i%2===1)c.fill={type:'pattern',pattern:'solid',fgColor:{argb:XL.band}};
+    });
+    row.getCell('date').numFmt='yyyy-mm-dd hh:mm';
+    ['liked','sugg'].forEach(k=>{row.getCell(k).alignment={vertical:'middle',horizontal:rtl?'right':'left',wrapText:true};});
+    ['dept','pname'].forEach(k=>{row.getCell(k).alignment={vertical:'middle',horizontal:rtl?'right':'left'};});
+    // colour the rating cells
+    [...QRATED.map(q=>q.k),'overall','avg'].forEach(k=>{
+      const c=row.getCell(k);const v=Number(c.value);
+      if(v){const [bg,fg]=xlScoreColor(v);
+        c.fill={type:'pattern',pattern:'solid',fgColor:{argb:bg}};
+        c.font={bold:true,color:{argb:fg}};}
+    });
+    const ce=row.getCell('ne');
+    if(Number(ce.value)>0){ce.fill={type:'pattern',pattern:'solid',fgColor:{argb:XL.amberSoft}};ce.font={bold:true,color:{argb:'FF8A5F0E'}};}
+  });
+  ws.autoFilter={from:{row:1,column:1},to:{row:1,column:ws.columns.length}};
+
+  /* ============ SHEET 2 — issues ============ */
+  const probs=[];
+  list.forEach(r=>r.problems.forEach(p=>probs.push({p,r})));
+  if(probs.length){
+    const w2=wb.addWorksheet(t('sh_issues'),{views:[{rightToLeft:rtl,state:'frozen',ySplit:1}],
+      pageSetup:{paperSize:9,orientation:'landscape',fitToPage:true,fitToWidth:1,fitToHeight:0}});
+    w2.columns=[
+      {header:t('th_date'),key:'date',width:19},
+      {header:t('th_dept'),key:'dept',width:26},
+      {header:t('th_room'),key:'room',width:10},
+      {header:t('th_pname'),key:'pname',width:22},
+      {header:t('th_mrn'),key:'mrn',width:14},
+      {header:t('th_issue'),key:'issue',width:40},
+      {header:t('th_status2'),key:'st',width:14},
+      {header:t('th_desc'),key:'desc',width:34},
+      {header:t('th_plan'),key:'plan',width:42},
+      {header:t('th_by'),key:'by',width:20}
+    ];
+    xlHeadRow(w2,w2.getRow(1));
+    probs.forEach(({p,r},i)=>{
+      const st=p.status==='resolved'?t('bar_resolved'):p.status==='escalated'?t('bar_escalated'):t('bar_open');
+      const row=w2.addRow({date:xlDate(r.ts),dept:deptLabel(r.dept),room:r.room,pname:r.pname||'',mrn:r.mrn||'',issue:probLabel(p),st,
+        desc:p.note||'',plan:p.actionSup||p.actionTech||'',by:p.supName||p.handledBy||r.tech||''});
+      row.height=20;
+      row.eachCell({includeEmpty:true},c=>{
+        c.border=xlBorder();
+        c.alignment={vertical:'middle',horizontal:rtl?'right':'left',wrapText:true};
+        if(i%2===1)c.fill={type:'pattern',pattern:'solid',fgColor:{argb:XL.band}};
+      });
+      row.getCell('date').numFmt='yyyy-mm-dd hh:mm';
+      row.getCell('date').alignment={vertical:'middle',horizontal:'center'};
+      row.getCell('room').alignment={vertical:'middle',horizontal:'center'};
+      const c=row.getCell('st');
+      const pal=p.status==='resolved'?[XL.greenSoft,XL.green]:p.status==='escalated'?[XL.amberSoft,'FF8A5F0E']:[XL.coralSoft,XL.coral];
+      c.fill={type:'pattern',pattern:'solid',fgColor:{argb:pal[0]}};
+      c.font={bold:true,color:{argb:pal[1]}};
+      c.alignment={vertical:'middle',horizontal:'center'};
+    });
+    w2.autoFilter={from:{row:1,column:1},to:{row:1,column:w2.columns.length}};
+  }
+
+  /* ============ SHEET 3 — summary ============ */
+  const w3=wb.addWorksheet(t('sh_summary'),{views:[{rightToLeft:rtl,showGridLines:false}]});
+  w3.columns=[{width:38},{width:20},{width:16}];
+  const allP=[];list.forEach(r=>r.problems.forEach(p=>allP.push(p)));
+  const done=allP.filter(p=>p.status==='resolved').length;
+  const openN=allP.length-done;
+  const overallAvg=periodAvg(list);
+  const scopeTxt=seesAllDepts(USER)?t('all_departments'):userDepts(USER).map(deptLabel).join('، ');
+
+  const nrow=()=>w3.addRow({});          // explicit cell writes — no array reliance
+  const title=nrow();
+  title.height=38;
+  w3.mergeCells(title.number,1,title.number,3);
+  const tc=w3.getCell(title.number,1);
+  tc.value=t('xl_title');
+  tc.font={bold:true,size:16,color:{argb:XL.white}};
+  tc.fill={type:'pattern',pattern:'solid',fgColor:{argb:XL.ink}};
+  tc.alignment={vertical:'middle',horizontal:'center'};
+  nrow();
+
+  const kv=(label,val,accent)=>{
+    const row=nrow();
+    row.height=22;
+    const a=row.getCell(1),b=row.getCell(2);
+    a.value=label;b.value=val;
+    a.font={bold:true,color:{argb:XL.ink}};
+    a.fill={type:'pattern',pattern:'solid',fgColor:{argb:XL.tealSoft}};
+    a.alignment={vertical:'middle',horizontal:rtl?'right':'left'};
+    b.alignment={vertical:'middle',horizontal:'center'};
+    b.font={bold:true,size:12,color:{argb:accent||XL.ink}};
+    a.border=xlBorder();b.border=xlBorder();
+    return row;
+  };
+  kv(t('xl_generated'),xlDate(Date.now())).getCell(2).numFmt='yyyy-mm-dd hh:mm';
+  kv(t('xl_scope'),scopeTxt);
+  kv(t('xl_count'),list.length);
+  kv(t('xl_avg'),overallAvg?Number(overallAvg.toFixed(2)):'—',overallAvg?xlScoreColor(overallAvg)[1]:XL.muted);
+  kv(t('xl_issues_total'),allP.length);
+  kv(t('xl_issues_open'),openN,openN?XL.coral:XL.green);
+  kv(t('xl_issues_done'),done,XL.green);
+
+  const section=txt=>{
+    nrow();
+    const r=nrow();
+    w3.mergeCells(r.number,1,r.number,3);
+    r.height=26;
+    const c=w3.getCell(r.number,1);
+    c.value=txt;
+    c.font={bold:true,size:12,color:{argb:XL.white}};
+    c.fill={type:'pattern',pattern:'solid',fgColor:{argb:XL.teal}};
+    c.alignment={vertical:'middle',horizontal:'center'};
+  };
+  const tableHead=(cols)=>{
+    const r=nrow();r.height=24;
+    for(let i=0;i<3;i++){
+      const c=r.getCell(i+1);c.value=cols[i]!=null?cols[i]:'';
+      c.fill={type:'pattern',pattern:'solid',fgColor:{argb:XL.tealSoft}};
+      c.font={bold:true,color:{argb:XL.ink}};c.border=xlBorder();
+      c.alignment={vertical:'middle',horizontal:'center'};
+    }
+  };
+  const dataRow=(cells,scoreIdx)=>{
+    const r=nrow();r.height=20;
+    for(let i=0;i<3;i++){
+      const c=r.getCell(i+1);c.value=cells[i]!=null?cells[i]:'';
+      c.border=xlBorder();c.alignment={vertical:'middle',horizontal:'center'};
+    }
+    r.getCell(1).alignment={vertical:'middle',horizontal:rtl?'right':'left'};
+    if(scoreIdx){const c=r.getCell(scoreIdx);const v=Number(c.value);
+      if(v){const [bg,fg]=xlScoreColor(v);c.fill={type:'pattern',pattern:'solid',fgColor:{argb:bg}};c.font={bold:true,color:{argb:fg}};}}
+  };
+
+  // by department
+  section(t('xl_by_dept'));
+  tableHead([t('th_dept'),t('kpi_roundscount'),t('xl_avg_short')]);
+  userDepts(USER).map(d=>({d,rs:list.filter(r=>r.dept===d)})).filter(x=>x.rs.length)
+    .sort((a,b)=>b.rs.length-a.rs.length)
+    .forEach(({d,rs})=>{const a=periodAvg(rs);dataRow([deptLabel(d),rs.length,a?Number(a.toFixed(2)):'—'],3);});
+
+  // by question
+  section(t('xl_by_q'));
+  tableHead([t('xl_item'),t('xl_avg_short'),'']);
+  QRATED.forEach(q=>{
+    const vals=list.map(r=>r.ratings[q.k]).filter(v=>v);
+    const a=vals.length?vals.reduce((x,y)=>x+y,0)/vals.length:0;
+    dataRow([qLabel(q),a?Number(a.toFixed(2)):'—',''],2);
+  });
+
+  /* ============ download ============ */
+  try{
+    const buf=await wb.xlsx.writeBuffer();
+    const blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    const d=new Date(),pad=n=>String(n).padStart(2,'0');
+    const stamp=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download=(LANG==='en'?'patient_satisfaction_rounds_':'جولات_رضا_المرضى_')+stamp+'.xlsx';
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+    toast(t('toast_exported'),'ok');
+  }catch(e){console.error(e);toast(t('err_export_lib'),'err');}
 }
 
 /* ================= USER MANAGEMENT (admin) ================= */
