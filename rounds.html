@@ -11,6 +11,34 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+/* Mobile networks often drop one of the three SDK files. Re-fetch whatever is missing. */
+window.__fbParts=[
+  ['app','https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js'],
+  ['auth','https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js'],
+  ['firestore','https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js']
+];
+window.__fbMissing=function(){
+  if(!window.firebase)return ['app','auth','firestore'];
+  return ['auth','firestore'].filter(k=>typeof window.firebase[k]!=='function');
+};
+window.__fbReload=function(){
+  const miss=window.__fbMissing();
+  if(!miss.length)return Promise.resolve(true);
+  return Promise.all(window.__fbParts.filter(p=>miss.includes(p[0])||miss.includes('app')).map(([k,url])=>
+    new Promise(res=>{
+      let done=false;
+      const finish=v=>{if(!done){done=true;res(v);}};
+      const sc=document.createElement('script');
+      sc.src=url+'?r='+Date.now();
+      sc.onload=()=>finish(true);
+      sc.onerror=()=>finish(false);
+      setTimeout(()=>finish(false),12000);   // never hang on a stalled mobile connection
+      document.head.appendChild(sc);
+    })
+  )).then(()=>window.__fbMissing().length===0);
+};
+</script>
 <style>
 :root{
   --ink:#0d3b45;        /* deep petrol */
@@ -227,6 +255,73 @@ tbody tr:hover{background:#f8fbfb}
   .scale{flex-wrap:wrap}
   .dot{min-width:56px}
 }
+
+/* ---------- Phones ---------- */
+@media(max-width:640px){
+  header.top{padding:0 12px}
+  .top-inner{gap:8px;min-height:auto;padding:10px 0}
+  .brand{font-size:16px;gap:9px;width:100%}
+  .brand .mark{width:32px;height:32px;font-size:17px}
+  .brand small{font-size:10.5px}
+  .top-spacer{display:none}
+  .userchip{font-size:12px;padding:5px 10px;order:3}
+  .userchip .role{display:none}
+  .dbstatus{font-size:11px;padding:4px 9px}
+  nav.tabs{position:sticky;top:0}
+  .tabs-inner{padding:0 8px;gap:0}
+  .tab{padding:13px 12px 10px;font-size:13.5px}
+  main{padding:16px 12px 50px}
+  .card-pad{padding:16px}
+  .page-head{margin-bottom:16px}
+  .page-head h2{font-size:19px}
+  .kpis{grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+  .kpi{padding:13px 14px;border-radius:13px}
+  .kpi .val{font-size:22px}
+  .kpi .lbl{font-size:11.5px;margin-bottom:6px}
+  .kpi .sub{font-size:11px}
+  .btn{padding:13px 18px}
+  .btn-sm{padding:10px 14px}
+  .seg-opt{min-width:calc(50% - 4px);padding:13px 8px}
+  .dot{min-width:calc(33.33% - 5px);padding:11px 4px}
+  .qblock{padding:14px}
+  .qtitle{font-size:14px}
+  .bars{height:150px;gap:6px}
+  .bar-lbl{font-size:10px}
+  .choice .btn{min-width:100%}
+  .deptchecks{max-height:230px}
+  .dchk{width:100%}
+
+  /* tables become stacked cards — labels come from data-label */
+  table,thead,tbody,tr,th,td{display:block}
+  thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+  table{font-size:13.5px}
+  tbody tr{
+    border:1px solid var(--line);border-radius:13px;margin-bottom:11px;
+    padding:6px 2px;background:#fff;box-shadow:0 1px 3px rgba(13,59,69,.05)
+  }
+  tbody tr:hover{background:#fff}
+  tbody td{
+    border:none;border-bottom:1px dashed var(--line);
+    display:flex;justify-content:space-between;align-items:center;gap:12px;
+    padding:9px 13px;text-align:start
+  }
+  tbody td:last-child{border-bottom:none}
+  tbody td::before{
+    content:attr(data-label);font-size:12px;font-weight:700;color:var(--muted);
+    flex:none;max-width:45%
+  }
+  tbody td:empty{display:none}
+  tbody td.no-label::before{content:none}
+  tbody td.no-label{justify-content:flex-end}
+
+  .overlay{padding:14px;align-items:start;padding-top:32px;overflow-y:auto}
+  .modal{padding:22px;border-radius:16px}
+  .modal h2{font-size:19px}
+}
+/* iOS zooms the page when a field's text is under 16px — keep inputs at 16px */
+@media(max-width:640px){
+  input[type=text],input[type=number],input[type=password],select,textarea{font-size:16px}
+}
 </style>
 </head>
 <body>
@@ -243,6 +338,7 @@ tbody tr:hover{background:#f8fbfb}
     <button class="btn btn-primary" id="loginBtn" style="width:100%;justify-content:center" onclick="doLogin()">تسجيل الدخول</button>
     <p class="hint" id="lg_note" style="text-align:center;margin-top:16px">الدخول للموظفات المصرّح لهنّ فقط. للحصول على حساب راجعي الإدارة.</p>
     <p class="hint" id="loginMsg" style="text-align:center;color:var(--coral);font-weight:700;min-height:18px"></p>
+    <div id="lg_retry" style="margin-top:6px"></div>
   </div>
 </div>
 
@@ -354,7 +450,7 @@ const I18N={
   email:'البريد الإلكتروني',password:'كلمة المرور',login_btn:'تسجيل الدخول',login_note:'الدخول للموظفات المصرّح لهنّ فقط. للحصول على حساب راجعي الإدارة.',login_signingin:'جارِ الدخول…',
   err_fill_login:'اكتبي البريد وكلمة المرور',err_noserver:'لا يوجد اتصال بالخادم',err_login_generic:'تعذّر تسجيل الدخول',
   e_invalid_email:'صيغة البريد غير صحيحة',e_user_not_found:'لا يوجد حساب بهذا البريد',e_wrong_pass:'كلمة المرور غير صحيحة',e_invalid_cred:'البريد أو كلمة المرور غير صحيحة',e_too_many:'محاولات كثيرة، انتظري قليلاً ثم أعيدي المحاولة',e_disabled:'هذا الحساب موقوف',e_in_use:'هذا البريد مستخدم لحساب موجود',e_weak:'كلمة المرور قصيرة (٦ أحرف على الأقل)',
-  err_fb_load:'تعذّر تحميل Firebase — تأكدي من اتصال الإنترنت.',err_server:'تعذّر الاتصال بالخادم.',err_unauth:'حسابك غير مُصرّح له بعد. راجعي الإدارة.',err_load_acct:'تعذّر تحميل بيانات الحساب.',toast_admin_created:'تم إنشاء حساب الإدارة',toast_cloud_lost:'انقطع الاتصال بالسحابة',toast_cloud_savefail:'تعذّر الحفظ في السحابة',
+  err_fb_load:'تعذّر تحميل Firebase — تأكدي من اتصال الإنترنت.',err_server:'تعذّر الاتصال بالخادم.',btn_retry:'🔄 إعادة المحاولة',connecting:'جارِ الاتصال…',e_network:'ما فيه اتصال بالإنترنت — تأكدي من الشبكة وأعيدي المحاولة',err_unauth:'حسابك غير مُصرّح له بعد. راجعي الإدارة.',err_load_acct:'تعذّر تحميل بيانات الحساب.',toast_admin_created:'تم إنشاء حساب الإدارة',toast_cloud_lost:'انقطع الاتصال بالسحابة',toast_cloud_savefail:'تعذّر الحفظ في السحابة',
   nr_title:'جولة جديدة',nr_sub:'قيّمي كل بند من ١ (ضعيف) إلى ٥ (ممتاز). أي بند بتقييم ٢ أو أقل يُرصد كمشكلة تلقائياً.',
   sec_round_info:'بيانات الجولة',f_dept:'القسم',f_pname:'اسم المريض',f_pname_ph:'اختياري',f_mrn:'رقم الملف',f_mrn_ph:'اختياري',th_pname:'اسم المريض',th_mrn:'رقم الملف',optional_word:'(اختياري)',f_room:'رقم الغرفة',f_room_ph:'مثال: ٢١٤',f_asked:'تم سؤال',opt_patient:'مريض',opt_companion:'مرافق',
   sec_eval:'تقييم خدمات التمريض',sec_overall:'التقييم العام والملاحظات',q12:'التقييم العام لخدمات مستشفى الجبيل العام',
@@ -397,7 +493,7 @@ const I18N={
   email:'Email',password:'Password',login_btn:'Sign in',login_note:'Access is limited to authorized staff. Contact administration for an account.',login_signingin:'Signing in…',
   err_fill_login:'Enter your email and password',err_noserver:'No server connection',err_login_generic:'Sign-in failed',
   e_invalid_email:'Invalid email format',e_user_not_found:'No account with this email',e_wrong_pass:'Incorrect password',e_invalid_cred:'Incorrect email or password',e_too_many:'Too many attempts, wait a moment and try again',e_disabled:'This account is disabled',e_in_use:'This email is already in use',e_weak:'Password too short (at least 6 characters)',
-  err_fb_load:'Failed to load Firebase — check your internet connection.',err_server:'Failed to connect to the server.',err_unauth:'Your account is not authorized yet. Contact administration.',err_load_acct:'Failed to load account data.',toast_admin_created:'Administrator account created',toast_cloud_lost:'Cloud connection lost',toast_cloud_savefail:'Failed to save to cloud',
+  err_fb_load:'Failed to load Firebase — check your internet connection.',err_server:'Failed to connect to the server.',btn_retry:'🔄 Try again',connecting:'Connecting…',e_network:'No internet connection — check your network and try again',err_unauth:'Your account is not authorized yet. Contact administration.',err_load_acct:'Failed to load account data.',toast_admin_created:'Administrator account created',toast_cloud_lost:'Cloud connection lost',toast_cloud_savefail:'Failed to save to cloud',
   nr_title:'New Round',nr_sub:'Rate each item from 1 (Poor) to 5 (Excellent). Any item rated 2 or below is automatically flagged as an issue.',
   sec_round_info:'Round Details',f_dept:'Department',f_pname:'Patient name',f_pname_ph:'Optional',f_mrn:'File no.',f_mrn_ph:'Optional',th_pname:'Patient name',th_mrn:'File no.',optional_word:'(optional)',f_room:'Room Number',f_room_ph:'e.g. 214',f_asked:'Surveyed',opt_patient:'Patient',opt_companion:'Companion',
   sec_eval:'Nursing Services Evaluation',sec_overall:'Overall Rating & Comments',q12:'Overall rating of Jubail General Hospital services',
@@ -464,18 +560,47 @@ const DB={
 };
 
 function setStatus(ok){const el=$('#dbstatus');if(!el)return;el.className='dbstatus '+(ok?'cloud':'local');el.textContent=ok?t('status_cloud'):t('status_local');}
-function loginMsg(m){const el=$('#loginMsg');if(el)el.textContent=m||'';}
+function loginMsg(m,neutral){const el=$('#loginMsg');if(!el)return;el.textContent=m||'';el.style.color=neutral?'var(--muted)':'var(--coral)';}
 function showLogin(){const l=$('#login');if(l)l.classList.remove('hidden');}
 function hideLogin(){const l=$('#login');if(l)l.classList.add('hidden');}
 
-function initDB(){
-  if(!(USE_FIREBASE && window.firebase)){setStatus(false);loginMsg(t('err_fb_load'));return;}
+async function initDB(attempt){
+  attempt=attempt||1;
+  if(!USE_FIREBASE){setStatus(false);loginMsg(t('err_fb_load'));return;}
+  // one of the SDK files may not have arrived (common on mobile data) → fetch it again
+  if(window.__fbMissing&&window.__fbMissing().length){
+    loginMsg(t('connecting'),true);
+    const ok=await window.__fbReload();
+    if(!ok){setStatus(false);showRetry(t('err_fb_load'));return;}
+  }
+  if(!window.firebase||typeof firebase.firestore!=='function'||typeof firebase.auth!=='function'){
+    setStatus(false);showRetry(t('err_fb_load'));return;
+  }
   try{
-    firebase.initializeApp(firebaseConfig);
+    if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);
     db=firebase.firestore(); auth=firebase.auth();
+    // some mobile browsers (private mode) block IndexedDB → fall back so login still works
+    try{ await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL); }
+    catch(e1){ try{ await auth.setPersistence(firebase.auth.Auth.Persistence.SESSION); }catch(e2){} }
     setStatus(true);
+    loginMsg('');
     auth.onAuthStateChanged(handleAuth);
-  }catch(e){console.error('Firebase init failed:',e);setStatus(false);loginMsg(t('err_server'));}
+  }catch(e){
+    console.error('Firebase init failed:',e);
+    setStatus(false);
+    if(attempt<2){setTimeout(()=>initDB(attempt+1),1200);return;}
+    showRetry(t('err_server'));
+  }
+}
+function showRetry(msg){
+  loginMsg(msg);
+  const box=$('#lg_retry');if(!box)return;
+  box.innerHTML=`<button class="btn btn-outline btn-sm" onclick="retryConnect()">${t('btn_retry')}</button>`;
+}
+async function retryConnect(){
+  const box=$('#lg_retry');if(box)box.innerHTML='';
+  loginMsg(t('connecting'),true);
+  await initDB(1);
 }
 
 /* runs on login/logout */
@@ -577,7 +702,8 @@ function authErr(e){
   const m={'auth/invalid-email':'e_invalid_email','auth/user-not-found':'e_user_not_found',
     'auth/wrong-password':'e_wrong_pass','auth/invalid-credential':'e_invalid_cred',
     'auth/too-many-requests':'e_too_many','auth/user-disabled':'e_disabled',
-    'auth/email-already-in-use':'e_in_use','auth/weak-password':'e_weak'};
+    'auth/email-already-in-use':'e_in_use','auth/weak-password':'e_weak',
+    'auth/network-request-failed':'e_network','auth/internal-error':'e_network'};
   return t(m[e&&e.code]||'err_login_generic');
 }
 function logout(){current='';USER=null;if(auth){auth.signOut();}showLogin();}
@@ -623,6 +749,20 @@ function render(){
   const v={new:viewNew,myrounds:viewMyRounds,all:viewAll,problems:viewProblems,dash:viewDash,staff:viewStaff,users:viewUsers}[current];
   $('#app').innerHTML='';
   if(v)v(); else if(TABS[0]){current=TABS[0].id;render();}
+  labelCells();
+}
+/* On phones each table row becomes a card; every cell needs its column name. */
+function labelCells(root){
+  (root||document).querySelectorAll('table').forEach(tb=>{
+    const heads=[...tb.querySelectorAll('thead th')].map(th=>th.textContent.trim());
+    if(!heads.length)return;
+    tb.querySelectorAll('tbody tr').forEach(tr=>{
+      [...tr.children].forEach((td,i)=>{
+        const h=heads[i]||'';
+        if(h)td.setAttribute('data-label',h); else td.classList.add('no-label');
+      });
+    });
+  });
 }
 
 /* ================= NEW ROUND ================= */
@@ -1306,7 +1446,7 @@ function renderStaff(){
     </tr>`;
   });
   html+=`</tbody></table></div></div><p class="hint" style="margin-top:12px">${t('st_staff_note')}</p>`;
-  box.innerHTML=html;
+  box.innerHTML=html;labelCells(box);
 }
 function openStaff(k){stOpen=k;renderStaff();window.scrollTo({top:0,behavior:'smooth'});}
 function closeStaff(){stOpen=null;renderStaff();}
@@ -1336,7 +1476,7 @@ function renderStaffDetail(box,rows){
       <td>${a?`<b style="color:${avgColor(a)}">${a.toFixed(1)}</b>`:'—'}</td><td>${num(iss)}</td></tr>`;
   });
   html+=`</tbody></table></div></div>`;
-  box.innerHTML=html;
+  box.innerHTML=html;labelCells(box);
 }
 
 /* ---- Excel export (styled .xlsx via ExcelJS, loaded on demand) ---- */
@@ -1631,6 +1771,7 @@ function renderUsers(){
   html+=`</tbody></table></div></div>
     <p class="hint" style="margin-top:14px">${t('hint_disabled_note')}</p>`;
   box.innerHTML=html;
+  labelCells(box);
   toggleDeptField();
 }
 function renderEditForm(box,u){
