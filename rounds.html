@@ -98,6 +98,14 @@ header.top{
 .dbstatus.cloud{background:rgba(31,157,107,.22)}
 .dbstatus.cloud::before{background:#4ade80;box-shadow:0 0 0 3px rgba(74,222,128,.25)}
 .dbstatus.local{background:rgba(255,255,255,.1)}
+.agechip{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:5px;white-space:nowrap}
+.agechip.ok{background:var(--teal-soft);color:var(--ink-deep)}
+.agechip.warn{background:var(--amber-soft);color:#8a5f0e}
+.agechip.crit{background:var(--coral-soft);color:#a83320}
+.rowcrit{border-inline-start:3px solid var(--coral)}
+.rowwarn{border-inline-start:3px solid var(--amber)}
+.dbstatus.pending{background:rgba(227,154,31,.28)}
+.dbstatus.pending::before{background:#fbbf24;box-shadow:0 0 0 3px rgba(251,191,36,.25)}
 .btn-ghost:hover{background:rgba(255,255,255,.2)}
 
 /* ---------- Nav ---------- */
@@ -197,6 +205,8 @@ textarea{resize:vertical;min-height:70px}
 .kpi.accent .val{color:var(--teal)}
 .kpi.good .val{color:var(--green)}
 .kpi.warn .val{color:var(--coral)}
+.kpi.danger{border-color:var(--coral);box-shadow:0 0 0 1px var(--coral) inset,var(--shadow)}
+.kpi.danger .val{color:var(--coral)}
 
 /* ---------- Chart ---------- */
 .chartwrap{padding:6px 4px 0}
@@ -433,6 +443,13 @@ const USE_FIREBASE = firebaseConfig.projectId && !firebaseConfig.projectId.inclu
    ======================================================================== */
 const OWNER_UID='tddkmx91NtY9rR8aHDsDSk2aZWD2';
 
+/* ===== إعدادات المتابعة — عدّليها متى ما تغيّرت سياستكم =====
+   SAT_TARGET  : هدف الرضا بالنسبة المئوية (٥/٥ = ١٠٠٪، فـ ٩٥٪ تعني متوسط ٤.٧٥)
+   ESC_WARN_D  : بعد كم يوم تُعتبر المشكلة المصعّدة متأخرة (تنبيه برتقالي)
+   ESC_CRIT_D  : بعد كم يوم تصير حرجة (تنبيه أحمر)
+   REPEAT_MIN  : كم تكرار للبند في نفس القسم حتى يُعتبر خللاً متكرراً */
+const SAT_TARGET=95, ESC_WARN_D=3, ESC_CRIT_D=7, REPEAT_MIN=3;
+
 const ROLE   ={tech:'القائم بالجولة',head:'رئيس القسم',sup:'مشرف الأقسام',admin:'الإدارة'};
 const ROLE_IC={tech:'🩺',head:'🧑‍⚕️',sup:'👩‍⚕️',admin:'🏛️'};
 const DEPTS=[
@@ -481,7 +498,7 @@ const I18N={
  ar:{
   app_title:'جولات رضا المرضى',app_tagline:'نهتم… لنطمئن بكل خطوة',app_sub:'مستشفى الجبيل العام · رضا المرضى وجودة التمريض',
   logout:'تسجيل الخروج',lang_btn:'EN',
-  status_cloud:'متصل بالسحابة',status_local:'غير متصل',
+  status_pending:'يُرفع لاحقاً ({n})',status_offline_ok:'بدون إنترنت · محفوظ',status_pending_hint:'الجولات محفوظة على الجهاز وتُرفع تلقائياً أول ما يرجع الاتصال — لا تقفلي الصفحة.',status_cloud:'متصل بالسحابة',status_local:'غير متصل',
   role_tech:'القائم بالجولة',role_head:'رئيس القسم',role_sup:'مشرف الأقسام',role_admin:'الإدارة',
   all_departments:'كل الأقسام',n_departments:'{n} أقسام',
   tab_new:'جولة جديدة',tab_myrounds:'جولات قسمي',tab_problems:'المشاكل',tab_all_all:'كل الجولات',tab_all_dept:'جولات القسم',tab_dash:'الداشبورد',st_title:'إنتاجية الفريق',st_sub:'جولات كل موظفة ومعدّلها اليومي ومستوى الرضا في جولاتها.',st_kpi_staff:'موظفات نشطات',st_kpi_rounds:'إجمالي الجولات',st_kpi_avg_per:'متوسط الجولات للموظفة',st_kpi_top:'الأعلى إنتاجية',st_th_name:'الموظفة',st_th_rounds:'الجولات',st_th_perday:'المعدل اليومي',st_th_days:'أيام العمل',st_th_sat:'متوسط الرضا',st_th_issues:'مشاكل رصدتها',st_th_res:'حلّتها',st_th_esc:'صعّدتها',st_th_last:'آخر جولة',st_none:'ما فيه جولات في هذه الفترة',st_none_sub:'غيّري الفترة أو القسم.',st_inactive:'بدون جولات في الفترة',st_detail:'تفصيل يومي — {name}',st_back:'رجوع للقائمة',st_day:'اليوم',st_rounds_day:'الجولات',st_sat_day:'متوسط الرضا',st_no_days:'ما فيه أيام مسجّلة في هذه الفترة.',st_click_hint:'اضغطي على أي موظفة لعرض تفصيلها اليومي.',st_staff_note:'القائمة تشمل الموظفات في أقسامك. اللي ما سوّت جولات تظهر في الآخر.',tab_staff:'الإنتاجية',tab_users:'المستخدمون',
@@ -500,7 +517,7 @@ const I18N={
   no_issues_title:'ما فيه مشاكل مرصودة',no_issues_sub:'كل التقييمات فوق حد الرصد. تقدرين تحفظين الجولة مباشرة.',save_round:'حفظ الجولة',
   ps_intro:'رُصدت {n} مشكلة. لكل مشكلة: إما تحلينها وتكتبين خطة العمل، أو تصعّدينها للمسؤول.',rating_word:'التقييم',
   f_probdesc:'وصف المشكلة كما ذكرها المريض',f_probdesc_ph:'تفاصيل المشكلة...',btn_resolved_now:'✔ حليتها الآن',btn_escalate:'⬆ تصعيد للمسؤول',
-  st_resolved:'✓ تم الحل',st_escalated:'⬆ مُصعّدة',st_open:'● مفتوحة',
+  age_today:'اليوم',age_days:'منذ {n} يوم',age_oldest:'أقدم مشكلة',age_overdue:'متأخرة',dur_min:'{n} دقيقة',dur_hr:'{n} ساعة',dur_day:'{n} يوم',kpi_resptime:'متوسط زمن الاستجابة',resp_sub:'من التصعيد للإغلاق',no_resp:'ما فيه مشاكل مغلقة بعد',sec_overdue:'متأخرة عن {n} أيام',st_resolved:'✓ تم الحل',st_escalated:'⬆ مُصعّدة',st_open:'● مفتوحة',
   ap_resolved_label:'خطة العمل (Action Plan) — تم حل المشكلة ميدانياً',ap_resolved_ph:'وش الإجراء اللي سويتيه لحل المشكلة؟',esc_reason_label:'سبب التصعيد / ملاحظة للمسؤول',esc_reason_ph:'ليش تحتاج تدخّل المسؤول؟',
   sum_resolved:'تم الحل',sum_escalated:'مُصعّدة',sum_remaining:'متبقّي {n} بدون قرار',
   err_decide:'كل مشكلة لازم تُحل أو تُصعّد قبل الحفظ',toast_saved:'تم حفظ الجولة',toast_saved_esc:' · {n} مشكلة صُعّدت للمسؤولين',err_complete:'أكملي القسم ورقم الغرفة والشخص المُقيّم',err_rateall:'قيّمي كل بنود التمريض قبل المتابعة',
@@ -512,7 +529,7 @@ const I18N={
   pr_title:'المشاكل',pr_sub:'المشاكل المصعّدة تحتاج خطة عمل. المحلولة معروضة للمتابعة. أي مسؤول يقدر يكتب الخطة ويقفل.',kpi_needaction:'تحتاج إجراء',kpi_escalated:'مصعّدة',kpi_resolved:'تم حلها',kpi_inscope:'في نطاقك',
   sec_needaction:'تحتاج إجراء ({n})',no_esc_title:'ما فيه مشاكل مصعّدة',no_esc_sub:'كل شي تحت السيطرة. المصعّد الجديد بيظهر هنا.',esc_by:'صعّدها',lbl_patient_desc:'وصف المريض',lbl_tech_note:'ملاحظة القائم بالجولة',ap_label:'خطة العمل (Action Plan)',ap_ph:'وش الإجراء التصحيحي؟ ومين المسؤول عن التنفيذ؟',btn_save_close:'✔ حفظ الخطة وإقفال المشكلة',sec_resolved:'تم حلها ({n})',by_the_plan:'خطة العمل',
   err_noperm_close:'لا تملكين صلاحية إقفال المشاكل',err_write_plan:'اكتبي خطة العمل قبل الإقفال',toast_issue_closed:'تم إقفال المشكلة',
-  dash_title:'داشبورد رضا المرضى',dash_sub:'مؤشرات الرضا وحالة المشاكل حسب الفترة الزمنية.',f_period:'الفترة',p_daily:'يومي',p_weekly:'أسبوعي',p_monthly:'شهري',p_quarterly:'ربع سنوي',p_yearly:'سنوي',all_my_depts:'كل أقسامي',
+  sat_vs_target:'{mark} {n}٪ · الهدف {tg}٪',under_target:'{n} قسم تحت هدف {tg}٪',all_on_target:'كل الأقسام حققت هدف {tg}٪ ✔',sec_repeat:'مشاكل متكررة',repeat_hint:'تكرّر البند {n} مرات فأكثر في نفس القسم يشير إلى خلل نظام لا حادثة فردية — تستحق مشروع تحسين.',repeat_none:'ما فيه بند تكرر {n} مرات في قسم واحد خلال هذه الفترة.',repeat_count:'مرات التكرار',repeat_open:'ما زالت مفتوحة',sec_comments:'ملاحظات المرضى',comments_none:'ما فيه ملاحظات مكتوبة في هذه الفترة.',comments_count:'{n} ملاحظة',dash_title:'داشبورد رضا المرضى',dash_sub:'مؤشرات الرضا وحالة المشاكل حسب الفترة الزمنية.',f_period:'الفترة',p_daily:'يومي',p_weekly:'أسبوعي',p_monthly:'شهري',p_quarterly:'ربع سنوي',p_yearly:'سنوي',all_my_depts:'كل أقسامي',
   nodata_title:'لا توجد بيانات',nodata_sub:'ما تسجّلت جولات في نطاقك بعد.',kpi_avgsat_period:'متوسط الرضا ({period})',sat_pct:'{n}% رضا',no_rounds_word:'لا جولات',kpi_roundscount:'عدد الجولات',in_current_period:'في الفترة الحالية',kpi_flagged_issues:'مشاكل مرصودة',open_word:'مفتوحة: {n}',kpi_resolve_rate:'نسبة الحل',resolved_of:'تم حل {a} من {b}',
   sec_trend:'اتجاه الرضا عبر الفترات',sec_strengths:'نقاط القوة والضعف حسب البند',sec_issue_status:'حالة المشاكل (الفترة الحالية)',bar_resolved:'تم الحل',bar_escalated:'مُصعّدة',bar_open:'مفتوحة',sec_by_dept:'حسب القسم (كل الفترات)',no_rounds_period:'لا توجد جولات في هذه الفترة.',no_rounds_yet:'لا توجد جولات مسجّلة بعد.',rounds_unit:'جولة',
   pl_daily:'اليوم',pl_weekly:'هذا الأسبوع',pl_monthly:'هذا الشهر',pl_quarterly:'هذا الربع',pl_yearly:'هذي السنة',week_prefix:'أسبوع',quarter_prefix:'ربع',
@@ -524,7 +541,7 @@ const I18N={
  en:{
   app_title:'Patient Satisfaction Rounds',app_tagline:'We care… to reassure, every step of the way',app_sub:'Jubail General Hospital · Patient Satisfaction & Nursing Quality',
   logout:'Sign out',lang_btn:'ع',
-  status_cloud:'Cloud connected',status_local:'Offline',
+  status_pending:'Will upload ({n})',status_offline_ok:'Offline · saved',status_pending_hint:'Rounds are saved on this device and upload automatically once you are back online — keep this page open.',status_cloud:'Cloud connected',status_local:'Offline',
   role_tech:'Rounds Conductor',role_head:'Department Head',role_sup:'Departments Supervisor',role_admin:'Administration',
   all_departments:'All Departments',n_departments:'{n} departments',
   tab_new:'New Round',tab_myrounds:'My Rounds',tab_problems:'Issues',tab_all_all:'All Rounds',tab_all_dept:'Department Rounds',tab_dash:'Dashboard',st_title:'Team Productivity',st_sub:'Rounds per staff member, daily rate, and the satisfaction level in their rounds.',st_kpi_staff:'Active staff',st_kpi_rounds:'Total rounds',st_kpi_avg_per:'Avg. rounds per person',st_kpi_top:'Top performer',st_th_name:'Staff member',st_th_rounds:'Rounds',st_th_perday:'Per day',st_th_days:'Active days',st_th_sat:'Avg. satisfaction',st_th_issues:'Issues found',st_th_res:'Resolved',st_th_esc:'Escalated',st_th_last:'Last round',st_none:'No rounds in this period',st_none_sub:'Try a different period or department.',st_inactive:'No rounds this period',st_detail:'Daily breakdown — {name}',st_back:'Back to list',st_day:'Day',st_rounds_day:'Rounds',st_sat_day:'Avg. satisfaction',st_no_days:'No days recorded in this period.',st_click_hint:'Tap any staff member to see their daily breakdown.',st_staff_note:'The list covers staff in your departments. Anyone with no rounds appears at the bottom.',tab_staff:'Productivity',tab_users:'Users',
@@ -543,7 +560,7 @@ const I18N={
   no_issues_title:'No issues flagged',no_issues_sub:'All ratings are above the threshold. You can save the round directly.',save_round:'Save Round',
   ps_intro:'{n} issue(s) flagged. For each one: resolve it and write an action plan, or escalate it to the manager.',rating_word:'Rating',
   f_probdesc:'Issue description as stated by the patient',f_probdesc_ph:'Issue details...',btn_resolved_now:'✔ Resolved now',btn_escalate:'⬆ Escalate to manager',
-  st_resolved:'✓ Resolved',st_escalated:'⬆ Escalated',st_open:'● Open',
+  age_today:'Today',age_days:'{n} days ago',age_oldest:'Oldest issue',age_overdue:'Overdue',dur_min:'{n} min',dur_hr:'{n} hr',dur_day:'{n} days',kpi_resptime:'Avg. response time',resp_sub:'escalation to closure',no_resp:'No closed issues yet',sec_overdue:'Overdue by {n}+ days',st_resolved:'✓ Resolved',st_escalated:'⬆ Escalated',st_open:'● Open',
   ap_resolved_label:'Action Plan — issue resolved on site',ap_resolved_ph:'What did you do to resolve the issue?',esc_reason_label:'Escalation reason / note to manager',esc_reason_ph:'Why does this need the manager?',
   sum_resolved:'Resolved',sum_escalated:'Escalated',sum_remaining:'{n} still undecided',
   err_decide:'Every issue must be resolved or escalated before saving',toast_saved:'Round saved',toast_saved_esc:' · {n} issue(s) escalated to managers',err_complete:'Complete the department, room number, and surveyed person',err_rateall:'Rate all nursing items before continuing',
@@ -555,7 +572,7 @@ const I18N={
   pr_title:'Issues',pr_sub:'Escalated issues need an action plan. Resolved ones are shown for follow-up. Any manager can write the plan and close.',kpi_needaction:'Needs action',kpi_escalated:'Escalated',kpi_resolved:'Resolved',kpi_inscope:'in your scope',
   sec_needaction:'Needs Action ({n})',no_esc_title:'No escalated issues',no_esc_sub:'All under control. New escalations appear here.',esc_by:'escalated by',lbl_patient_desc:"Patient's description",lbl_tech_note:"Technician's note",ap_label:'Action Plan',ap_ph:"What's the corrective action, and who is responsible?",btn_save_close:'✔ Save plan & close issue',sec_resolved:'Resolved ({n})',by_the_plan:'Action plan',
   err_noperm_close:"You don't have permission to close issues",err_write_plan:'Write the action plan before closing',toast_issue_closed:'Issue closed',
-  dash_title:'Patient Satisfaction Dashboard',dash_sub:'Satisfaction metrics and issue status by time period.',f_period:'Period',p_daily:'Daily',p_weekly:'Weekly',p_monthly:'Monthly',p_quarterly:'Quarterly',p_yearly:'Yearly',all_my_depts:'All my departments',
+  sat_vs_target:'{mark} {n}% · target {tg}%',under_target:'{n} department(s) below the {tg}% target',all_on_target:'All departments met the {tg}% target ✔',sec_repeat:'Recurring issues',repeat_hint:'An item failing {n}+ times in the same department points to a system problem, not a one-off — worth an improvement project.',repeat_none:'No item recurred {n} times in a single department this period.',repeat_count:'Occurrences',repeat_open:'Still open',sec_comments:'Patient comments',comments_none:'No written comments in this period.',comments_count:'{n} comments',dash_title:'Patient Satisfaction Dashboard',dash_sub:'Satisfaction metrics and issue status by time period.',f_period:'Period',p_daily:'Daily',p_weekly:'Weekly',p_monthly:'Monthly',p_quarterly:'Quarterly',p_yearly:'Yearly',all_my_depts:'All my departments',
   nodata_title:'No data',nodata_sub:'No rounds recorded in your scope yet.',kpi_avgsat_period:'Avg. Satisfaction ({period})',sat_pct:'{n}% satisfaction',no_rounds_word:'No rounds',kpi_roundscount:'Rounds',in_current_period:'in current period',kpi_flagged_issues:'Flagged issues',open_word:'open: {n}',kpi_resolve_rate:'Resolution rate',resolved_of:'{a} of {b} resolved',
   sec_trend:'Satisfaction Trend Across Periods',sec_strengths:'Strengths & Weaknesses by Item',sec_issue_status:'Issue Status (current period)',bar_resolved:'Resolved',bar_escalated:'Escalated',bar_open:'Open',sec_by_dept:'By Department (all periods)',no_rounds_period:'No rounds in this period.',no_rounds_yet:'No rounds recorded yet.',rounds_unit:'rounds',
   pl_daily:'Today',pl_weekly:'This week',pl_monthly:'This month',pl_quarterly:'This quarter',pl_yearly:'This year',week_prefix:'Wk',quarter_prefix:'Q',
@@ -602,7 +619,19 @@ const DB={
   }
 };
 
-function setStatus(ok){const el=$('#dbstatus');if(!el)return;el.className='dbstatus '+(ok?'cloud':'local');el.textContent=ok?t('status_cloud'):t('status_local');}
+let PENDING=0, FROM_CACHE=false;
+function setStatus(ok){
+  const el=$('#dbstatus');if(!el)return;
+  if(ok&&(PENDING>0||FROM_CACHE)){
+    el.className='dbstatus pending';
+    el.textContent=PENDING>0?t('status_pending',{n:num(PENDING)}):t('status_offline_ok');
+    el.title=t('status_pending_hint');
+    return;
+  }
+  el.className='dbstatus '+(ok?'cloud':'local');
+  el.textContent=ok?t('status_cloud'):t('status_local');
+  el.title='';
+}
 function loginMsg(m,neutral){const el=$('#loginMsg');if(!el)return;el.textContent=m||'';el.style.color=neutral?'var(--muted)':'var(--coral)';}
 function showLogin(){const l=$('#login');if(l)l.classList.remove('hidden');}
 function hideLogin(){const l=$('#login');if(l)l.classList.add('hidden');}
@@ -622,6 +651,9 @@ async function initDB(attempt){
   try{
     if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);
     db=firebase.firestore(); auth=firebase.auth();
+    // keep working when the ward WiFi drops — writes queue locally and sync on reconnect
+    try{ await db.enablePersistence({synchronizeTabs:true}); }
+    catch(e0){ console.warn('offline cache unavailable:',e0&&e0.code); }
     // some mobile browsers (private mode) block IndexedDB → fall back so login still works
     try{ await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL); }
     catch(e1){ try{ await auth.setPersistence(firebase.auth.Auth.Persistence.SESSION); }catch(e2){} }
@@ -681,14 +713,20 @@ function unsubscribeRounds(){
 function subscribeRounds(){
   if(roundsSubbed)return; roundsSubbed=true; cloud=true;
   const errH=e=>{console.error(e);toast(t('toast_cloud_lost'),'err');};
+  const meta=snap=>{
+    FROM_CACHE=!!(snap.metadata&&snap.metadata.fromCache);
+    PENDING=snap.docs.filter(d=>d.metadata&&d.metadata.hasPendingWrites).length;
+    setStatus(true);
+  };
   if(seesAllDepts(USER)){
     // full access → one listener, no filter
-    roundsUnsubs.push(db.collection(RC).onSnapshot(snap=>onData(snap.docs.map(d=>d.data())),errH));
+    roundsUnsubs.push(db.collection(RC).onSnapshot(snap=>{meta(snap);onData(snap.docs.map(d=>d.data()));},errH));
   }else{
     // scoped roles → one listener per allowed department (matches security rules)
     const ds=userDepts(USER);
     ds.forEach(d=>{
       roundsUnsubs.push(db.collection(RC).where('dept','==',d).onSnapshot(snap=>{
+        meta(snap);
         ROUNDS_BY_DEPT[d]=snap.docs.map(x=>x.data());
         const all=[];ds.forEach(k=>{(ROUNDS_BY_DEPT[k]||[]).forEach(r=>all.push(r));});
         onData(all);
@@ -708,6 +746,24 @@ function onData(rounds){
 function toast(msg,type=''){const t=$('#toast');t.textContent=msg;t.className='show '+type;setTimeout(()=>t.className='',2600);}
 function esc(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 function initials(n){return (n||'?').trim().slice(0,2);}
+
+/* ---- escalation ageing ---- */
+function escStart(item){return item.escalatedTs||(item.round&&item.round.ts)||null;}
+function ageDays(iso){ if(!iso)return null; return Math.floor((Date.now()-new Date(iso))/864e5); }
+function ageLevel(d){ return d==null?'':(d>=ESC_CRIT_D?'crit':(d>=ESC_WARN_D?'warn':'ok')); }
+function ageLabel(d){ return d==null?'':(d===0?t('age_today'):t('age_days',{n:num(d)})); }
+function ageChip(item){
+  const d=ageDays(escStart(item)); if(d==null)return '';
+  const lv=ageLevel(d);
+  return `<span class="agechip ${lv}">${lv==='crit'?'⏰ ':''}${ageLabel(d)}</span>`;
+}
+function hoursBetween(a,b){ if(!a||!b)return null; const h=(new Date(b)-new Date(a))/36e5; return h>=0?h:null; }
+function fmtDur(h){
+  if(h==null)return '—';
+  if(h<1)return t('dur_min',{n:num(Math.max(1,Math.round(h*60)))});
+  if(h<48)return t('dur_hr',{n:num(Math.round(h))});
+  return t('dur_day',{n:num(Math.round(h/24))});
+}
 
 /* ---- problem helpers ---- */
 function allProblems(){
@@ -1069,7 +1125,7 @@ function commitRound(){
   // finalize resolved problems metadata
   draft.problems.forEach(p=>{
     if(p.status==='resolved'){p.handledBy=USER.name;p.resolvedTs=new Date().toISOString();}
-    if(p.status==='escalated'){p.escalatedBy=USER.name;}
+    if(p.status==='escalated'){p.escalatedBy=USER.name;p.escalatedTs=new Date().toISOString();}
   });
   const round={
     id:uid(),ts:new Date().toISOString(),
@@ -1164,14 +1220,23 @@ function problemFullCard(p,r){
 function viewProblems(){
   const app=$('#app');
   const all=scopedProblems();
-  const pending=all.filter(p=>p.status==='escalated');
+  const pending=all.filter(p=>p.status==='escalated')
+    .sort((a,b)=>new Date(escStart(a)||0)-new Date(escStart(b)||0));   // oldest first
   const done=all.filter(p=>p.status==='resolved');
+  const overdue=pending.filter(p=>{const d=ageDays(escStart(p));return d!=null&&d>=ESC_CRIT_D;});
+  const oldest=pending.length?ageDays(escStart(pending[0])):null;
   app.innerHTML=`<div class="page-head"><div><h2>${t('pr_title')}</h2>
     <p>${t('pr_sub')}</p></div></div>`;
 
+  const respAvg=(()=>{const v=done.map(p=>hoursBetween(escStart(p),p.resolvedTs)).filter(x=>x!=null);
+    return v.length?v.reduce((a,b)=>a+b,0)/v.length:null;})();
   app.innerHTML+=`<div class="kpis" style="margin-bottom:22px">
     <div class="kpi warn"><div class="lbl">${t('kpi_needaction')}</div><div class="val">${num(pending.length)}</div><div class="sub">${t('kpi_escalated')}</div></div>
-    <div class="kpi good"><div class="lbl">${t('kpi_resolved')}</div><div class="val">${num(done.length)}</div><div class="sub">${t('kpi_inscope')}</div></div>
+    <div class="kpi${overdue.length?' danger':''}"><div class="lbl">${t('age_overdue')}</div>
+      <div class="val">${num(overdue.length)}</div>
+      <div class="sub">${t('sec_overdue',{n:num(ESC_CRIT_D)})}</div></div>
+    <div class="kpi"><div class="lbl">${t('age_oldest')}</div><div class="val" style="font-size:20px">${oldest==null?'—':ageLabel(oldest)}</div><div class="sub">${t('kpi_escalated')}</div></div>
+    <div class="kpi good"><div class="lbl">${t('kpi_resptime')}</div><div class="val" style="font-size:20px">${respAvg==null?'—':fmtDur(respAvg)}</div><div class="sub">${respAvg==null?t('no_resp'):t('resp_sub')}</div></div>
   </div>`;
 
   app.innerHTML+=`<div class="section-title">${t('sec_needaction',{n:num(pending.length)})}</div>`;
@@ -1180,11 +1245,12 @@ function viewProblems(){
     let html='';
     pending.forEach(item=>{
       const r=item.round;
-      html+=`<div class="card card-pad" style="margin-bottom:14px">
+      const lv=ageLevel(ageDays(escStart(item)));
+      html+=`<div class="card card-pad ${lv==='crit'?'rowcrit':lv==='warn'?'rowwarn':''}" style="margin-bottom:14px">
         <div class="row-between" style="margin-bottom:10px">
           <div><span class="prob-src">${esc(probLabel(item))}</span>
             <div class="hint">${esc(deptLabel(r.dept))} · ${t('room_word')} ${esc(r.room)} · ${fmtDate(r.ts)} · ${t('esc_by')} ${esc(item.escalatedBy||r.tech)}</div></div>
-          <span class="status st-esc">${t('st_escalated')}</span>
+          <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap">${ageChip(item)}<span class="status st-esc">${t('st_escalated')}</span></div>
         </div>
         ${item.note?`<div class="hint" style="color:var(--text);margin-bottom:6px"><b>${t('lbl_patient_desc')}:</b> ${esc(item.note)}</div>`:''}
         ${item.escalatedTo?`<div style="background:var(--amber-soft);border-radius:10px;padding:10px 13px;margin-bottom:12px"><b style="color:#8a5f0e">${t('lbl_tech_note')}:</b> ${esc(item.escalatedTo)}</div>`:''}
@@ -1209,7 +1275,7 @@ function viewProblems(){
           <div style="flex:1"></div><span class="status st-res">${t('st_resolved')}</span></div>
         <div class="prob-body">
           ${item.note?`<div class="hint" style="color:var(--text);margin-bottom:6px"><b>${t('lbl_desc')}:</b> ${esc(item.note)}</div>`:''}
-          ${plan?`<div style="background:var(--green-soft);border-radius:10px;padding:10px 13px"><b style="color:#146b48">${t('by_the_plan')}:</b> ${esc(plan)}<div class="hint">${t('by_word')} ${by} · ${fmtDate(r.ts)}</div></div>`:''}
+          ${plan?`<div style="background:var(--green-soft);border-radius:10px;padding:10px 13px"><b style="color:#146b48">${t('by_the_plan')}:</b> ${esc(plan)}<div class="hint">${t('by_word')} ${by} · ${fmtDate(r.ts)}${(()=>{const h=hoursBetween(escStart(item),item.resolvedTs);return h==null?'':' · '+t('resp_sub')+': '+fmtDur(h);})()}</div></div>`:''}
         </div></div>`;
     });
     app.innerHTML+=html;
@@ -1272,11 +1338,18 @@ function renderDash(){
   const box=$('#dashBody');
   if(!data.length){box.innerHTML=emptyCard('📊',t('nodata_title'),t('nodata_sub'));return;}
 
+  const satPct=avg?pct(avg):null;
+  const hitTarget=satPct!=null&&satPct>=SAT_TARGET;
+  const respVals=probs.filter(p=>p.status==='resolved').map(p=>hoursBetween(escStart(p),p.resolvedTs)).filter(x=>x!=null);
+  const respAvg=respVals.length?respVals.reduce((a,b)=>a+b,0)/respVals.length:null;
   let html=`<div class="kpis">
-    <div class="kpi accent"><div class="lbl">${t('kpi_avgsat_period',{period:periodLabel(dashPeriod)})}</div><div class="val">${avg?avg.toFixed(1):'—'}<span style="font-size:16px">/5</span></div><div class="sub">${avg?t('sat_pct',{n:pct(avg)}):t('no_rounds_word')}</div></div>
+    <div class="kpi ${satPct==null?'accent':hitTarget?'good':'danger'}"><div class="lbl">${t('kpi_avgsat_period',{period:periodLabel(dashPeriod)})}</div>
+      <div class="val" style="${satPct==null?'':'color:'+(hitTarget?'var(--green)':'var(--coral)')}">${avg?avg.toFixed(1):'—'}<span style="font-size:16px">/5</span></div>
+      <div class="sub">${satPct==null?t('no_rounds_word'):t('sat_vs_target',{n:num(satPct),tg:num(SAT_TARGET),mark:hitTarget?'✔':'▼'})}</div></div>
     <div class="kpi"><div class="lbl">${t('kpi_roundscount')}</div><div class="val">${num(curRounds.length)}</div><div class="sub">${t('in_current_period')}</div></div>
     <div class="kpi warn"><div class="lbl">${t('kpi_flagged_issues')}</div><div class="val">${num(probs.length)}</div><div class="sub">${t('open_word',{n:num(openc+escc)})}</div></div>
     <div class="kpi good"><div class="lbl">${t('kpi_resolve_rate')}</div><div class="val">${resRate==null?'—':num(resRate)+'%'}</div><div class="sub">${t('resolved_of',{a:num(resolved),b:num(probs.length)})}</div></div>
+    <div class="kpi"><div class="lbl">${t('kpi_resptime')}</div><div class="val" style="font-size:21px">${respAvg==null?'—':fmtDur(respAvg)}</div><div class="sub">${respAvg==null?t('no_resp'):t('resp_sub')}</div></div>
   </div>`;
 
   // trend chart
@@ -1300,7 +1373,79 @@ function renderDash(){
   </div>`;
   html+='</div>';
 
+  html+=recurringSection(scope);
+  html+=commentsSection(scope);
+
   box.innerHTML=html;
+  labelCells(box);
+}
+
+/* ---- same item failing again and again in one department = systemic ---- */
+function recurringSection(rounds){
+  const map={};
+  rounds.forEach(r=>r.problems.forEach(p=>{
+    const k=r.dept+'||'+(p.qkey||'');
+    if(!map[k])map[k]={dept:r.dept,qkey:p.qkey,n:0,open:0};
+    map[k].n++; if(p.status!=='resolved')map[k].open++;
+  }));
+  const rows=Object.values(map).filter(x=>x.n>=REPEAT_MIN).sort((a,b)=>b.n-a.n);
+  let html=`<div class="card card-pad" style="margin-bottom:20px">
+    <div class="section-title" style="margin-top:0">${t('sec_repeat')}</div>`;
+  if(!rows.length){
+    html+=`<p class="hint">${t('repeat_none',{n:num(REPEAT_MIN)})}</p></div>`;
+    return html;
+  }
+  html+=`<p class="hint" style="margin-top:0">${t('repeat_hint',{n:num(REPEAT_MIN)})}</p>
+    <div style="overflow-x:auto"><table><thead><tr><th>${t('th_dept')}</th><th>${t('xl_item')}</th><th>${t('repeat_count')}</th><th>${t('repeat_open')}</th></tr></thead><tbody>`;
+  rows.forEach(x=>{
+    const q=QRATED.find(q=>q.k===x.qkey);
+    html+=`<tr><td><b>${esc(deptLabel(x.dept))}</b></td>
+      <td>${esc(q?qLabel(q):(x.qkey||'—'))}</td>
+      <td><span class="agechip crit">${num(x.n)}</span></td>
+      <td>${x.open?'<span class="agechip warn">'+num(x.open)+'</span>':num(0)}</td></tr>`;
+  });
+  html+='</tbody></table></div></div>';
+  return html;
+}
+
+/* ---- free-text feedback, surfaced instead of buried ---- */
+let cmtTab='liked';
+function setCmtTab(v){cmtTab=v;renderDash();}
+function commentsSection(rounds){
+  const pick=r=>cmtTab==='liked'?r.liked:cmtTab==='sugg'?r.suggestions:r.nurse;
+  const items=rounds.filter(r=>(pick(r)||'').trim())
+    .map(r=>({txt:pick(r).trim(),dept:r.dept,ts:r.ts}))
+    .sort((a,b)=>new Date(b.ts)-new Date(a.ts));
+  const tabs=[['liked',t('th_liked')],['sugg',t('th_sugg')],['nurse',t('th_nurse')]];
+  let html=`<div class="card card-pad" style="margin-bottom:20px">
+    <div class="section-title" style="margin-top:0">${t('sec_comments')}</div>
+    <div class="seg" style="margin-bottom:14px">
+      ${tabs.map(([v,l])=>`<div class="seg-opt${cmtTab===v?' on':''}" style="min-width:auto" onclick="setCmtTab('${v}')">${l}</div>`).join('')}
+    </div>`;
+  if(!items.length){html+=`<p class="hint">${t('comments_none')}</p></div>`;return html;}
+  const words=topWords(items.map(x=>x.txt));
+  if(words.length){
+    html+=`<div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px">
+      ${words.map(w=>`<span class="tag">${esc(w[0])} <b>${num(w[1])}</b></span>`).join('')}</div>`;
+  }
+  html+=`<div style="max-height:340px;overflow-y:auto;display:flex;flex-direction:column;gap:9px">`;
+  items.slice(0,120).forEach(x=>{
+    html+=`<div style="border-inline-start:3px solid var(--teal);background:var(--bg);border-radius:7px;padding:10px 13px">
+      <div style="font-size:14px;line-height:1.7">${esc(x.txt)}</div>
+      <div class="hint" style="margin-top:4px">${esc(deptLabel(x.dept))} · ${fmtDate(x.ts)}</div></div>`;
+  });
+  html+=`</div><p class="hint" style="margin-top:10px">${t('comments_count',{n:num(items.length)})}</p></div>`;
+  return html;
+}
+const STOPWORDS=('في من على الى إلى عن مع كل ان أن ام أم او أو لا ما هو هي هم هن اللي التي الذي كان كانت يكون قد لم لن هذا هذه ذلك تلك بس بعد قبل عند لكن ثم و يا جدا جداً شي شيء الله and the for with was were they that this have has not you are but all very some'
+).split(/\s+/);
+function topWords(texts,limit){
+  const c={};
+  texts.join(' ').toLowerCase()
+    .replace(/[ً-ٰٟ]/g,'')                 // strip Arabic diacritics
+    .split(/[^ء-يa-z0-9]+/)
+    .forEach(w=>{ if(w.length>2&&!STOPWORDS.includes(w))c[w]=(c[w]||0)+1; });
+  return Object.entries(c).filter(x=>x[1]>1).sort((a,b)=>b[1]-a[1]).slice(0,limit||8);
 }
 function probStatusBar(lbl,n,total,col){
   const p=total?n/total*100:0;
@@ -1321,11 +1466,15 @@ function questionAverages(rounds){
 function deptBreakdown(){
   const rows=userDepts(USER).map(d=>({d,rs:scopedRounds().filter(r=>r.dept===d)})).filter(x=>x.rs.length).sort((a,b)=>b.rs.length-a.rs.length);
   if(!rows.length)return '<div class="hint">'+t('no_rounds_yet')+'</div>';
-  return rows.map(({d,rs})=>{
+  const under=rows.filter(({rs})=>{const a=periodAvg(rs);return a!=null&&pct(a)<SAT_TARGET;}).length;
+  const head=`<p class="hint" style="margin:0 0 8px">${under?t('under_target',{n:num(under),tg:num(SAT_TARGET)}):t('all_on_target',{tg:num(SAT_TARGET)})}</p>`;
+  return head+rows.map(({d,rs})=>{
     const a=periodAvg(rs);
+    const p=a?pct(a):null;
+    const below=p!=null&&p<SAT_TARGET;
     return `<div class="row-between" style="padding:8px 0;border-bottom:1px solid var(--line)">
-      <span style="font-weight:700">${esc(deptLabel(d))}</span>
-      <span><span class="tag">${num(rs.length)} ${LANG==='en'&&rs.length===1?'round':t('rounds_unit')}</span> <b style="color:${avgColor(a)}">${a?a.toFixed(1)+'/5':'—'}</b></span></div>`;
+      <span style="font-weight:700">${below?'<span style="color:var(--coral)">▼</span> ':''}${esc(deptLabel(d))}</span>
+      <span><span class="tag">${num(rs.length)} ${LANG==='en'&&rs.length===1?'round':t('rounds_unit')}</span> <b style="color:${below?'var(--coral)':'var(--green)'}">${a?a.toFixed(1)+'/5':'—'}</b></span></div>`;
   }).join('');
 }
 function periodAvg(rounds){
