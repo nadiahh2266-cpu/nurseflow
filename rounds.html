@@ -182,6 +182,30 @@ textarea{resize:vertical;min-height:70px}
 .dot.sel-2{border-color:var(--coral);background:var(--coral-soft);color:#a83320}
 .dot.sel-1{border-color:var(--coral);background:var(--coral-soft);color:#a83320}
 .flag-note{margin-top:11px;font-size:13px;color:#a83320;font-weight:700;display:flex;align-items:center;gap:6px}
+.qtitle .qtext{flex:1}
+.rubric-btn{flex:none;width:22px;height:22px;border-radius:50%;border:1.5px solid var(--line);background:#fff;color:var(--muted);font-size:12px;font-weight:800;cursor:pointer;line-height:1;padding:0}
+.rubric-btn:hover{border-color:var(--teal);color:var(--teal)}
+.anchor{font-size:12px;color:var(--muted);margin:-4px 0 12px;padding-inline-start:34px}
+.scale-desc{margin-top:10px;min-height:20px;font-size:13px;display:flex;gap:9px;align-items:baseline;flex-wrap:wrap}
+.ds-badge{font-weight:800;border-radius:6px;padding:2px 9px;font-size:12.5px;white-space:nowrap}
+.ds-long{color:var(--text)}
+.ds-badge.sel-5{background:var(--green-soft);color:#146b48}
+.ds-badge.sel-4{background:#e8f4ec;color:#2f7d55}
+.ds-badge.sel-3{background:var(--amber-soft);color:#8a5f0e}
+.ds-badge.sel-2{background:#fbe9df;color:#a85a26}
+.ds-badge.sel-1{background:var(--coral-soft);color:#a83320}
+.rub-overlay{display:none;position:fixed;inset:0;background:rgba(35,53,88,.5);backdrop-filter:blur(3px);place-items:center;z-index:120;padding:18px}
+.rub-box{background:#fff;border-radius:12px;max-width:440px;width:100%;padding:20px;box-shadow:0 24px 60px rgba(35,53,88,.3);max-height:85vh;overflow-y:auto}
+.rub-modal-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:8px;font-size:15px;color:var(--ink-deep)}
+.rub-modal-head .x{border:none;background:none;font-size:18px;color:var(--muted);cursor:pointer;flex:none;padding:0;line-height:1}
+.rub-row{display:flex;gap:12px;align-items:flex-start;padding:9px 0;border-bottom:1px dashed var(--line)}
+.rub-row:last-child{border-bottom:none}
+.rub-score{flex:none;width:30px;height:30px;border-radius:8px;display:grid;place-items:center;font-weight:800;font-size:14px}
+.rub-score.sel-5{background:var(--green-soft);color:#146b48}
+.rub-score.sel-4{background:#e8f4ec;color:#2f7d55}
+.rub-score.sel-3{background:var(--amber-soft);color:#8a5f0e}
+.rub-score.sel-2{background:#fbe9df;color:#a85a26}
+.rub-score.sel-1{background:var(--coral-soft);color:#a83320}
 
 /* ---------- Problem cards ---------- */
 .prob{border:1px solid var(--line);border-radius:9px;overflow:hidden;margin-bottom:14px;background:#fff}
@@ -309,6 +333,8 @@ tbody tr:hover{background:#f8fbfb}
   .seg-opt{min-width:calc(50% - 4px);padding:13px 8px}
   .dot{min-width:calc(33.33% - 5px);padding:11px 4px}
   .qblock{padding:14px}
+  .anchor{padding-inline-start:0}
+  .rub-box{padding:16px}
   .qtitle{font-size:14px}
   .bars{height:150px;gap:6px}
   .bar-lbl{font-size:10px}
@@ -414,6 +440,14 @@ const QRATED=[{k:'q3',n:3},{k:'q4',n:4},{k:'q5',n:5},{k:'q6',n:6},{k:'q7',n:7},{
 const SCALE=[{v:5},{v:4},{v:3},{v:2},{v:1}];
 const THRESHOLD=2; // <= 2 يُعتبر مشكلة تلقائية
 
+/* ===== معايير التقييم القياسية (Standardized scoring) =====
+   وصف كل درجة لكل سؤال — يظهر تحت الأزرار وفي نافذة «معايير التقييم».
+   عدّلي النصوص هنا متى ما اعتمدتم صياغة رسمية. */
+const RUBRICS={ar:{q3:{anchor:"المعيار: نسبة أفراد الطاقم الذين عرّفوا بأنفسهم (الاسم + الدور)",5:["الجميع عرّف بنفسه","كل فرد لامس رعايتك عرّف باسمه ودوره دون أن تسأل"],4:["الأغلب عرّف بنفسه","معظم الطاقم عرّف بنفسه، وقلة أغفلت ذلك"],3:["النصف تقريباً","عرّف بعضهم بأنفسهم، والبعض الآخر لا"],2:["قلة عرّفت بنفسها","فرد أو اثنان فقط عرّفا بنفسيهما"],1:["لا أحد عرّف بنفسه","لم يعرّف أحد باسمه أو دوره"]},q4:{anchor:"المعيار: هل شُرح الإجراء واستُؤذن قبل تنفيذه؟",5:["شرح واستئذان كامل","شُرح كل إجراء واستُؤذن قبله في كل مرة"],4:["غالباً","شُرح واستُؤذن في معظم الإجراءات"],3:["أحياناً","شُرح البعض دون استئذان، أو العكس"],2:["نادراً","نُفّذ معظم الإجراءات دون شرح أو استئذان"],1:["إطلاقاً","نُفّذت الإجراءات دون أي شرح أو استئذان"]},q5:{anchor:"المعيار: مستوى اللطف والاحترام في التعامل",5:["دافئ ومبادر","تعامل لطيف ومحترم ومبادر بالاهتمام طوال الوقت"],4:["لطيف ومحترم","تعامل جيد ومحترم في معظم المواقف"],3:["محايد","تعامل مقبول، مهني دون دفء واضح"],2:["فاتر","تعامل جاف أو مستعجل أحياناً"],1:["غير لائق","تعامل جاف أو غير محترم"]},q6:{anchor:"المعيار: الزمن التقريبي للاستجابة بعد الضغط على الجرس",5:["فورية","خلال دقيقتين"],4:["سريعة","خلال ٥ دقائق"],3:["مقبولة","خلال ١٠ دقائق"],2:["متأخرة","خلال ١٥–٢٠ دقيقة"],1:["بطيئة جداً","أكثر من ٢٠ دقيقة أو بلا استجابة"]},q7:{anchor:"المعيار: مدى مراعاة الاحتياجات الخاصة (الخصوصية، اللغة، الألم، الدين…)",5:["مراعاة تامة ومبادرة","لُوحظت احتياجاتك الخاصة ورُوعيت دون أن تطلب"],4:["مراعاة جيدة","رُوعيت احتياجاتك عند طلبها"],3:["مراعاة جزئية","رُوعي بعضها وأُغفل بعضها"],2:["مراعاة ضعيفة","رُوعيت نادراً وبصعوبة"],1:["بلا مراعاة","لم تُراعَ احتياجاتك الخاصة"]},q8:{anchor:"المعيار: مدى إطلاعك على خطة رعايتك وما يجري",5:["إطلاع كامل وواضح","أُطلعت أولاً بأول بلغة مفهومة على كل ما يخص رعايتك"],4:["إطلاع جيد","أُطلعت على معظم الأمور المهمة"],3:["إطلاع جزئي","أُطلعت على بعض الأمور عند سؤالك"],2:["إطلاع ضعيف","أُطلعت نادراً وبمعلومات ناقصة"],1:["بلا إطلاع","لم تُطلَع على ما يجري في رعايتك"]}},en:{q3:{anchor:"Criterion: share of staff who introduced themselves (name + role)",5:["Everyone did","Every staff member gave their name and role unprompted"],4:["Most did","Most introduced themselves; a few did not"],3:["About half","Some introduced themselves, others did not"],2:["Few did","Only one or two introduced themselves"],1:["No one did","No one gave their name or role"]},q4:{anchor:"Criterion: was the procedure explained and consent sought first?",5:["Always","Every procedure explained and consented each time"],4:["Usually","Explained and consented for most procedures"],3:["Sometimes","Some explained without consent, or vice versa"],2:["Rarely","Most procedures done without explanation or consent"],1:["Never","Procedures done with no explanation or consent"]},q5:{anchor:"Criterion: level of kindness and respect shown",5:["Warm & proactive","Kind, respectful and attentive throughout"],4:["Kind & respectful","Good, respectful manner most of the time"],3:["Neutral","Acceptable, professional but not warm"],2:["Cool","Curt or rushed at times"],1:["Improper","Curt or disrespectful"]},q6:{anchor:"Criterion: approximate response time after the call bell",5:["Immediate","Within 2 minutes"],4:["Prompt","Within 5 minutes"],3:["Acceptable","Within 10 minutes"],2:["Delayed","15–20 minutes"],1:["Very slow","Over 20 minutes or no response"]},q7:{anchor:"Criterion: attention to special needs (privacy, language, pain, faith…)",5:["Full & proactive","Special needs noticed and met unprompted"],4:["Good","Needs met when asked"],3:["Partial","Some met, some missed"],2:["Weak","Rarely and reluctantly met"],1:["None","Special needs not considered"]},q8:{anchor:"Criterion: how well you were kept informed about your care",5:["Full & clear","Kept informed throughout in understandable terms"],4:["Good","Informed about most important matters"],3:["Partial","Informed about some things when you asked"],2:["Weak","Rarely informed, with incomplete detail"],1:["None","Not informed about your care"]}}};
+function rubric(qk){const r=RUBRICS[LANG]&&RUBRICS[LANG][qk]?RUBRICS[LANG][qk]:RUBRICS.ar[qk];return r||null;}
+function scaleShort(qk,v){const r=rubric(qk);return r&&r[v]?r[v][0]:t('sc_'+v);}
+function scaleLong(qk,v){const r=rubric(qk);return r&&r[v]?r[v][1]:'';}
+
 /* ================= UTIL ================= */
 const $=s=>document.querySelector(s);
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
@@ -512,7 +546,7 @@ const I18N={
   sec_eval:'تقييم خدمات التمريض',sec_overall:'التقييم العام والملاحظات',q12:'التقييم العام لخدمات مستشفى الجبيل العام',
   f_liked:'أبرز الجوانب التي أعجبتك أو لم تعجبك',f_liked_ph:'ملاحظات المريض...',f_sugg:'ملاحظات ومقترحات لتحسين الخدمة',f_sugg_ph:'مقترحات...',f_nurse:'اسم ممرض/ة قدّم خدمة استثنائية',f_nurse_ph:'اسم الممرض/ة (اختياري)',
   next_review:'التالي: مراجعة المشاكل ←',live_notstarted:'لم يبدأ التقييم بعد',live_avg:'متوسط الرضا',live_flagged:'{n} مشكلة مرصودة',live_noflag:'لا مشاكل مرصودة ✅',
-  flag_note:'⚠️ رُصدت كمشكلة — بتنحل أو تُصعّد في الخطوة التالية',
+  rubric_help:'؟',rubric_title:'معايير التقييم',rubric_pick:'اختاري درجة لعرض المعيار',rubric_intro:'المعيار لكل درجة:',flag_note:'⚠️ رُصدت كمشكلة — بتنحل أو تُصعّد في الخطوة التالية',
   ps_title:'مراجعة المشاكل ومعالجتها',room_word:'غرفة',back_eval:'→ رجوع للتقييم',
   no_issues_title:'ما فيه مشاكل مرصودة',no_issues_sub:'كل التقييمات فوق حد الرصد. تقدرين تحفظين الجولة مباشرة.',save_round:'حفظ الجولة',
   ps_intro:'رُصدت {n} مشكلة. لكل مشكلة: إما تحلينها وتكتبين خطة العمل، أو تصعّدينها للمسؤول.',rating_word:'التقييم',
@@ -555,7 +589,7 @@ const I18N={
   sec_eval:'Nursing Services Evaluation',sec_overall:'Overall Rating & Comments',q12:'Overall rating of Jubail General Hospital services',
   f_liked:'Aspects you liked or disliked',f_liked_ph:"Patient's remarks...",f_sugg:'Comments & suggestions to improve the service',f_sugg_ph:'Suggestions...',f_nurse:'Name of a nurse who gave exceptional service',f_nurse_ph:"Nurse's name (optional)",
   next_review:'Next: Review Issues →',live_notstarted:'Evaluation not started yet',live_avg:'Satisfaction average',live_flagged:'{n} issue(s) flagged',live_noflag:'No issues flagged ✅',
-  flag_note:'⚠️ Flagged as an issue — resolve or escalate it in the next step',
+  rubric_help:'?',rubric_title:'Scoring guide',rubric_pick:'Pick a score to see its criterion',rubric_intro:'Criterion for each score:',flag_note:'⚠️ Flagged as an issue — resolve or escalate it in the next step',
   ps_title:'Review & Handle Issues',room_word:'Room',back_eval:'← Back to evaluation',
   no_issues_title:'No issues flagged',no_issues_sub:'All ratings are above the threshold. You can save the round directly.',save_round:'Save Round',
   ps_intro:'{n} issue(s) flagged. For each one: resolve it and write an action plan, or escalate it to the manager.',rating_word:'Rating',
@@ -972,15 +1006,41 @@ function renderQuestions(){
   QRATED.forEach(q=>{
     const cur=draft.ratings[q.k];
     const flagged=cur&&cur<=THRESHOLD;
+    const rb=rubric(q.k);
     const d=document.createElement('div');
     d.className='qblock'+(flagged?' flagged':'');
-    d.innerHTML=`<div class="qtitle"><span class="n">${arNum(q.n)}</span> ${qLabel(q)}</div>
+    d.innerHTML=`<div class="qtitle"><span class="n">${arNum(q.n)}</span> <span class="qtext">${qLabel(q)}</span>
+        <button type="button" class="rubric-btn" title="${t('rubric_title')}" onclick="openRubric('${q.k}')">${t('rubric_help')}</button></div>
+      ${rb?`<div class="anchor">${esc(rb.anchor)}</div>`:''}
       <div class="scale" data-k="${q.k}"></div>
+      <div class="scale-desc" id="desc_${q.k}"></div>
       ${flagged?'<div class="flag-note">'+t('flag_note')+'</div>':''}`;
     box.appendChild(d);
     renderScale(d.querySelector('.scale'),q.k);
+    updateScaleDesc(q.k);
   });
 }
+function updateScaleDesc(qk){
+  const el=$('#desc_'+qk);if(!el)return;
+  const v=draft.ratings[qk];
+  if(!v){el.innerHTML='<span class="hint">'+t('rubric_pick')+'</span>';return;}
+  el.innerHTML=`<span class="ds-badge sel-${v}">${arNum(v)} · ${esc(scaleShort(qk,v))}</span> <span class="ds-long">${esc(scaleLong(qk,v))}</span>`;
+}
+function openRubric(qk){
+  const rb=rubric(qk);if(!rb)return;
+  const q=QRATED.find(x=>x.k===qk);
+  const rows=[5,4,3,2,1].map(v=>`<div class="rub-row">
+      <span class="rub-score sel-${v}">${arNum(v)}</span>
+      <div><b>${esc(rb[v][0])}</b><div class="hint">${esc(rb[v][1])}</div></div>
+    </div>`).join('');
+  const html=`<div class="rub-modal-head"><b>${arNum(q.n)} · ${esc(qLabel(q))}</b>
+      <button type="button" class="x" onclick="closeRubric()">✕</button></div>
+    <div class="anchor" style="margin:0 0 12px">${esc(rb.anchor)}</div>${rows}`;
+  let ov=$('#rubricOverlay');
+  if(!ov){ov=document.createElement('div');ov.id='rubricOverlay';ov.className='rub-overlay';ov.onclick=e=>{if(e.target===ov)closeRubric();};document.body.appendChild(ov);}
+  ov.innerHTML=`<div class="rub-box">${html}</div>`;ov.style.display='grid';
+}
+function closeRubric(){const ov=$('#rubricOverlay');if(ov)ov.style.display='none';}
 function renderScale(target,key){
   const el=typeof target==='string'?$('#'+target):target;
   el.innerHTML='';
@@ -988,8 +1048,10 @@ function renderScale(target,key){
   SCALE.forEach(s=>{
     const b=document.createElement('div');
     b.className='dot'+(cur===s.v?' sel-'+s.v:'');
-    b.innerHTML=`<span class="num">${arNum(s.v)}</span>${t('sc_'+s.v)}`;
-    b.onclick=()=>{draft.ratings[key]=s.v;if(key==='overall'){renderScale('overallScale','overall');}else{renderQuestions();}updateLive();};
+    const short=(key!=='overall')?scaleShort(key,s.v):t('sc_'+s.v);
+    b.innerHTML=`<span class="num">${arNum(s.v)}</span>${esc(short)}`;
+    if(key!=='overall'&&short!==t('sc_'+s.v))b.title=t('sc_'+s.v)+' — '+scaleLong(key,s.v);
+    b.onclick=()=>{draft.ratings[key]=s.v;if(key==='overall'){renderScale('overallScale','overall');}else{updateScaleDesc(key);renderScale(el,key);const qb=el.closest('.qblock');if(qb){qb.classList.toggle('flagged',s.v<=THRESHOLD);}}updateLive();};
     el.appendChild(b);
   });
 }
