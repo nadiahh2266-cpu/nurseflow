@@ -621,7 +621,7 @@ function buildNav(){
   if(list.length)switchPg(list[0][1]);
 }
 
-function switchPg(id){
+window.switchPg=function(id){
   document.querySelectorAll('.pg').forEach(function(p){p.classList.remove('on');});
   document.querySelectorAll('.sb-item').forEach(function(t){t.classList.toggle('on',t.dataset.pg===id);});
   var titleEl=document.getElementById('tb-title');
@@ -633,7 +633,7 @@ function switchPg(id){
   render();
 }
 
-function chMonth(d){
+window.chMonth=function(d){
   var next=new Date(MONTH);
   next.setMonth(next.getMonth()+d);
   if(ME&&ME.role==='nurse'){
@@ -838,7 +838,7 @@ function buildCal(gridId,uid,editable,y,m){
   grid.innerHTML=h;
 }
 
-function submitSched(){
+window.submitSched=function(){
   fsSet('schedule_status',ME.id,{nurse_id:ME.id,status:'submitted',submitted_at:new Date().toISOString(),reviewed_by:null,approved_by:null,notes:null}).then(function(r){
     if(r.error)return toast(r.error.message,'td');
     fsGetAll('schedule_status').then(function(st2d){ALL_ST={};(st2d||[]).forEach(function(x){ALL_ST[x.nurse_id]=x;});render();});
@@ -846,7 +846,7 @@ function submitSched(){
   });
 }
 
-function openModal(ds){
+window.openModal=function(ds){
   selDay=ds;selShift=null;selFlag=null;
   var e=(ALL_S[ME.id]||{})[ds];if(e){selShift=e.shift;selFlag=e.flag||null;}
   var dt=new Date(ds+'T00:00:00');
@@ -874,16 +874,16 @@ function buildShiftOpts(ds){
   document.getElementById('shift-opts').innerHTML=h;
 }
 
-function closeModal(){document.getElementById('smodal').style.display='none';}
+window.closeModal=function(){document.getElementById('smodal').style.display='none';}
 
 var selFlag=null;
-function pickShift(k,flag){
+window.pickShift=function(k,flag){
   selShift=k;
   selFlag=flag!==undefined?flag:null;
   buildShiftOpts(selDay);
 }
 
-function saveShift(){
+window.saveShift=function(){
   if(!selShift){toast(LANG==='ar'?'\u0627\u062e\u062a\u0631 \u0627\u0644\u0634\u0641\u062a':'Select shift','tw');return;}
   var dept=ME.dept||'',cap=shiftCap(dept,selShift),cur=shiftCount(dept,selDay,selShift);
   var myEntry=(ALL_S[ME.id]||{})[selDay];
@@ -958,26 +958,26 @@ function renderApprove(){
   pg.innerHTML=h;
 }
 
-function hnOk(uid){
+window.hnOk=function(uid){
   fsSet('schedule_status',uid,{status:'reviewed',reviewed_by:ME.id,reviewed_at:new Date().toISOString()}).then(function(){
     fsGetAll('schedule_status').then(function(rd){ALL_ST={};(rd||[]).forEach(function(x){ALL_ST[x.nurse_id]=x;});render();});
     toast(LANG==='ar'?'\u0623\u0631\u0633\u0644 \u0644\u0644\u0645\u062f\u064a\u0631 \u2713':'Sent to Manager \u2713','ts');
   });
 }
-function hnNo(uid){
+window.hnNo=function(uid){
   var note=prompt(LANG==='ar'?'\u0633\u0628\u0628 \u0627\u0644\u0631\u0641\u0636 (\u0627\u062e\u062a\u064a\u0627\u0631\u064a):':'Rejection reason (optional):','');
   fsSet('schedule_status',uid,{status:'rejected',reviewed_by:ME.id,notes:note||null}).then(function(){
     fsGetAll('schedule_status').then(function(rd){ALL_ST={};(rd||[]).forEach(function(x){ALL_ST[x.nurse_id]=x;});render();});
     toast(LANG==='ar'?'\u0631\u062c\u0639 \u0644\u0644\u0645\u0645\u0631\u0636\u0629':'Returned','ti');
   });
 }
-function mgOk(uid){
+window.mgOk=function(uid){
   fsSet('schedule_status',uid,{status:'approved',approved_by:ME.id,approved_at:new Date().toISOString()}).then(function(){
     fsGetAll('schedule_status').then(function(rd){ALL_ST={};(rd||[]).forEach(function(x){ALL_ST[x.nurse_id]=x;});render();});
     toast('\u2705 '+(LANG==='ar'?'\u062a\u0645\u062a \u0627\u0644\u0645\u0648\u0627\u0641\u0642\u0629':'Approved'),'ts');
   });
 }
-function mgNo(uid){
+window.mgNo=function(uid){
   var note=prompt(LANG==='ar'?'\u0633\u0628\u0628 \u0627\u0644\u0631\u0641\u0636:':'Rejection reason:','');
   fsSet('schedule_status',uid,{status:'rejected',approved_by:ME.id,notes:note||null}).then(function(){
     fsGetAll('schedule_status').then(function(rd){ALL_ST={};(rd||[]).forEach(function(x){ALL_ST[x.nurse_id]=x;});render();});
@@ -1060,7 +1060,7 @@ function renderReport(){
   pg.innerHTML='<div class="phdr"><div class="ptitle">\uD83D\uDCCB '+(T?'\u062a\u0642\u0631\u064a\u0631 \u0627\u0644\u0625\u062c\u0627\u0632\u0627\u062a':'Leave Report')+'<\/div><button class="print-btn" onclick="printReport()">\uD83D\uDDA8\uFE0F '+(T?'\u0637\u0628\u0627\u0639\u0629':'Print')+'<\/button><\/div><div class="calwrap twrap"><table><thead>'+th+'<\/thead><tbody>'+tb+'<\/tbody><\/table><\/div>';
 }
 
-function editBal(uid,type,current){
+window.editBal=function(uid,type,current){
   var T=LANG==='ar';
   var labels={fitr:T?'\u0623\u064a\u0627\u0645 \u0639\u064a\u062f \u0627\u0644\u0641\u0637\u0631':'Eid Al-Fitr days',adha:T?'\u0623\u064a\u0627\u0645 \u0639\u064a\u062f \u0627\u0644\u0623\u0636\u062d\u0649':'Eid Al-Adha days',comp:T?'\u0623\u064a\u0627\u0645 \u0627\u0644\u062a\u0639\u0648\u064a\u0636':'Comp days'};
   var val=prompt(labels[type]+':',current||0);
@@ -1077,7 +1077,7 @@ function editBal(uid,type,current){
   });
 }
 
-function printReport(){
+window.printReport=function(){
   var T=LANG==='ar';
   var content=document.querySelector('#pg-report .calwrap');
   if(!content)return;
@@ -1121,7 +1121,7 @@ function renderSwap(){
   pg.innerHTML=h;
 }
 
-function requestSwap(){
+window.requestSwap=function(){
   var T=LANG==='ar';
   var date=document.getElementById('sw-date').value;
   var targetId=document.getElementById('sw-nurse').value;
@@ -1133,7 +1133,7 @@ function requestSwap(){
   });
 }
 
-function respondSwap(id,status){
+window.respondSwap=function(id,status){
   var T=LANG==='ar';
   var swap=ALL_SW.find(function(s){return String(s.id)===String(id);});
   fsSet('swap_requests',String(id),{status:status}).then(function(r){
@@ -1151,7 +1151,7 @@ function respondSwap(id,status){
   });
 }
 
-function exportToCalendar(){
+window.exportToCalendar=function(){
   var T=LANG==='ar';
   var data=ALL_S[ME.id]||{};
   var lines=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//NurseFlow//EN','CALSCALE:GREGORIAN'];
@@ -1210,14 +1210,14 @@ function renderUpload(){
     }).join('')+'<\/tbody><\/table><\/div><\/div>';
 }
 
-function downloadTemplate(){
+window.downloadTemplate=function(){
   var T=LANG==='ar';
   var ws=XLSX.utils.aoa_to_sheet([[T?'\u0627\u0644\u0627\u0633\u0645':'Name',T?'\u0627\u0644\u0625\u064a\u0645\u064a\u0644':'Email',T?'\u0643\u0644\u0645\u0629 \u0627\u0644\u0633\u0631':'Password',T?'\u0627\u0644\u062f\u0648\u0631':'Role',T?'\u0627\u0644\u0642\u0633\u0645':'Department'],['Example Name','nurse@hospital.com','1234','nurse',T?'\u0637\u0648\u0627\u0631\u0626':'Emergency']]);
   var wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Staff');
   XLSX.writeFile(wb,'nurseflow_template.xlsx');
 }
 
-function handleUpload(input){
+window.handleUpload=function(input){
   var file=input.files[0];if(!file)return;
   var reader=new FileReader();
   reader.onload=function(e){
@@ -1265,7 +1265,7 @@ function showResults(results){
   toast((T?'\u062a\u0645\u062a \u0627\u0644\u0645\u0639\u0627\u0644\u062c\u0629: ':'Done: ')+ok+' '+(T?'\u062a\u0645\u062a \u0625\u0636\u0627\u0641\u062a\u0647\u0645':'added'),'ts');
 }
 
-function saveUserEdit(uid){
+window.saveUserEdit=function(uid){
   var deptEl=document.getElementById('ef-'+uid+'-dept');
   var roleEl=document.getElementById('rs-'+uid);
   if(!deptEl||!roleEl)return;
@@ -1308,7 +1308,7 @@ function renderAdmin(){
     +(managers.length?'<div class="balcard"><div class="baltitle">\uD83D\uDC54 '+(T?'\u0623\u0642\u0633\u0627\u0645 \u0627\u0644\u0645\u0646\u062c\u0631\u0632':'Manager Depts')+'<\/div>'+mgrHtml+'<\/div>':'');
 }
 
-function addDept(){
+window.addDept=function(){
   var name=document.getElementById('d-n').value.trim();
   var m2=parseInt(document.getElementById('d-m').value)||0;
   var e2=parseInt(document.getElementById('d-e').value)||0;
@@ -1321,12 +1321,12 @@ function addDept(){
   });
 }
 
-function delDept(name){
+window.delDept=function(name){
   if(!confirm((LANG==='ar'?'\u062d\u0630\u0641 \u0642\u0633\u0645 ':'Delete dept ')+name+'?'))return;
   fsDel('departments',ALL_D[name]&&ALL_D[name].docId||name).then(function(){delete ALL_D[name];render();toast(LANG==='ar'?'\u062a\u0645 \u0627\u0644\u062d\u0630\u0641':'Deleted','ti');});
 }
 
-function toggleMgrDept(mgrId,dept){
+window.toggleMgrDept=function(mgrId,dept){
   var myDepts=ALL_MD[mgrId]||[];
   var has=myDepts.indexOf(dept)>=0;
   if(has){
@@ -1350,13 +1350,13 @@ function updateBadges(){
   if(ab){var n2=nurses.filter(function(n3){return ALL_ST[n3.id]&&ALL_ST[n3.id].status==='reviewed';}).length;ab.textContent=n2;ab.style.display=n2?'inline-flex':'none';}
 }
 
-function toggleTheme(){
+window.toggleTheme=function(){
   var isL=document.documentElement.getAttribute('data-theme')==='light';
   if(isL){document.documentElement.removeAttribute('data-theme');localStorage.setItem('nf-theme','dark');document.getElementById('theme-btn').textContent='\uD83C\uDF19';}
   else{document.documentElement.setAttribute('data-theme','light');localStorage.setItem('nf-theme','light');document.getElementById('theme-btn').textContent='\u2600\uFE0F';}
 }
 
-function toggleLang(){
+window.toggleLang=function(){
   LANG=LANG==='ar'?'en':'ar';
   localStorage.setItem('nf-lang',LANG);
   document.documentElement.dir=LANG==='ar'?'rtl':'ltr';
@@ -1436,7 +1436,7 @@ function renderLeave(){
   pg.innerHTML=h;
 }
 
-function addLeavePlan(){
+window.addLeavePlan=function(){
   var T=LANG==='ar';
   var date=document.getElementById('lp-date').value;
   var typeEl=document.getElementById('lp-type');
@@ -1451,7 +1451,7 @@ function addLeavePlan(){
   });
 }
 
-function toggleLeavePlan(ds){
+window.toggleLeavePlan=function(ds){
   var myPlans=ALL_LP[ME.id]||[];
   var existing=myPlans.find(function(p){return p.date===ds;});
   if(existing){deleteLeavePlan(existing.id);return;}
@@ -1463,7 +1463,7 @@ function toggleLeavePlan(ds){
   });
 }
 
-function deleteLeavePlan(id){
+window.deleteLeavePlan=function(id){
   fsDel('leave_plan',id).then(function(r){
     if(r.error)return toast(r.error.message,'td');
     if(ALL_LP[ME.id])ALL_LP[ME.id]=ALL_LP[ME.id].filter(function(p){return p.id!==id;});
@@ -1488,7 +1488,7 @@ function renderAI(){
   pg.innerHTML=h;
 }
 
-function generateAISchedule(){
+window.generateAISchedule=function(){
   var T=LANG==='ar';
   var btn=document.getElementById('ai-btn');if(!btn)return;
   var reqEl=document.getElementById('ai-req');
@@ -1545,7 +1545,7 @@ function showAIResult(schedule,summary,daysInMonth){
   el.innerHTML=h;
 }
 
-function applyAISchedule(){
+window.applyAISchedule=function(){
   var T=LANG==='ar';
   if(!window._aiSchedule){toast(T?'\u0644\u0627 \u064a\u0648\u062c\u062f \u062c\u062f\u0648\u0644':'No schedule','tw');return;}
   var ref=window._aiSchedule;
