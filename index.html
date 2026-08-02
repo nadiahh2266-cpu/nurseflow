@@ -1250,7 +1250,7 @@ function renderUpload(){
     h+='<td><select id="es-role-'+u.id+'" style="padding:4px 8px;background:var(--s2);border:1px solid var(--b1);border-radius:6px;color:var(--text);font-family:Tajawal,sans-serif;font-size:11px;outline:none"><option value="nurse"'+(u.role==='nurse'?' selected':'')+'>Nurse</option><option value="head_nurse"'+(u.role==='head_nurse'?' selected':'')+'>Head Nurse</option><option value="manager"'+(u.role==='manager'?' selected':'')+'>Manager</option><option value="admin"'+(u.role==='admin'?' selected':'')+'>Admin</option></select></td>';
     h+='<td><input id="es-dept-'+u.id+'" value="'+(u.dept||'')+'" style="padding:4px 8px;background:var(--s2);border:1px solid var(--b1);border-radius:6px;color:var(--text);font-family:Tajawal,sans-serif;font-size:11px;outline:none;width:110px"></td>';
     h+='<td><select id="es-shift-'+u.id+'" style="padding:4px 8px;background:var(--s2);border:1px solid var(--b1);border-radius:6px;color:var(--text);font-family:Tajawal,sans-serif;font-size:11px;outline:none"><option value="">'+(T?'غير محدد':'-')+'</option><option value="9h"'+(u.shift_type==='9h'?' selected':'')+'>9h</option><option value="12h"'+(u.shift_type==='12h'?' selected':'')+'>12h</option></select></td>';
-    h+='<td><button onclick="saveExistingStaff(''+u.id+'')" style="padding:4px 10px;border:none;border-radius:6px;background:var(--blue-lt);color:var(--blue);font-family:Tajawal,sans-serif;font-size:11px;font-weight:700;cursor:pointer">'+(T?'حفظ':'Save')+'</button></td>';
+    h+='<td><button data-uid="'+u.id+'" onclick="saveExistingStaff(this.dataset.uid)" style="padding:4px 10px;border:none;border-radius:6px;background:var(--blue-lt);color:var(--blue);font-family:Tajawal,sans-serif;font-size:11px;font-weight:700;cursor:pointer">'+(T?'حفظ':'Save')+'</button></td>';
     h+='</tr>';
   });
   h+='</tbody></table></div></div>';
@@ -1461,7 +1461,7 @@ function renderLeave(){
       var isTaken=oth.length>0&&!isMy;
       var bg=isMy?'var(--green)':isTaken?'rgba(239,68,68,.2)':'var(--s3)';
       var col=isMy?'white':isTaken?'var(--red)':'var(--muted)';
-      h+='<div onclick="toggleLeavePlan(\''+ds+'\')" title="'+(isTaken?oth.join(','):'')+'" style="width:26px;height:26px;border-radius:5px;background:'+bg+';color:'+col+';display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;cursor:'+(isTaken?'not-allowed':'pointer')+'">'+d+'<\/div>';
+      h+='<div data-ds="'+ds+'" onclick="toggleLeavePlan(this.dataset.ds)" title="'+(isTaken?oth.join(','):'')+'" style="width:26px;height:26px;border-radius:5px;background:'+bg+';color:'+col+';display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;cursor:'+(isTaken?'not-allowed':'pointer')+'">'+d+'<\/div>';
     }
     h+='<\/div><\/div>';
   });
