@@ -445,8 +445,6 @@ tbody td:first-child{text-align:right;padding-right:14px}
 </div>
 
 <div class="toast" id="toast"></div>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, sendPasswordResetEmail, onAuthStateChanged, updatePassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
@@ -501,7 +499,6 @@ function toast(msg,type){
   t.textContent=msg;t.className='toast '+(type||'ti')+' show';
   setTimeout(function(){t.classList.remove('show');},3000);
 }
-function p2(n){return String(n).padStart(2,'0');}
 
 // ── THEME INIT ──
 (function(){
@@ -1363,7 +1360,9 @@ function toggleLang(){
 // ── INIT ──
 
 </script>
-<script>
+
+</body>
+</html
 
 function renderLeave(){
   var pg=document.getElementById('pg-leave'),T=LANG==='ar';
@@ -1576,6 +1575,4 @@ onAuthStateChanged(auth,async function(user){
   }
 });
 
-</script>
-</body>
-</html>
+>
