@@ -1202,38 +1202,73 @@ function copySchedule(){
 
 function renderUpload(){
   var pg=document.getElementById('pg-upload'),T=LANG==='ar';if(!pg)return;
-  pg.innerHTML='<div class="phdr"><div><div class="ptitle">\uD83D\uDCE4 '+(T?'\u0631\u0641\u0639 \u0645\u0648\u0638\u0641\u064a\u0646 \u0645\u0646 Excel':'Upload Staff from Excel')+'<\/div><\/div><\/div>'
-    +'<div class="balcard"><div class="baltitle">\u2B07\uFE0F '+(T?'\u062a\u062d\u0645\u064a\u0644 \u0642\u0627\u0644\u0628 Excel':'Download Template')+'<\/div><button class="btn-sub" onclick="downloadTemplate()">'+(T?'\u062a\u062d\u0645\u064a\u0644 \u0627\u0644\u0642\u0627\u0644\u0628':'Download Template')+'<\/button><\/div>'
-    +'<div class="balcard"><div class="baltitle">\uD83D\uDCC1 '+(T?'\u0631\u0641\u0639 \u0627\u0644\u0645\u0644\u0641':'Upload File')+'<\/div>'
-    +'<div class="upload-area" onclick="document.getElementById(\'xl-input\').click()"><input type="file" id="xl-input" accept=".xlsx,.xls,.csv" onchange="handleUpload(this)"><div style="font-size:32px;margin-bottom:8px">\uD83D\uDCCA<\/div><div style="font-weight:700">'+(T?'\u0627\u0633\u062d\u0628 \u0645\u0644\u0641 Excel \u0647\u0646\u0627':'Drag Excel file here')+'<\/div><\/div>'
-    +'<div id="upload-progress" style="display:none"><div class="prog-wrap"><div class="prog-fill" id="prog-bar" style="width:0%"><\/div><\/div><div id="prog-text" style="font-size:12px;color:var(--muted)"><\/div><\/div><div id="upload-results"><\/div><\/div>'
-    +'<div class="balcard"><div class="baltitle">\u270F\uFE0F '+(T?'\u062a\u0639\u062f\u064a\u0644 \u0627\u0644\u0645\u0648\u0638\u0641\u064a\u0646':'Edit Staff Roles')+'<\/div>'
-    +'<div class="calwrap twrap"><table><thead><tr><th>'+(T?'\u0627\u0644\u0627\u0633\u0645':'Name')+'<\/th><th>'+(T?'\u0627\u0644\u0642\u0633\u0645':'Dept')+'<\/th><th>'+(T?'\u0627\u0644\u062f\u0648\u0631':'Role')+'<\/th><th><\/th><\/tr><\/thead><tbody>'
-    +Object.values(ALL_P).map(function(u){
-      return '<tr><td>'+u.name+'<\/td><td><input id="ef-'+u.id+'-dept" value="'+(u.dept||'')+'" style="padding:4px 8px;background:var(--s2);border:1px solid var(--b1);border-radius:5px;color:var(--text);font-size:12px;outline:none;width:100px"><\/td>'
-        +'<td><select id="rs-'+u.id+'" style="padding:4px 8px;background:var(--s2);border:1px solid var(--b1);border-radius:5px;color:var(--text);font-size:12px;outline:none"><option value="nurse"'+(u.role==='nurse'?' selected':'')+'>'+(T?'\u0645\u0645\u0631\u0636\u0629':'Nurse')+'<\/option><option value="head_nurse"'+(u.role==='head_nurse'?' selected':'')+'>Head Nurse<\/option><option value="manager"'+(u.role==='manager'?' selected':'')+'>Manager<\/option><option value="admin"'+(u.role==='admin'?' selected':'')+'>Admin<\/option><\/select><\/td>'
-        +'<td><button class="btn-ok" style="padding:5px 10px;font-size:11px" onclick="saveUserEdit(\''+u.id+'\')">'+(T?'\u062d\u0641\u0638':'Save')+'<\/button><\/td><\/tr>';
-    }).join('')+'<\/tbody><\/table><\/div><\/div>';
+  var depts=Object.keys(ALL_D);
+  if(!depts.length)depts=Array.from(new Set(Object.values(ALL_P).map(function(p){return p.dept||'';})));
+  var roleLabels={nurse:T?'ممرضة':'Nurse',head_nurse:'Head Nurse',manager:'Manager',admin:'Admin'};
+
+  var h='<div class="phdr"><div class="ptitle">👤 '+(T?'إدارة الموظفين':'Staff Management')+'</div></div>';
+
+  // ── ADD NEW STAFF ──
+  h+='<div class="balcard"><div class="baltitle">➕ '+(T?'إضافة موظفة جديدة':'Add New Staff')+'</div>';
+  h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">';
+  h+='<div><label style="font-size:11px;font-weight:700;color:var(--muted);display:block;margin-bottom:5px">'+(T?'الاسم الكامل':'Full Name')+'</label><input id="new-name" placeholder="'+(T?'اسم الموظفة':'Staff name')+'" style="width:100%;padding:10px 12px;background:var(--s2);border:1.5px solid var(--b1);border-radius:8px;color:var(--text);font-family:Tajawal,sans-serif;font-size:13px;outline:none"></div>';
+  h+='<div><label style="font-size:11px;font-weight:700;color:var(--muted);display:block;margin-bottom:5px">'+(T?'البريد الإلكتروني':'Email')+'</label><input id="new-email" type="email" placeholder="nurse@hospital.com" style="width:100%;padding:10px 12px;background:var(--s2);border:1.5px solid var(--b1);border-radius:8px;color:var(--text);font-family:Tajawal,sans-serif;font-size:13px;outline:none"></div>';
+  h+='<div><label style="font-size:11px;font-weight:700;color:var(--muted);display:block;margin-bottom:5px">'+(T?'كلمة المرور':'Password')+'</label><input id="new-pass" type="password" placeholder="••••••••" style="width:100%;padding:10px 12px;background:var(--s2);border:1.5px solid var(--b1);border-radius:8px;color:var(--text);font-family:Tajawal,sans-serif;font-size:13px;outline:none"></div>';
+  h+='<div><label style="font-size:11px;font-weight:700;color:var(--muted);display:block;margin-bottom:5px">'+(T?'الدور':'Role')+'</label><select id="new-role" style="width:100%;padding:10px 12px;background:var(--s2);border:1.5px solid var(--b1);border-radius:8px;color:var(--text);font-family:Tajawal,sans-serif;font-size:13px;outline:none"><option value="nurse">'+(T?'ممرضة':'Nurse')+'</option><option value="head_nurse">Head Nurse</option><option value="manager">Manager</option><option value="admin">Admin</option></select></div>';
+  h+='<div><label style="font-size:11px;font-weight:700;color:var(--muted);display:block;margin-bottom:5px">'+(T?'القسم':'Department')+'</label><select id="new-dept" style="width:100%;padding:10px 12px;background:var(--s2);border:1.5px solid var(--b1);border-radius:8px;color:var(--text);font-family:Tajawal,sans-serif;font-size:13px;outline:none"><option value="">'+(T?'بدون قسم':'No dept')+'</option>'+depts.map(function(d){return'<option value="'+d+'">'+d+'</option>';}).join('')+'</select></div>';
+  h+='<div><label style="font-size:11px;font-weight:700;color:var(--muted);display:block;margin-bottom:5px">'+(T?'نظام الساعات':'Shift System')+'</label><select id="new-shift-type" style="width:100%;padding:10px 12px;background:var(--s2);border:1.5px solid var(--b1);border-radius:8px;color:var(--text);font-family:Tajawal,sans-serif;font-size:13px;outline:none"><option value="">'+(T?'غير محدد':'Not set')+'</option><option value="9h">'+(T?'9 ساعات':'9h')+'</option><option value="12h">'+(T?'12 ساعة':'12h')+'</option></select></div>';
+  h+='</div>';
+  h+='<button class="btn-sub" onclick="addNewStaff()" id="add-staff-btn">'+(T?'➕ إضافة الموظفة':'➕ Add Staff Member')+'</button>';
+  h+='<div id="add-staff-result" style="margin-top:10px"></div>';
+  h+='</div>';
+
+  // ── BULK UPLOAD ──
+  h+='<div class="balcard"><div class="baltitle">📊 '+(T?'رفع جماعي من Excel':'Bulk Upload from Excel')+'</div>';
+  h+='<div style="font-size:12px;color:var(--muted);margin-bottom:12px">'+(T?'أعمدة Excel المطلوبة: الاسم، الإيميل، كلمة المرور، الدور، القسم، نظام الساعات':'Required Excel columns: Name, Email, Password, Role, Dept, ShiftType')+'</div>';
+  h+='<div style="display:flex;gap:10px;flex-wrap:wrap">';
+  h+='<button class="btn-sub" onclick="downloadTemplate()">'+(T?'⬇️ تحميل القالب':'⬇️ Download Template')+'</button>';
+  h+='<button class="btn-sub" style="background:var(--s2);color:var(--text);border:1.5px solid var(--b1);box-shadow:none" onclick="document.getElementById('bulk-file').click()">'+(T?'📁 رفع ملف Excel':'📁 Upload Excel')+'</button>';
+  h+='<input type="file" id="bulk-file" accept=".xlsx,.xls" style="display:none" onchange="handleBulkUpload(this)">';
+  h+='</div>';
+  h+='<div id="bulk-result" style="margin-top:12px"></div>';
+  h+='</div>';
+
+  // ── EXISTING STAFF ──
+  h+='<div class="balcard"><div class="baltitle">👥 '+(T?'الموظفون الحاليون':'Current Staff')+'</div>';
+  h+='<div class="calwrap twrap"><table><thead><tr>';
+  h+='<th style="text-align:right;padding-right:14px">'+(T?'الاسم':'Name')+'</th>';
+  h+='<th>'+(T?'الإيميل':'Email')+'</th>';
+  h+='<th>'+(T?'الدور':'Role')+'</th>';
+  h+='<th>'+(T?'القسم':'Dept')+'</th>';
+  h+='<th>'+(T?'نظام الساعات':'Hours')+'</th>';
+  h+='<th></th>';
+  h+='</tr></thead><tbody>';
+  Object.values(ALL_P).forEach(function(u){
+    h+='<tr>';
+    h+='<td style="text-align:right;padding-right:14px"><div class="nrow"><div class="mav">'+(u.name?u.name.slice(0,2):'?')+'</div>'+(u.name||'-')+'</div></td>';
+    h+='<td style="font-size:11px;color:var(--muted)">'+(u.email||'-')+'</td>';
+    h+='<td><select id="es-role-'+u.id+'" style="padding:4px 8px;background:var(--s2);border:1px solid var(--b1);border-radius:6px;color:var(--text);font-family:Tajawal,sans-serif;font-size:11px;outline:none"><option value="nurse"'+(u.role==='nurse'?' selected':'')+'>Nurse</option><option value="head_nurse"'+(u.role==='head_nurse'?' selected':'')+'>Head Nurse</option><option value="manager"'+(u.role==='manager'?' selected':'')+'>Manager</option><option value="admin"'+(u.role==='admin'?' selected':'')+'>Admin</option></select></td>';
+    h+='<td><input id="es-dept-'+u.id+'" value="'+(u.dept||'')+'" style="padding:4px 8px;background:var(--s2);border:1px solid var(--b1);border-radius:6px;color:var(--text);font-family:Tajawal,sans-serif;font-size:11px;outline:none;width:110px"></td>';
+    h+='<td><select id="es-shift-'+u.id+'" style="padding:4px 8px;background:var(--s2);border:1px solid var(--b1);border-radius:6px;color:var(--text);font-family:Tajawal,sans-serif;font-size:11px;outline:none"><option value="">'+(T?'غير محدد':'-')+'</option><option value="9h"'+(u.shift_type==='9h'?' selected':'')+'>9h</option><option value="12h"'+(u.shift_type==='12h'?' selected':'')+'>12h</option></select></td>';
+    h+='<td><button onclick="saveExistingStaff(''+u.id+'')" style="padding:4px 10px;border:none;border-radius:6px;background:var(--blue-lt);color:var(--blue);font-family:Tajawal,sans-serif;font-size:11px;font-weight:700;cursor:pointer">'+(T?'حفظ':'Save')+'</button></td>';
+    h+='</tr>';
+  });
+  h+='</tbody></table></div></div>';
+  pg.innerHTML=h;
 }
+
 
 window.downloadTemplate=function(){
   var T=LANG==='ar';
-  var ws=XLSX.utils.aoa_to_sheet([[T?'\u0627\u0644\u0627\u0633\u0645':'Name',T?'\u0627\u0644\u0625\u064a\u0645\u064a\u0644':'Email',T?'\u0643\u0644\u0645\u0629 \u0627\u0644\u0633\u0631':'Password',T?'\u0627\u0644\u062f\u0648\u0631':'Role',T?'\u0627\u0644\u0642\u0633\u0645':'Department'],['Example Name','nurse@hospital.com','1234','nurse',T?'\u0637\u0648\u0627\u0631\u0626':'Emergency']]);
+  var ws=XLSX.utils.aoa_to_sheet([
+    [T?'\u0627\u0644\u0627\u0633\u0645':'Name',T?'\u0627\u0644\u0625\u064a\u0645\u064a\u0644':'Email',T?'\u0643\u0644\u0645\u0629 \u0627\u0644\u0645\u0631\u0648\u0631':'Password',T?'\u0627\u0644\u062f\u0648\u0631':'Role',T?'\u0627\u0644\u0642\u0633\u0645':'Department',T?'\u0646\u0638\u0627\u0645 \u0627\u0644\u0633\u0627\u0639\u0627\u062a':'ShiftType'],
+    ['\u0646\u0627\u062f\u064a\u0629 \u0645\u062d\u0645\u062f','nurse1@hospital.com','Pass1234','nurse',T?'\u0637\u0648\u0627\u0631\u0626':'Emergency','9h'],
+    ['\u0633\u0627\u0631\u0629 \u0639\u0644\u064a','nurse2@hospital.com','Pass1234','nurse',T?'\u0637\u0648\u0627\u0631\u0626':'Emergency','12h'],
+    ['\u0645\u0646\u0649 \u062e\u0627\u0644\u062f','hn1@hospital.com','Pass1234','head_nurse',T?'\u0637\u0648\u0627\u0631\u0626':'Emergency','9h']
+  ]);
   var wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Staff');
-  XLSX.writeFile(wb,'nurseflow_template.xlsx');
+  XLSX.writeFile(wb,'nurseflow_staff_template.xlsx');
 }
-
-window.handleUpload=function(input){
-  var file=input.files[0];if(!file)return;
-  var reader=new FileReader();
-  reader.onload=function(e){
-    var data=new Uint8Array(e.target.result);
-    var wb=XLSX.read(data,{type:'array'});
-    var ws=wb.Sheets[wb.SheetNames[0]];
-    var rows=XLSX.utils.sheet_to_json(ws,{header:1});
-    if(rows.length<2){toast(LANG==='ar'?'\u0627\u0644\u0645\u0644\u0641 \u0641\u0627\u0631\u063a':'Empty file','tw');return;}
-    processRows(rows.slice(1));
-  };
   reader.readAsArrayBuffer(file);
 }
 
@@ -1949,5 +1984,143 @@ async function checkScheduleMode(){
   }
   return true;
 }
+
+
+// ── ADD NEW STAFF VIA FIREBASE REST API ──
+window.addNewStaff=async function(){
+  var T=LANG==='ar';
+  var name=document.getElementById('new-name').value.trim();
+  var email=document.getElementById('new-email').value.trim().toLowerCase();
+  var pass=document.getElementById('new-pass').value;
+  var role=document.getElementById('new-role').value;
+  var dept=document.getElementById('new-dept').value;
+  var shiftType=document.getElementById('new-shift-type').value;
+
+  if(!name||!email||!pass){toast(T?'أدخلي جميع البيانات المطلوبة':'Fill all required fields','tw');return;}
+  if(pass.length<6){toast(T?'كلمة المرور 6 أحرف على الأقل':'Password min 6 chars','tw');return;}
+
+  var btn=document.getElementById('add-staff-btn');
+  var resultDiv=document.getElementById('add-staff-result');
+  btn.disabled=true;btn.innerHTML='<span class="loader"></span> '+(T?'جارٍ الإضافة...':'Adding...');
+
+  try{
+    // Get current user token
+    var token=await auth.currentUser.getIdToken();
+    var apiKey='AIzaSyDC2cmBlwZDoOdCJXgQ7dc9X6MBqmlMf5w';
+
+    // Create user via Firebase Auth REST API
+    var resp=await fetch('https://identitytoolkit.googleapis.com/v1/accounts:signUp?key='+apiKey,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({email:email,password:pass,returnSecureToken:true})
+    });
+    var data=await resp.json();
+
+    if(data.error){
+      var msg=data.error.message;
+      if(msg==='EMAIL_EXISTS')msg=T?'الإيميل مستخدم مسبقاً':'Email already exists';
+      throw new Error(msg);
+    }
+
+    var uid=data.localId;
+
+    // Save profile to Firestore
+    await fsSet('user_profiles',uid,{
+      name:name,email:email,role:role,dept:dept,
+      shift_type:shiftType,created_by:ME.id,created_at:new Date().toISOString()
+    });
+
+    // Update local cache
+    ALL_P[uid]={id:uid,name:name,email:email,role:role,dept:dept,shift_type:shiftType};
+
+    // Clear form
+    document.getElementById('new-name').value='';
+    document.getElementById('new-email').value='';
+    document.getElementById('new-pass').value='';
+
+    resultDiv.innerHTML='<div style="padding:10px 14px;background:var(--green-lt);border:1.5px solid #6ee7b7;border-radius:8px;color:var(--green);font-size:13px;font-weight:700">✅ '+(T?'تم إضافة '+name+' بنجاح':'Added '+name+' successfully')+'</div>';
+    toast(T?'تم الإضافة ✓':'Added ✓','ts');
+    renderUpload();
+
+  }catch(e){
+    resultDiv.innerHTML='<div style="padding:10px 14px;background:var(--red-lt);border:1.5px solid #fca5a5;border-radius:8px;color:var(--red);font-size:13px;font-weight:700">❌ '+e.message+'</div>';
+    toast(e.message,'td');
+  }finally{
+    btn.disabled=false;btn.textContent=T?'➕ إضافة الموظفة':'➕ Add Staff Member';
+  }
+};
+
+window.saveExistingStaff=async function(uid){
+  var T=LANG==='ar';
+  var role=document.getElementById('es-role-'+uid);
+  var dept=document.getElementById('es-dept-'+uid);
+  var shift=document.getElementById('es-shift-'+uid);
+  if(!role||!dept)return;
+  await fsSet('user_profiles',uid,{role:role.value,dept:dept.value.trim(),shift_type:shift?shift.value:''});
+  if(ALL_P[uid]){ALL_P[uid].role=role.value;ALL_P[uid].dept=dept.value.trim();if(shift)ALL_P[uid].shift_type=shift.value;}
+  toast(T?'تم الحفظ ✓':'Saved ✓','ts');
+};
+
+window.handleBulkUpload=async function(input){
+  var T=LANG==='ar';
+  var file=input.files[0];if(!file)return;
+  var resultDiv=document.getElementById('bulk-result');
+  resultDiv.innerHTML='<div style="color:var(--muted);font-size:12px">'+(T?'جارٍ المعالجة...':'Processing...')+'</div>';
+
+  var reader=new FileReader();
+  reader.onload=async function(e){
+    try{
+      var data=new Uint8Array(e.target.result);
+      var wb=XLSX.read(data,{type:'array'});
+      var ws=wb.Sheets[wb.SheetNames[0]];
+      var rows=XLSX.utils.sheet_to_json(ws,{header:1});
+      if(rows.length<2){toast(T?'الملف فارغ':'Empty file','tw');return;}
+
+      var apiKey='AIzaSyDC2cmBlwZDoOdCJXgQ7dc9X6MBqmlMf5w';
+      var results=[];
+      var rows2=rows.slice(1).filter(function(r){return r[0]&&r[1]&&r[2];});
+
+      for(var i=0;i<rows2.length;i++){
+        var row=rows2[i];
+        var rname=String(row[0]||'').trim();
+        var remail=String(row[1]||'').trim().toLowerCase();
+        var rpass=String(row[2]||'1234').trim();
+        var rrole=String(row[3]||'nurse').trim();
+        var rdept=String(row[4]||'').trim();
+        var rshift=String(row[5]||'').trim();
+
+        resultDiv.innerHTML='<div style="color:var(--muted);font-size:12px">'+(T?'جارٍ إضافة ':'Adding ')+(i+1)+'/'+rows2.length+': '+rname+'</div>';
+
+        try{
+          var resp=await fetch('https://identitytoolkit.googleapis.com/v1/accounts:signUp?key='+apiKey,{
+            method:'POST',headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({email:remail,password:rpass,returnSecureToken:true})
+          });
+          var rd=await resp.json();
+          if(rd.error){throw new Error(rd.error.message);}
+          var uid=rd.localId;
+          await fsSet('user_profiles',uid,{name:rname,email:remail,role:rrole,dept:rdept,shift_type:rshift,created_by:ME.id,created_at:new Date().toISOString()});
+          ALL_P[uid]={id:uid,name:rname,email:remail,role:rrole,dept:rdept,shift_type:rshift};
+          results.push({name:rname,ok:true});
+        }catch(err){
+          results.push({name:rname,ok:false,msg:err.message});
+        }
+      }
+
+      var ok=results.filter(function(r){return r.ok;}).length;
+      var fail=results.filter(function(r){return !r.ok;});
+      var rh='<div style="padding:12px;background:var(--green-lt);border-radius:8px;margin-bottom:8px;font-size:13px;font-weight:700;color:var(--green)">✅ '+(T?'تم إضافة ':'Added ')+ok+(T?' موظفة بنجاح':' staff successfully')+'</div>';
+      if(fail.length){
+        rh+='<div style="font-size:12px;color:var(--red);font-weight:700;margin-bottom:6px">❌ '+(T?'فشل إضافة:':'Failed:')+'</div>';
+        fail.forEach(function(f){rh+='<div style="font-size:11px;color:var(--muted);margin-bottom:3px">• '+f.name+': '+f.msg+'</div>';});
+      }
+      resultDiv.innerHTML=rh;
+      renderUpload();
+    }catch(err){
+      resultDiv.innerHTML='<div style="color:var(--red);font-size:12px">❌ '+err.message+'</div>';
+    }
+  };
+  reader.readAsArrayBuffer(file);
+};
 
 l
