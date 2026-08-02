@@ -1575,6 +1575,13 @@ function applyAISchedule(){
   });
 }
 onAuthStateChanged(auth,async function(user){
+  if(user){await loadMe(user.uid);}
+  else{
+    ME=null;
+    document.getElementById('login').style.display='flex';
+    document.getElementById('app').style.display='none';
+  }
+});
 </script>
 </body>
 </html>
