@@ -536,15 +536,11 @@ window.forgotPass=async function(){
 };
 
 async function loadMe(uid){
-  console.log('loadMe called with UID:', uid);
   var profile=await fsGet('user_profiles',uid);
-  console.log('profile by UID:', profile);
   if(!profile){
     var allProfiles=await fsGetAll('user_profiles');
-    console.log('all profiles:', allProfiles.length, allProfiles.map(function(p){return p.id+':'+p.email;}));
     var user=auth.currentUser;
     profile=allProfiles.find(function(p){return p.email&&user&&p.email.trim().toLowerCase()===user.email.toLowerCase();});
-    console.log('profile by email:', profile);
     if(profile){
       await fsSet('user_profiles',uid,Object.assign({},profile));
     }
@@ -579,7 +575,7 @@ async function loadAll(){
 
 function showApp(){
   document.getElementById('login').style.display='none';
-  document.getElementById('app').style.display='block';
+  document.getElementById('app').style.display='flex';
   document.getElementById('u-av').textContent=ME.name.slice(0,2);
   document.getElementById('u-nm').textContent=ME.name;
   document.getElementById('u-rl').textContent=ME.role;
@@ -1369,13 +1365,6 @@ function toggleLang(){
   if(ME)render();
 }
 
-// ── INIT ──
-
-</script>
-
-</body>
-</html
-
 function renderLeave(){
   var pg=document.getElementById('pg-leave'),T=LANG==='ar';
   if(!pg)return;
@@ -1578,13 +1567,10 @@ function applyAISchedule(){
     switchPg('pg-team');
   });
 }
-onAuthStateChanged(auth,async function(user){
-  if(user){await loadMe(user.uid);}
-  else{
-    ME=null;
-    document.getElementById('login').style.display='flex';
-    document.getElementById('app').style.display='none';
-  }
-});
 
->
+// ── INIT ──
+
+</script>
+
+</body>
+</html
