@@ -1269,53 +1269,7 @@ window.downloadTemplate=function(){
   var wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Staff');
   XLSX.writeFile(wb,'nurseflow_staff_template.xlsx');
 }
-  reader.readAsArrayBuffer(file);
-}
 
-function processRows(rows){
-  var T=LANG==='ar';
-  var valid=rows.filter(function(r){return r[0]&&r[1]&&r[2];});
-  if(!valid.length){toast(T?'\u0644\u0627 \u062a\u0648\u062c\u062f \u0628\u064a\u0627\u0646\u0627\u062a':'No valid data','tw');return;}
-  document.getElementById('upload-progress').style.display='block';
-  var results=[],done=0;
-  function updateProgress(){var pct=Math.round(done/valid.length*100);document.getElementById('prog-bar').style.width=pct+'%';document.getElementById('prog-text').textContent=(T?'\u062c\u0627\u0631\u064d \u0627\u0644\u0645\u0639\u0627\u0644\u062c\u0629: ':'Processing: ')+done+'/'+valid.length;}
-  function processNext(idx){
-    if(idx>=valid.length){showResults(results);return;}
-    var row=valid[idx];
-    var name=String(row[0]||'').trim(),email=String(row[1]||'').trim().toLowerCase(),pass=String(row[2]||'1234').trim(),role=String(row[3]||'nurse').trim(),dept=String(row[4]||'').trim();
-    if(!['nurse','head_nurse','manager','admin'].includes(role))role='nurse';
-    fsAdd('user_profiles',{email:email,name:name,role:role,dept:dept}).then(function(r){
-      done++;updateProgress();
-      if(r.error)results.push({name:name,email:email,ok:false,msg:r.error.message});
-      else{results.push({name:name,email:email,ok:true});if(r.data)ALL_P[r.data]={id:r.data,name:name,email:email,role:role,dept:dept};}
-      setTimeout(function(){processNext(idx+1);},200);
-    });
-  }
-  processNext(0);
-}
-
-function showResults(results){
-  var T=LANG==='ar';
-  var ok=results.filter(function(r){return r.ok;}).length;
-  var fail=results.filter(function(r){return !r.ok;});
-  var h='<div class="balcard" style="margin-top:16px"><div class="baltitle">\u2705 '+(T?'\u0627\u0644\u0646\u062a\u0627\u0626\u062c':'Results')+': '+ok+'/'+(ok+fail.length)+'<\/div>';
-  if(fail.length){h+='<div style="margin-top:8px">';fail.forEach(function(f){h+='<div style="font-size:11px;color:var(--muted);padding:4px 0">'+f.email+': '+f.msg+'<\/div>';});h+='<\/div>';}
-  h+='<\/div>';
-  document.getElementById('upload-results').innerHTML=h;
-  document.getElementById('upload-progress').style.display='none';
-  toast((T?'\u062a\u0645\u062a \u0627\u0644\u0645\u0639\u0627\u0644\u062c\u0629: ':'Done: ')+ok+' '+(T?'\u062a\u0645\u062a \u0625\u0636\u0627\u0641\u062a\u0647\u0645':'added'),'ts');
-}
-
-window.saveUserEdit=function(uid){
-  var deptEl=document.getElementById('ef-'+uid+'-dept');
-  var roleEl=document.getElementById('rs-'+uid);
-  if(!deptEl||!roleEl)return;
-  fsSet('user_profiles',uid,{dept:deptEl.value.trim(),role:roleEl.value}).then(function(r){
-    if(r.error)return toast(r.error.message,'td');
-    if(ALL_P[uid]){ALL_P[uid].dept=deptEl.value.trim();ALL_P[uid].role=roleEl.value;}
-    toast(LANG==='ar'?'\u062a\u0645 \u0627\u0644\u062a\u0639\u062f\u064a\u0644 \u2713':'Updated \u2713','ts');
-  });
-}
 
 function renderAdmin(){
   var pg=document.getElementById('pg-admin'),T=LANG==='ar';if(!pg)return;
