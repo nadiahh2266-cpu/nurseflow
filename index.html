@@ -1227,7 +1227,7 @@ function renderUpload(){
   h+='<div style="font-size:12px;color:var(--muted);margin-bottom:12px">'+(T?'أعمدة Excel المطلوبة: الاسم، الإيميل، كلمة المرور، الدور، القسم، نظام الساعات':'Required Excel columns: Name, Email, Password, Role, Dept, ShiftType')+'</div>';
   h+='<div style="display:flex;gap:10px;flex-wrap:wrap">';
   h+='<button class="btn-sub" onclick="downloadTemplate()">'+(T?'⬇️ تحميل القالب':'⬇️ Download Template')+'</button>';
-  h+='<button class="btn-sub" style="background:var(--s2);color:var(--text);border:1.5px solid var(--b1);box-shadow:none" onclick="document.getElementById('bulk-file').click()">'+(T?'📁 رفع ملف Excel':'📁 Upload Excel')+'</button>';
+  h+='<button class="btn-sub" style="background:var(--s2);color:var(--text);border:1.5px solid var(--b1);box-shadow:none" onclick="triggerBulkUpload()">'+( T?'📁 رفع Excel':'📁 Upload Excel')+'</button>';
   h+='<input type="file" id="bulk-file" accept=".xlsx,.xls" style="display:none" onchange="handleBulkUpload(this)">';
   h+='</div>';
   h+='<div id="bulk-result" style="margin-top:12px"></div>';
@@ -2057,6 +2057,8 @@ window.saveExistingStaff=async function(uid){
   if(ALL_P[uid]){ALL_P[uid].role=role.value;ALL_P[uid].dept=dept.value.trim();if(shift)ALL_P[uid].shift_type=shift.value;}
   toast(T?'تم الحفظ ✓':'Saved ✓','ts');
 };
+
+window.triggerBulkUpload=function(){var el=document.getElementById("bulk-file");if(el)el.click();};
 
 window.handleBulkUpload=async function(input){
   var T=LANG==='ar';
