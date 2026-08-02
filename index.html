@@ -536,14 +536,16 @@ window.forgotPass=async function(){
 };
 
 async function loadMe(uid){
+  console.log('loadMe called with UID:', uid);
   var profile=await fsGet('user_profiles',uid);
+  console.log('profile by UID:', profile);
   if(!profile){
-    // Try searching by email
     var allProfiles=await fsGetAll('user_profiles');
+    console.log('all profiles:', allProfiles.length, allProfiles.map(function(p){return p.id+':'+p.email;}));
     var user=auth.currentUser;
     profile=allProfiles.find(function(p){return p.email&&user&&p.email.trim().toLowerCase()===user.email.toLowerCase();});
+    console.log('profile by email:', profile);
     if(profile){
-      // Fix: update document ID to match UID
       await fsSet('user_profiles',uid,Object.assign({},profile));
     }
   }
