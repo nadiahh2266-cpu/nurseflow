@@ -538,6 +538,16 @@ window.forgotPass=async function(){
 async function loadMe(uid){
   var profile=await fsGet('user_profiles',uid);
   if(!profile){
+    // Try searching by email
+    var allProfiles=await fsGetAll('user_profiles');
+    var user=auth.currentUser;
+    profile=allProfiles.find(function(p){return p.email&&user&&p.email.trim().toLowerCase()===user.email.toLowerCase();});
+    if(profile){
+      // Fix: update document ID to match UID
+      await fsSet('user_profiles',uid,Object.assign({},profile));
+    }
+  }
+  if(!profile){
     toast('البروفايل غير موجود','td');
     var btn=document.getElementById('li-btn');
     if(btn){btn.disabled=false;btn.textContent='دخول';}
