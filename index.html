@@ -447,6 +447,8 @@ tbody td:first-child{text-align:right;padding-right:14px}
 </div>
 
 <div class="toast" id="toast"></div>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, sendPasswordResetEmail, onAuthStateChanged, updatePassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
@@ -501,80 +503,6 @@ function toast(msg,type){
   t.textContent=msg;t.className='toast '+(type||'ti')+' show';
   setTimeout(function(){t.classList.remove('show');},3000);
 }
-
-// ── THEME INIT ──
-(function(){
-  var t=localStorage.getItem('nf-theme');
-  if(t==='light')document.documentElement.setAttribute('data-theme','light');
-})();
-
-// ── AUTH ──
-
-
-window.doLogin=async function(){
-  var em=document.getElementById('li-em').value.trim().toLowerCase();
-  var pw=document.getElementById('li-pw').value;
-  if(!em||!pw){toast('أدخل البيانات','tw');return;}
-  var btn=document.getElementById('li-btn');
-  btn.disabled=true;btn.innerHTML='<span class="loader"></span>';
-  try{
-    var cred=await signInWithEmailAndPassword(auth,em,pw);
-    await loadMe(cred.user.uid);
-  }catch(e){
-    btn.disabled=false;btn.textContent=LANG==='ar'?'دخول':'Sign In';
-    toast(LANG==='ar'?'بيانات خاطئة':'Invalid credentials','td');
-  }
-};
-
-window.doLogout=function(){signOut(auth);};
-
-window.forgotPass=async function(){
-  var em=document.getElementById('li-em').value.trim().toLowerCase();
-  if(!em){toast(LANG==='ar'?'أدخلي الإيميل':'Enter email','tw');return;}
-  try{
-    await sendPasswordResetEmail(auth,em);
-    toast(LANG==='ar'?'تم الإرسال ✓':'Sent ✓','ts');
-  }catch(e){toast(e.message,'td');}
-};
-
-async function loadMe(uid){
-  var profile=await fsGet('user_profiles',uid);
-  if(!profile){
-    var allProfiles=await fsGetAll('user_profiles');
-    var user=auth.currentUser;
-    profile=allProfiles.find(function(p){return p.email&&user&&p.email.trim().toLowerCase()===user.email.toLowerCase();});
-    if(profile){
-      await fsSet('user_profiles',uid,Object.assign({},profile));
-    }
-  }
-  if(!profile){
-    toast('البروفايل غير موجود','td');
-    var btn=document.getElementById('li-btn');
-    if(btn){btn.disabled=false;btn.textContent='دخول';}
-    return;
-  }
-  ME=Object.assign({id:uid},profile);
-  await loadAll();
-  showApp();
-}
-
-async function loadAll(){
-  var [profiles,schedules,depts,statuses,balances,mgrDepts,swaps,leavePlans]=await Promise.all([
-    fsGetAll('user_profiles'),fsGetAll('schedules'),fsGetAll('departments'),
-    fsGetAll('schedule_status'),fsGetAll('leave_balance'),fsGetAll('manager_departments'),
-    fsGetAll('swap_requests'),fsGetAll('leave_plan')
-  ]);
-  ALL_P={};profiles.forEach(function(x){ALL_P[x.id]=x;});
-  ALL_S={};schedules.forEach(function(x){if(!ALL_S[x.nurse_id])ALL_S[x.nurse_id]={};ALL_S[x.nurse_id][x.date]={shift:x.shift,flag:x.flag||null,docId:x.id};});
-  ALL_D={};depts.forEach(function(x){ALL_D[x.name]={m:x.cap_morning||99,e:x.cap_evening||99,n:x.cap_night||99,ld:x.cap_long_day||99,docId:x.id};});
-  ALL_ST={};statuses.forEach(function(x){ALL_ST[x.nurse_id]=x;});
-  ALL_LB={};balances.forEach(function(x){ALL_LB[x.nurse_id]=x;});
-  ALL_MD={};mgrDepts.forEach(function(x){if(!ALL_MD[x.manager_id])ALL_MD[x.manager_id]=[];ALL_MD[x.manager_id].push(x.dept_name);});
-  ALL_SW=swaps;
-  ALL_LP={};leavePlans.forEach(function(x){if(!ALL_LP[x.nurse_id])ALL_LP[x.nurse_id]=[];ALL_LP[x.nurse_id].push(x);});
-}
-
-
 function showApp(){
   document.getElementById('login').style.display='none';
   document.getElementById('app').style.display='flex';
@@ -609,7 +537,7 @@ function buildNav(){
   var T=LANG==='ar';
   var tabs={
     nurse:[['\uD83C\uDFE0 '+(T?'\u0627\u0644\u0631\u0626\u064a\u0633\u064a\u0629':'Dashboard'),'pg-dash'],['\uD83D\uDCC5 '+(T?'\u062c\u062f\u0648\u0644\u064a':'My Schedule'),'pg-my'],['\uD83D\uDD04 '+(T?'\u062a\u0628\u0627\u062f\u0644 \u0627\u0644\u0634\u0641\u062a':'Shift Swap'),'pg-swap']],
-    head_nurse:[['\uD83C\uDFE0 '+(T?'\u0627\u0644\u0631\u0626\u064a\u0633\u064a\u0629':'Dashboard'),'pg-dash'],['\uD83D\uDD0D '+(T?'\u0627\u0644\u0645\u0631\u0627\u062c\u0639\u0629':'Review'),'pg-review',1],['\u23F0 '+(T?'\u0648\u0636\u0639 \u0627\u0644\u062c\u062f\u0648\u0644':'Schedule Mode'),'pg-mode'],['\uD83D\uDCCB '+(T?'\u0627\u0644\u062a\u0642\u0631\u064a\u0631':'Report'),'pg-report'],['\uD83D\uDCC5 '+(T?'\u0627\u0644\u062c\u062f\u0648\u0644':'Schedule'),'pg-team'],['\uD83D\uDCCA '+(T?'\u0627\u0644\u062a\u063a\u0637\u064a\u0629':'Coverage'),'pg-overview']],
+    head_nurse:[['\uD83C\uDFE0 '+(T?'\u0627\u0644\u0631\u0626\u064a\u0633\u064a\u0629':'Dashboard'),'pg-dash'],['\uD83D\uDD0D '+(T?'\u0627\u0644\u0645\u0631\u0627\u062c\u0639\u0629':'Review'),'pg-review',1],['\u23F0 '+(T?'\u0648\u0636\u0639 \u0627\u0644\u062c\u062f\u0648\u0644':'Mode'),'pg-mode'],['\uD83D\uDCCB '+(T?'\u0627\u0644\u062a\u0642\u0631\u064a\u0631':'Report'),'pg-report'],['\uD83D\uDCC5 '+(T?'\u0627\u0644\u062c\u062f\u0648\u0644':'Schedule'),'pg-team'],['\uD83D\uDCCA '+(T?'\u0627\u0644\u062a\u063a\u0637\u064a\u0629':'Coverage'),'pg-overview']],
     manager:[['\uD83C\uDFE0 '+(T?'\u0627\u0644\u0631\u0626\u064a\u0633\u064a\u0629':'Dashboard'),'pg-dash'],['\u2705 '+(T?'\u0627\u0644\u0645\u0648\u0627\u0641\u0642\u0629':'Approval'),'pg-approve',1],['\uD83D\uDCCB '+(T?'\u0627\u0644\u062a\u0642\u0631\u064a\u0631':'Report'),'pg-report'],['\uD83D\uDCCA '+(T?'\u0627\u0644\u062a\u063a\u0637\u064a\u0629':'Coverage'),'pg-overview'],['\uD83D\uDCC5 '+(T?'\u0627\u0644\u062c\u062f\u0648\u0644':'Schedule'),'pg-team']],
     admin:[['\uD83C\uDFE0 '+(T?'\u0627\u0644\u0631\u0626\u064a\u0633\u064a\u0629':'Dashboard'),'pg-dash'],['\uD83D\uDD11 '+(T?'\u0627\u0644\u0625\u062f\u0627\u0631\u0629':'Admin'),'pg-admin'],['\uD83D\uDCE4 '+(T?'\u0631\u0641\u0639 \u0645\u0648\u0638\u0641\u064a\u0646':'Upload'),'pg-upload'],['\u2705 '+(T?'\u0627\u0644\u0645\u0648\u0627\u0641\u0642\u0629':'Approval'),'pg-approve',1],['\uD83D\uDCCB '+(T?'\u0627\u0644\u062a\u0642\u0631\u064a\u0631':'Report'),'pg-report'],['\uD83D\uDCCA '+(T?'\u0627\u0644\u062a\u063a\u0637\u064a\u0629':'Coverage'),'pg-overview'],['\uD83D\uDCC5 '+(T?'\u0627\u0644\u062c\u062f\u0648\u0644':'Schedule'),'pg-team']]
   };
@@ -661,8 +589,8 @@ function render(){
   else if(id==='pg-admin')renderAdmin();
   else if(id==='pg-leave')renderLeave();
   else if(id==='pg-ai')renderAI();
-  else if(id==='pg-roles')renderRoles();
-  else if(id==='pg-mode')renderMode();
+  else if(id==='pg-roles')window.renderRoles();
+  else if(id==='pg-mode')window.renderMode();
   updateBadges();
 }
 
@@ -842,8 +770,7 @@ function buildCal(gridId,uid,editable,y,m){
   grid.innerHTML=h;
 }
 
-window.submitSched=async function(){
-  var ok=await checkScheduleMode();if(!ok)return;
+window.submitSched=function(){
   fsSet('schedule_status',ME.id,{nurse_id:ME.id,status:'submitted',submitted_at:new Date().toISOString(),reviewed_by:null,approved_by:null,notes:null}).then(function(r){
     if(r.error)return toast(r.error.message,'td');
     fsGetAll('schedule_status').then(function(st2d){ALL_ST={};(st2d||[]).forEach(function(x){ALL_ST[x.nurse_id]=x;});render();});
@@ -851,8 +778,7 @@ window.submitSched=async function(){
   });
 }
 
-window.openModal=async function(ds){
-  var ok=await checkScheduleMode();if(!ok)return;
+window.openModal=function(ds){
   selDay=ds;selShift=null;selFlag=null;
   var e=(ALL_S[ME.id]||{})[ds];if(e){selShift=e.shift;selFlag=e.flag||null;}
   var dt=new Date(ds+'T00:00:00');
@@ -1178,7 +1104,7 @@ window.exportToCalendar=function(){
   toast(T?'\u062a\u0645 \u0627\u0644\u062a\u0635\u062f\u064a\u0631 \u2713':'Exported \u2713','ts');
 }
 
-function copySchedule(){
+window.copySchedule=function(){
   var T=LANG==='ar';
   if(!confirm(T?'\u0646\u0633\u062e \u062c\u062f\u0648\u0644 \u0627\u0644\u0634\u0647\u0631 \u0627\u0644\u062d\u0627\u0644\u064a \u0644\u0644\u0634\u0647\u0631 \u0627\u0644\u0642\u0627\u062f\u0645\u061f':'Copy current month to next month?'))return;
   var now=new Date(),y=now.getFullYear(),m=now.getMonth();
@@ -1200,76 +1126,105 @@ function copySchedule(){
   });
 }
 
-function renderUpload(){
+window.renderUpload=function(){
   var pg=document.getElementById('pg-upload'),T=LANG==='ar';if(!pg)return;
   var depts=Object.keys(ALL_D);
   if(!depts.length)depts=Array.from(new Set(Object.values(ALL_P).map(function(p){return p.dept||'';})));
-  var roleLabels={nurse:T?'ممرضة':'Nurse',head_nurse:'Head Nurse',manager:'Manager',admin:'Admin'};
-
   var h='<div class="phdr"><div class="ptitle">👤 '+(T?'إدارة الموظفين':'Staff Management')+'</div></div>';
-
-  // ── ADD NEW STAFF ──
-  h+='<div class="balcard"><div class="baltitle">➕ '+(T?'إضافة موظفة جديدة':'Add New Staff')+'</div>';
+  h+='<div class="balcard"><div class="baltitle">➕ '+(T?'إضافة جديدة':'Add New Staff')+'</div>';
   h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">';
-  h+='<div><label style="font-size:11px;font-weight:700;color:var(--muted);display:block;margin-bottom:5px">'+(T?'الاسم الكامل':'Full Name')+'</label><input id="new-name" placeholder="'+(T?'اسم الموظفة':'Staff name')+'" style="width:100%;padding:10px 12px;background:var(--s2);border:1.5px solid var(--b1);border-radius:8px;color:var(--text);font-family:Tajawal,sans-serif;font-size:13px;outline:none"></div>';
-  h+='<div><label style="font-size:11px;font-weight:700;color:var(--muted);display:block;margin-bottom:5px">'+(T?'البريد الإلكتروني':'Email')+'</label><input id="new-email" type="email" placeholder="nurse@hospital.com" style="width:100%;padding:10px 12px;background:var(--s2);border:1.5px solid var(--b1);border-radius:8px;color:var(--text);font-family:Tajawal,sans-serif;font-size:13px;outline:none"></div>';
-  h+='<div><label style="font-size:11px;font-weight:700;color:var(--muted);display:block;margin-bottom:5px">'+(T?'كلمة المرور':'Password')+'</label><input id="new-pass" type="password" placeholder="••••••••" style="width:100%;padding:10px 12px;background:var(--s2);border:1.5px solid var(--b1);border-radius:8px;color:var(--text);font-family:Tajawal,sans-serif;font-size:13px;outline:none"></div>';
-  h+='<div><label style="font-size:11px;font-weight:700;color:var(--muted);display:block;margin-bottom:5px">'+(T?'الدور':'Role')+'</label><select id="new-role" style="width:100%;padding:10px 12px;background:var(--s2);border:1.5px solid var(--b1);border-radius:8px;color:var(--text);font-family:Tajawal,sans-serif;font-size:13px;outline:none"><option value="nurse">'+(T?'ممرضة':'Nurse')+'</option><option value="head_nurse">Head Nurse</option><option value="manager">Manager</option><option value="admin">Admin</option></select></div>';
-  h+='<div><label style="font-size:11px;font-weight:700;color:var(--muted);display:block;margin-bottom:5px">'+(T?'القسم':'Department')+'</label><select id="new-dept" style="width:100%;padding:10px 12px;background:var(--s2);border:1.5px solid var(--b1);border-radius:8px;color:var(--text);font-family:Tajawal,sans-serif;font-size:13px;outline:none"><option value="">'+(T?'بدون قسم':'No dept')+'</option>'+depts.map(function(d){return'<option value="'+d+'">'+d+'</option>';}).join('')+'</select></div>';
-  h+='<div><label style="font-size:11px;font-weight:700;color:var(--muted);display:block;margin-bottom:5px">'+(T?'نظام الساعات':'Shift System')+'</label><select id="new-shift-type" style="width:100%;padding:10px 12px;background:var(--s2);border:1.5px solid var(--b1);border-radius:8px;color:var(--text);font-family:Tajawal,sans-serif;font-size:13px;outline:none"><option value="">'+(T?'غير محدد':'Not set')+'</option><option value="9h">'+(T?'9 ساعات':'9h')+'</option><option value="12h">'+(T?'12 ساعة':'12h')+'</option></select></div>';
-  h+='</div>';
-  h+='<button class="btn-sub" onclick="addNewStaff()" id="add-staff-btn">'+(T?'➕ إضافة الموظفة':'➕ Add Staff Member')+'</button>';
-  h+='<div id="add-staff-result" style="margin-top:10px"></div>';
-  h+='</div>';
-
-  // ── BULK UPLOAD ──
-  h+='<div class="balcard"><div class="baltitle">📊 '+(T?'رفع جماعي من Excel':'Bulk Upload from Excel')+'</div>';
-  h+='<div style="font-size:12px;color:var(--muted);margin-bottom:12px">'+(T?'أعمدة Excel المطلوبة: الاسم، الإيميل، كلمة المرور، الدور، القسم، نظام الساعات':'Required Excel columns: Name, Email, Password, Role, Dept, ShiftType')+'</div>';
-  h+='<div style="display:flex;gap:10px;flex-wrap:wrap">';
-  h+='<button class="btn-sub" onclick="downloadTemplate()">'+(T?'⬇️ تحميل القالب':'⬇️ Download Template')+'</button>';
-  h+='<button class="btn-sub" style="background:var(--s2);color:var(--text);border:1.5px solid var(--b1);box-shadow:none" onclick="triggerBulkUpload()">'+( T?'📁 رفع Excel':'📁 Upload Excel')+'</button>';
-  h+='<input type="file" id="bulk-file" accept=".xlsx,.xls" style="display:none" onchange="handleBulkUpload(this)">';
-  h+='</div>';
-  h+='<div id="bulk-result" style="margin-top:12px"></div>';
-  h+='</div>';
-
-  // ── EXISTING STAFF ──
-  h+='<div class="balcard"><div class="baltitle">👥 '+(T?'الموظفون الحاليون':'Current Staff')+'</div>';
-  h+='<div class="calwrap twrap"><table><thead><tr>';
-  h+='<th style="text-align:right;padding-right:14px">'+(T?'الاسم':'Name')+'</th>';
-  h+='<th>'+(T?'الإيميل':'Email')+'</th>';
-  h+='<th>'+(T?'الدور':'Role')+'</th>';
-  h+='<th>'+(T?'القسم':'Dept')+'</th>';
-  h+='<th>'+(T?'نظام الساعات':'Hours')+'</th>';
-  h+='<th></th>';
-  h+='</tr></thead><tbody>';
+  h+='<div><label style="font-size:11px;font-weight:700;color:var(--muted);display:block;margin-bottom:5px">'+(T?'الاسم':'Name')+'</label><input id="new-name" style="width:100%;padding:10px 12px;background:var(--s2);border:1.5px solid var(--b1);border-radius:8px;color:var(--text);font-family:Tajawal,sans-serif;font-size:13px;outline:none"></div>';
+  h+='<div><label style="font-size:11px;font-weight:700;color:var(--muted);display:block;margin-bottom:5px">Email</label><input id="new-email" type="email" style="width:100%;padding:10px 12px;background:var(--s2);border:1.5px solid var(--b1);border-radius:8px;color:var(--text);font-family:Tajawal,sans-serif;font-size:13px;outline:none"></div>';
+  h+='<div><label style="font-size:11px;font-weight:700;color:var(--muted);display:block;margin-bottom:5px">'+(T?'كلمة المرور':'Password')+'</label><input id="new-pass" type="password" style="width:100%;padding:10px 12px;background:var(--s2);border:1.5px solid var(--b1);border-radius:8px;color:var(--text);font-family:Tajawal,sans-serif;font-size:13px;outline:none"></div>';
+  h+='<div><label style="font-size:11px;font-weight:700;color:var(--muted);display:block;margin-bottom:5px">'+(T?'الدور':'Role')+'</label><select id="new-role" style="width:100%;padding:10px 12px;background:var(--s2);border:1.5px solid var(--b1);border-radius:8px;color:var(--text);font-family:Tajawal,sans-serif;font-size:13px;outline:none"><option value="nurse">Nurse</option><option value="head_nurse">Head Nurse</option><option value="manager">Manager</option><option value="admin">Admin</option></select></div>';
+  h+='<div><label style="font-size:11px;font-weight:700;color:var(--muted);display:block;margin-bottom:5px">'+(T?'القسم':'Dept')+'</label><select id="new-dept" style="width:100%;padding:10px 12px;background:var(--s2);border:1.5px solid var(--b1);border-radius:8px;color:var(--text);font-family:Tajawal,sans-serif;font-size:13px;outline:none"><option value="">-</option>'+depts.map(function(d){return\'<option value="\'+d+\'">\'+d+\'</option>\';}).join(\'\')+ \'</select></div>\';
+  h+=\'<div><label style="font-size:11px;font-weight:700;color:var(--muted);display:block;margin-bottom:5px">\'+(T?\'نظام الساعات\':\'Hours\')+\'</label><select id="new-shift-type" style="width:100%;padding:10px 12px;background:var(--s2);border:1.5px solid var(--b1);border-radius:8px;color:var(--text);font-family:Tajawal,sans-serif;font-size:13px;outline:none"><option value="">-</option><option value="9h">9h</option><option value="12h">12h</option></select></div>\';
+  h+=\'</div><button class="btn-sub" onclick="addNewStaff()" id="add-staff-btn">\'+(T?\'➕ إضافة\':\'➕ Add\')+\'</button>\';
+  h+=\'<div id="add-staff-result" style="margin-top:10px"></div></div>\';
+  h+=\'<div class="balcard"><div class="baltitle">📊 \'+(T?\'رفع من Excel\':\'Bulk Upload\')+\'</div>\';
+  h+=\'<div style="display:flex;gap:10px;flex-wrap:wrap">\';
+  h+=\'<button class="btn-sub" onclick="downloadTemplate()">⬇️ Template</button>\';
+  h+=\'<button class="btn-sub" style="background:var(--s2);color:var(--text);border:1.5px solid var(--b1);box-shadow:none" onclick="triggerBulkUpload()">📁 Upload</button>\';
+  h+=\'<input type="file" id="bulk-file" accept=".xlsx,.xls" style="display:none" onchange="handleBulkUpload(this)">\';
+  h+=\'</div><div id="bulk-result" style="margin-top:12px"></div></div>\';
+  h+=\'<div class="balcard"><div class="baltitle">👥 \'+(T?\'الموظفون الحاليون\':\'Current Staff\')+\'</div>\';
+  h+=\'<div class="calwrap twrap"><table><thead><tr><th style="text-align:right;padding-right:14px">\'+(T?\'الاسم\':\'Name\')+\'</th><th>\'+(T?\'الدور\':\'Role\')+\'</th><th>\'+(T?\'القسم\':\'Dept\')+\'</th><th>Hrs</th><th></th></tr></thead><tbody>\';
   Object.values(ALL_P).forEach(function(u){
-    h+='<tr>';
-    h+='<td style="text-align:right;padding-right:14px"><div class="nrow"><div class="mav">'+(u.name?u.name.slice(0,2):'?')+'</div>'+(u.name||'-')+'</div></td>';
-    h+='<td style="font-size:11px;color:var(--muted)">'+(u.email||'-')+'</td>';
-    h+='<td><select id="es-role-'+u.id+'" style="padding:4px 8px;background:var(--s2);border:1px solid var(--b1);border-radius:6px;color:var(--text);font-family:Tajawal,sans-serif;font-size:11px;outline:none"><option value="nurse"'+(u.role==='nurse'?' selected':'')+'>Nurse</option><option value="head_nurse"'+(u.role==='head_nurse'?' selected':'')+'>Head Nurse</option><option value="manager"'+(u.role==='manager'?' selected':'')+'>Manager</option><option value="admin"'+(u.role==='admin'?' selected':'')+'>Admin</option></select></td>';
-    h+='<td><input id="es-dept-'+u.id+'" value="'+(u.dept||'')+'" style="padding:4px 8px;background:var(--s2);border:1px solid var(--b1);border-radius:6px;color:var(--text);font-family:Tajawal,sans-serif;font-size:11px;outline:none;width:110px"></td>';
-    h+='<td><select id="es-shift-'+u.id+'" style="padding:4px 8px;background:var(--s2);border:1px solid var(--b1);border-radius:6px;color:var(--text);font-family:Tajawal,sans-serif;font-size:11px;outline:none"><option value="">'+(T?'غير محدد':'-')+'</option><option value="9h"'+(u.shift_type==='9h'?' selected':'')+'>9h</option><option value="12h"'+(u.shift_type==='12h'?' selected':'')+'>12h</option></select></td>';
-    h+='<td><button data-uid="'+u.id+'" onclick="saveExistingStaff(this.dataset.uid)" style="padding:4px 10px;border:none;border-radius:6px;background:var(--blue-lt);color:var(--blue);font-family:Tajawal,sans-serif;font-size:11px;font-weight:700;cursor:pointer">'+(T?'حفظ':'Save')+'</button></td>';
-    h+='</tr>';
+    h+=\'<tr><td style="text-align:right;padding-right:14px"><div class="nrow"><div class="mav">\'+(u.name?u.name.slice(0,2):\'?\')+\'</div>\'+(u.name||\'-\')+\'</div></td>\';
+    h+=\'<td><select id="es-role-\'+u.id+\'" style="padding:4px 8px;background:var(--s2);border:1px solid var(--b1);border-radius:6px;color:var(--text);font-family:Tajawal,sans-serif;font-size:11px;outline:none"><option value="nurse"\'+(u.role===\'nurse\'?\' selected\':\'\')+\'>Nurse</option><option value="head_nurse"\'+(u.role===\'head_nurse\'?\' selected\':\'\')+\'>Head Nurse</option><option value="manager"\'+(u.role===\'manager\'?\' selected\':\'\')+\'>Manager</option><option value="admin"\'+(u.role===\'admin\'?\' selected\':\'\')+\'>Admin</option></select></td>\';
+    h+=\'<td><input id="es-dept-\'+u.id+\'" value="\'+(u.dept||\'\')+\'" style="padding:4px 8px;background:var(--s2);border:1px solid var(--b1);border-radius:6px;color:var(--text);font-family:Tajawal,sans-serif;font-size:11px;outline:none;width:100px"></td>\';
+    h+=\'<td><select id="es-shift-\'+u.id+\'" style="padding:4px 8px;background:var(--s2);border:1px solid var(--b1);border-radius:6px;color:var(--text);font-family:Tajawal,sans-serif;font-size:11px;outline:none"><option value="">-</option><option value="9h"\'+(u.shift_type===\'9h\'?\' selected\':\'\')+\'>9h</option><option value="12h"\'+(u.shift_type===\'12h\'?\' selected\':\'\')+\'>12h</option></select></td>\';
+    h+=\'<td><button data-uid="\'+u.id+\'" onclick="saveExistingStaff(this.dataset.uid)" style="padding:4px 10px;border:none;border-radius:6px;background:var(--blue-lt);color:var(--blue);font-family:Tajawal,sans-serif;font-size:11px;font-weight:700;cursor:pointer">\'+(T?\'حفظ\':\'Save\')+\'</button></td></tr>\';
   });
-  h+='</tbody></table></div></div>';
+  h+=\'</tbody></table></div></div>\';
   pg.innerHTML=h;
 }
 
-
 window.downloadTemplate=function(){
   var T=LANG==='ar';
-  var ws=XLSX.utils.aoa_to_sheet([
-    [T?'\u0627\u0644\u0627\u0633\u0645':'Name',T?'\u0627\u0644\u0625\u064a\u0645\u064a\u0644':'Email',T?'\u0643\u0644\u0645\u0629 \u0627\u0644\u0645\u0631\u0648\u0631':'Password',T?'\u0627\u0644\u062f\u0648\u0631':'Role',T?'\u0627\u0644\u0642\u0633\u0645':'Department',T?'\u0646\u0638\u0627\u0645 \u0627\u0644\u0633\u0627\u0639\u0627\u062a':'ShiftType'],
-    ['\u0646\u0627\u062f\u064a\u0629 \u0645\u062d\u0645\u062f','nurse1@hospital.com','Pass1234','nurse',T?'\u0637\u0648\u0627\u0631\u0626':'Emergency','9h'],
-    ['\u0633\u0627\u0631\u0629 \u0639\u0644\u064a','nurse2@hospital.com','Pass1234','nurse',T?'\u0637\u0648\u0627\u0631\u0626':'Emergency','12h'],
-    ['\u0645\u0646\u0649 \u062e\u0627\u0644\u062f','hn1@hospital.com','Pass1234','head_nurse',T?'\u0637\u0648\u0627\u0631\u0626':'Emergency','9h']
-  ]);
+  var ws=XLSX.utils.aoa_to_sheet([[T?'\u0627\u0644\u0627\u0633\u0645':'Name',T?'\u0627\u0644\u0625\u064a\u0645\u064a\u0644':'Email',T?'\u0643\u0644\u0645\u0629 \u0627\u0644\u0633\u0631':'Password',T?'\u0627\u0644\u062f\u0648\u0631':'Role',T?'\u0627\u0644\u0642\u0633\u0645':'Department'],['Example Name','nurse@hospital.com','1234','nurse',T?'\u0637\u0648\u0627\u0631\u0626':'Emergency']]);
   var wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Staff');
-  XLSX.writeFile(wb,'nurseflow_staff_template.xlsx');
+  XLSX.writeFile(wb,'nurseflow_template.xlsx');
 }
 
+window.handleUpload=function(input){
+  var file=input.files[0];if(!file)return;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    var data=new Uint8Array(e.target.result);
+    var wb=XLSX.read(data,{type:'array'});
+    var ws=wb.Sheets[wb.SheetNames[0]];
+    var rows=XLSX.utils.sheet_to_json(ws,{header:1});
+    if(rows.length<2){toast(LANG==='ar'?'\u0627\u0644\u0645\u0644\u0641 \u0641\u0627\u0631\u063a':'Empty file','tw');return;}
+    processRows(rows.slice(1));
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function processRows(rows){
+  var T=LANG==='ar';
+  var valid=rows.filter(function(r){return r[0]&&r[1]&&r[2];});
+  if(!valid.length){toast(T?'\u0644\u0627 \u062a\u0648\u062c\u062f \u0628\u064a\u0627\u0646\u0627\u062a':'No valid data','tw');return;}
+  document.getElementById('upload-progress').style.display='block';
+  var results=[],done=0;
+  function updateProgress(){var pct=Math.round(done/valid.length*100);document.getElementById('prog-bar').style.width=pct+'%';document.getElementById('prog-text').textContent=(T?'\u062c\u0627\u0631\u064d \u0627\u0644\u0645\u0639\u0627\u0644\u062c\u0629: ':'Processing: ')+done+'/'+valid.length;}
+  function processNext(idx){
+    if(idx>=valid.length){showResults(results);return;}
+    var row=valid[idx];
+    var name=String(row[0]||'').trim(),email=String(row[1]||'').trim().toLowerCase(),pass=String(row[2]||'1234').trim(),role=String(row[3]||'nurse').trim(),dept=String(row[4]||'').trim();
+    if(!['nurse','head_nurse','manager','admin'].includes(role))role='nurse';
+    fsAdd('user_profiles',{email:email,name:name,role:role,dept:dept}).then(function(r){
+      done++;updateProgress();
+      if(r.error)results.push({name:name,email:email,ok:false,msg:r.error.message});
+      else{results.push({name:name,email:email,ok:true});if(r.data)ALL_P[r.data]={id:r.data,name:name,email:email,role:role,dept:dept};}
+      setTimeout(function(){processNext(idx+1);},200);
+    });
+  }
+  processNext(0);
+}
+
+function showResults(results){
+  var T=LANG==='ar';
+  var ok=results.filter(function(r){return r.ok;}).length;
+  var fail=results.filter(function(r){return !r.ok;});
+  var h='<div class="balcard" style="margin-top:16px"><div class="baltitle">\u2705 '+(T?'\u0627\u0644\u0646\u062a\u0627\u0626\u062c':'Results')+': '+ok+'/'+(ok+fail.length)+'<\/div>';
+  if(fail.length){h+='<div style="margin-top:8px">';fail.forEach(function(f){h+='<div style="font-size:11px;color:var(--muted);padding:4px 0">'+f.email+': '+f.msg+'<\/div>';});h+='<\/div>';}
+  h+='<\/div>';
+  document.getElementById('upload-results').innerHTML=h;
+  document.getElementById('upload-progress').style.display='none';
+  toast((T?'\u062a\u0645\u062a \u0627\u0644\u0645\u0639\u0627\u0644\u062c\u0629: ':'Done: ')+ok+' '+(T?'\u062a\u0645\u062a \u0625\u0636\u0627\u0641\u062a\u0647\u0645':'added'),'ts');
+}
+
+window.saveUserEdit=function(uid){
+  var deptEl=document.getElementById('ef-'+uid+'-dept');
+  var roleEl=document.getElementById('rs-'+uid);
+  if(!deptEl||!roleEl)return;
+  fsSet('user_profiles',uid,{dept:deptEl.value.trim(),role:roleEl.value}).then(function(r){
+    if(r.error)return toast(r.error.message,'td');
+    if(ALL_P[uid]){ALL_P[uid].dept=deptEl.value.trim();ALL_P[uid].role=roleEl.value;}
+    toast(LANG==='ar'?'\u062a\u0645 \u0627\u0644\u062a\u0639\u062f\u064a\u0644 \u2713':'Updated \u2713','ts');
+  });
+}
 
 function renderAdmin(){
   var pg=document.getElementById('pg-admin'),T=LANG==='ar';if(!pg)return;
@@ -1360,6 +1315,12 @@ window.toggleLang=function(){
   if(ME)render();
 }
 
+// ── INIT ──
+// auth handled by onAuthStateChanged
+
+</script>
+<script>
+
 function renderLeave(){
   var pg=document.getElementById('pg-leave'),T=LANG==='ar';
   if(!pg)return;
@@ -1415,7 +1376,7 @@ function renderLeave(){
       var isTaken=oth.length>0&&!isMy;
       var bg=isMy?'var(--green)':isTaken?'rgba(239,68,68,.2)':'var(--s3)';
       var col=isMy?'white':isTaken?'var(--red)':'var(--muted)';
-      h+='<div data-ds="'+ds+'" onclick="toggleLeavePlan(this.dataset.ds)" title="'+(isTaken?oth.join(','):'')+'" style="width:26px;height:26px;border-radius:5px;background:'+bg+';color:'+col+';display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;cursor:'+(isTaken?'not-allowed':'pointer')+'">'+d+'<\/div>';
+      h+='<div onclick="toggleLeavePlan(\''+ds+'\')" title="'+(isTaken?oth.join(','):'')+'" style="width:26px;height:26px;border-radius:5px;background:'+bg+';color:'+col+';display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;cursor:'+(isTaken?'not-allowed':'pointer')+'">'+d+'<\/div>';
     }
     h+='<\/div><\/div>';
   });
@@ -1439,8 +1400,7 @@ window.addLeavePlan=function(){
   if(!date){toast(T?'\u0627\u062e\u062a\u0631 \u062a\u0627\u0631\u064a\u062e\u0627\u064b':'Select date','tw');return;}
   var isBooked=Object.keys(ALL_LP).some(function(uid){if(uid===ME.id)return false;var n=ALL_P[uid];if(!n||n.dept!==ME.dept)return false;return(ALL_LP[uid]||[]).some(function(p){return p.date===date;});});
   if(isBooked){toast(T?'\u0627\u0644\u062a\u0627\u0631\u064a\u062e \u0645\u062d\u062c\u0648\u0632':' Date taken','tw');return;}
-  fsAdd('leave_plan',{nurse_id:ME.id,date:date,type:type}).then(function(r){
-    if(r.error)return toast(r.error.message,'td');
+  fsAdd('leave_plan',{nurse_id:ME.id,date:date,type:type}).then(function(){var r={};
     fsGetAll('leave_plan').then(function(r2d){ALL_LP[ME.id]=r2d.filter(function(x){return x.nurse_id===ME.id;});renderLeave();});
     toast(T?'\u062a\u0645 \u0627\u0644\u0625\u0636\u0627\u0641\u0629 \u2713':'Added','ts');
   });
@@ -1452,15 +1412,13 @@ window.toggleLeavePlan=function(ds){
   if(existing){deleteLeavePlan(existing.id);return;}
   var isBooked=Object.keys(ALL_LP).some(function(uid){if(uid===ME.id)return false;var n=ALL_P[uid];if(!n||n.dept!==ME.dept)return false;return(ALL_LP[uid]||[]).some(function(p){return p.date===ds;});});
   if(isBooked){toast(LANG==='ar'?'\u0645\u062d\u062c\u0648\u0632':'Taken','tw');return;}
-  fsAdd('leave_plan',{nurse_id:ME.id,date:ds,type:'annual_leave'}).then(function(r){
-    if(r.error)return toast(r.error.message,'td');
+  fsAdd('leave_plan',{nurse_id:ME.id,date:ds,type:'annual_leave'}).then(function(){var r={};
     fsGetAll('leave_plan').then(function(r2d){ALL_LP[ME.id]=r2d.filter(function(x){return x.nurse_id===ME.id;});renderLeave();});
   });
 }
 
 window.deleteLeavePlan=function(id){
-  fsDel('leave_plan',id).then(function(r){
-    if(r.error)return toast(r.error.message,'td');
+  fsDel('leave_plan',id).then(function(){var r={};
     if(ALL_LP[ME.id])ALL_LP[ME.id]=ALL_LP[ME.id].filter(function(p){return p.id!==id;});
     renderLeave();
     toast(LANG==='ar'?'\u062a\u0645 \u0627\u0644\u062d\u0630\u0641':'Removed','ti');
@@ -1555,389 +1513,12 @@ window.applyAISchedule=function(){
     });
   });
   if(!toUpsert.length){toast(T?'\u0644\u0627 \u0628\u064a\u0627\u0646\u0627\u062a':'No data','tw');return;}
-  Promise.all(toUpsert.map(function(item){return fsSet('schedules',item.nurse_id+'_'+item.date,item);})).then(function(r){
-    if(r.error)return toast(r.error.message,'td');
+  Promise.all(toUpsert.map(function(item){return fsSet('schedules',item.nurse_id+'_'+item.date,item);})).then(function(){var r={};
     toUpsert.forEach(function(x){if(!ALL_S[x.nurse_id])ALL_S[x.nurse_id]={};ALL_S[x.nurse_id][x.date]={shift:x.shift,flag:null};});
     toast((T?'\u062a\u0645 \u062a\u0637\u0628\u064a\u0642 ':'Applied ')+toUpsert.length+(T?' \u064a\u0648\u0645 \u2713':' days'),'ts');
     switchPg('pg-team');
   });
 }
-
-// ── INIT ──
-
-
-// ── ROLES MANAGEMENT ──
-window.renderRoles=function(){
-  var pg=document.getElementById('pg-roles'),T=LANG==='ar';if(!pg)return;
-  if(ME.role!=='manager'&&ME.role!=='admin'){pg.innerHTML='';return;}
-
-  var myDepts=ME.role==='manager'?(ALL_MD[ME.id]||[]):null;
-  var staff=Object.values(ALL_P).filter(function(p){
-    if(p.role==='admin')return false;
-    if(myDepts)return myDepts.indexOf(p.dept)>=0;
-    return true;
-  });
-
-  var roles=['nurse','head_nurse','manager','admin'];
-  var roleLabels={nurse:T?'ممرضة':'Nurse',head_nurse:'Head Nurse',manager:'Manager',admin:'Admin'};
-  var depts=Array.from(new Set(staff.map(function(p){return p.dept||'';})));
-
-  var h='<div class="phdr"><div><div class="ptitle">👥 '+(T?'إدارة الأدوار والموظفين':'Staff & Role Management')+'</div></div></div>';
-
-  // Search and filter bar
-  h+='<div class="balcard" style="padding:14px">';
-  h+='<div style="display:flex;gap:10px;flex-wrap:wrap">';
-  h+='<input id="role-search" oninput="filterRoles()" placeholder="'+(T?'بحث بالاسم':'Search name')+'" style="flex:2;min-width:150px;padding:9px 12px;background:var(--s2);border:1.5px solid var(--b1);border-radius:8px;color:var(--text);font-family:Tajawal,sans-serif;font-size:13px;outline:none">';
-  h+='<select id="role-filter-dept" onchange="filterRoles()" style="flex:1;min-width:120px;padding:9px;background:var(--s2);border:1.5px solid var(--b1);border-radius:8px;color:var(--text);font-family:Tajawal,sans-serif;font-size:13px;outline:none">';
-  h+='<option value="">'+(T?'كل الأقسام':'All Depts')+'</option>';
-  depts.forEach(function(d){if(d)h+='<option value="'+d+'">'+d+'</option>';});
-  h+='</select>';
-  h+='<select id="role-filter-role" onchange="filterRoles()" style="flex:1;min-width:120px;padding:9px;background:var(--s2);border:1.5px solid var(--b1);border-radius:8px;color:var(--text);font-family:Tajawal,sans-serif;font-size:13px;outline:none">';
-  h+='<option value="">'+(T?'كل الأدوار':'All Roles')+'</option>';
-  roles.forEach(function(r){h+='<option value="'+r+'">'+roleLabels[r]+'</option>';});
-  h+='</select>';
-  h+='<select id="role-filter-shift" onchange="filterRoles()" style="flex:1;min-width:100px;padding:9px;background:var(--s2);border:1.5px solid var(--b1);border-radius:8px;color:var(--text);font-family:Tajawal,sans-serif;font-size:13px;outline:none">';
-  h+='<option value="">'+(T?'كل الأنظمة':'All Systems')+'</option>';
-  h+='<option value="12h">'+(T?'12 ساعة':'12h')+'</option>';
-  h+='<option value="9h">'+(T?'9 ساعات':'9h')+'</option>';
-  h+='</select>';
-  h+='</div></div>';
-
-  // Staff table
-  h+='<div class="calwrap twrap"><table id="roles-table"><thead><tr>';
-  h+='<th style="text-align:right;padding-right:14px">'+(T?'الاسم':'Name')+'</th>';
-  h+='<th>'+(T?'القسم':'Dept')+'</th>';
-  h+='<th>'+(T?'الدور':'Role')+'</th>';
-  h+='<th>'+(T?'نظام الساعات':'Shift System')+'</th>';
-  h+='<th>'+(T?'حفظ':'Save')+'</th>';
-  h+='</tr></thead><tbody id="roles-tbody">';
-
-  staff.forEach(function(p){
-    var canEditRole=ME.role==='admin'||(ME.role==='manager'&&(p.role==='nurse'||p.role==='head_nurse'));
-    h+='<tr data-name="'+(p.name||'').toLowerCase()+'" data-dept="'+(p.dept||'')+'" data-role="'+(p.role||'')+'" data-shift="'+(p.shift_type||'')+'">';
-    h+='<td style="text-align:right;padding-right:14px"><div class="nrow"><div class="mav">'+( p.name?p.name.slice(0,2):'?')+'</div>'+( p.name||'-')+'</div></td>';
-    h+='<td>'+(p.dept||'-')+'</td>';
-    h+='<td>';
-    if(canEditRole){
-      h+='<select id="r-role-'+p.id+'" style="padding:5px 8px;background:var(--s2);border:1px solid var(--b1);border-radius:6px;color:var(--text);font-family:Tajawal,sans-serif;font-size:12px;outline:none">';
-      var allowedRoles=ME.role==='admin'?roles:['nurse','head_nurse'];
-      allowedRoles.forEach(function(r){h+='<option value="'+r+'"'+(p.role===r?' selected':'')+'>'+roleLabels[r]+'</option>';});
-      h+='</select>';
-    }else{
-      h+='<span class="stpl '+(p.role==='head_nurse'?'st-rv':'st-d')+'">'+roleLabels[p.role||'nurse']+'</span>';
-    }
-    h+='</td>';
-    h+='<td>';
-    h+='<select id="r-shift-'+p.id+'" style="padding:5px 8px;background:var(--s2);border:1px solid var(--b1);border-radius:6px;color:var(--text);font-family:Tajawal,sans-serif;font-size:12px;outline:none">';
-    h+='<option value="">'+(T?'غير محدد':'Not set')+'</option>';
-    h+='<option value="12h"'+(p.shift_type==='12h'?' selected':'')+'>'+(T?'12 ساعة':'12h')+'</option>';
-    h+='<option value="9h"'+(p.shift_type==='9h'?' selected':'')+'>'+(T?'9 ساعات':'9h')+'</option>';
-    h+='</select>';
-    h+='</td>';
-    h+='<td><button onclick="saveRoleEdit(''+p.id+'')" style="padding:5px 14px;border:none;border-radius:7px;background:var(--blue-lt);color:var(--blue);font-family:Tajawal,sans-serif;font-size:12px;font-weight:700;cursor:pointer">'+(T?'حفظ':'Save')+'</button></td>';
-    h+='</tr>';
-  });
-
-  h+='</tbody></table></div>';
-  pg.innerHTML=h;
-};
-
-window.filterRoles=function(){
-  var search=(document.getElementById('role-search')||{}).value||'';
-  var deptF=(document.getElementById('role-filter-dept')||{}).value||'';
-  var roleF=(document.getElementById('role-filter-role')||{}).value||'';
-  var shiftF=(document.getElementById('role-filter-shift')||{}).value||'';
-  var rows=document.querySelectorAll('#roles-tbody tr');
-  rows.forEach(function(row){
-    var name=row.dataset.name||'';
-    var dept=row.dataset.dept||'';
-    var role=row.dataset.role||'';
-    var shift=row.dataset.shift||'';
-    var show=(!search||name.includes(search.toLowerCase()))&&
-             (!deptF||dept===deptF)&&
-             (!roleF||role===roleF)&&
-             (!shiftF||shift===shiftF);
-    row.style.display=show?'':'none';
-  });
-};
-
-window.saveRoleEdit=async function(uid){
-  var T=LANG==='ar';
-  var roleEl=document.getElementById('r-role-'+uid);
-  var shiftEl=document.getElementById('r-shift-'+uid);
-  var newRole=roleEl?roleEl.value:null;
-  var newShift=shiftEl?shiftEl.value:'';
-  var updates={};
-  if(newRole)updates.role=newRole;
-  updates.shift_type=newShift;
-  await fsSet('user_profiles',uid,updates);
-  if(ALL_P[uid]){
-    if(newRole)ALL_P[uid].role=newRole;
-    ALL_P[uid].shift_type=newShift;
-  }
-  toast(T?'تم الحفظ ✓':'Saved ✓','ts');
-};
-
-// ── SCHEDULE MODE ──
-window.renderMode=async function(){
-  var pg=document.getElementById('pg-mode'),T=LANG==='ar';if(!pg)return;
-  var canManage=ME.role==='head_nurse'||ME.role==='manager'||ME.role==='admin';
-  if(!canManage){pg.innerHTML='';return;}
-
-  // Load schedule modes
-  var modes=await fsGetAll('schedule_modes');
-  var modeMap={};modes.forEach(function(m){modeMap[m.dept]=m;});
-
-  var myDepts=ME.role==='head_nurse'?[ME.dept]:(ME.role==='manager'?(ALL_MD[ME.id]||[]):Object.keys(ALL_D));
-
-  var h='<div class="phdr"><div><div class="ptitle">⏰ '+(T?'وضع الجدولة':'Schedule Mode')+'</div><div class="psub">'+(T?'تحكم في كيفية تعبئة الجداول لكل قسم':'Control how schedules are filled per department')+'</div></div></div>';
-
-  myDepts.forEach(function(dept){
-    var mode=modeMap[dept]||{dept:dept,mode:'open',ai_done:false};
-    var nurses=Object.values(ALL_P).filter(function(p){return p.role==='nurse'&&p.dept===dept;});
-    var filled=nurses.filter(function(n){return ALL_ST[n.id]&&ALL_ST[n.id].status!=='draft';}).length;
-    var notFilled=nurses.filter(function(n){return !ALL_ST[n.id]||ALL_ST[n.id].status==='draft';});
-
-    h+='<div class="balcard">';
-    h+='<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px">';
-    h+='<div><div class="baltitle" style="margin-bottom:2px">🏥 '+dept+'</div>';
-    h+='<div style="font-size:11px;color:var(--muted)">'+filled+'/'+nurses.length+' '+(T?'عبّوا جداولهم':'filled schedules')+'</div></div>';
-
-    // Mode toggle
-    h+='<div style="display:flex;gap:8px;align-items:center">';
-    h+='<span style="font-size:12px;color:var(--muted)">'+(T?'وضع التعبئة:':'Fill mode:')+'</span>';
-    var isOpen=mode.mode==='open';
-    h+='<button onclick="toggleDeptMode(''+dept+'','open')" style="padding:6px 14px;border-radius:7px;border:1.5px solid '+(isOpen?'var(--green)':'var(--b1)')+';background:'+(isOpen?'var(--green-lt)':'transparent')+';color:'+(isOpen?'var(--green)':'var(--muted)')+';font-family:Tajawal,sans-serif;font-size:12px;font-weight:700;cursor:pointer">👐 '+(T?'مفتوح':'Open')+'</button>';
-    h+='<button onclick="toggleDeptMode(''+dept+'','hn_only')" style="padding:6px 14px;border-radius:7px;border:1.5px solid '+(!isOpen?'var(--blue)':'var(--b1)')+';background:'+(!isOpen?'var(--blue-lt)':'transparent')+';color:'+(!isOpen?'var(--blue)':'var(--muted)')+';font-family:Tajawal,sans-serif;font-size:12px;font-weight:700;cursor:pointer">🔒 '+(T?'هيد نيرس فقط':'HN Only')+'</button>';
-    h+='</div></div>';
-
-    // Not filled nurses
-    if(notFilled.length>0){
-      h+='<div style="margin-bottom:12px"><div style="font-size:11px;font-weight:700;color:var(--amber);margin-bottom:8px">⚠️ '+(T?'لم يعبّوا جداولهم:':'Not filled:')+'</div>';
-      h+='<div style="display:flex;flex-wrap:wrap;gap:6px">';
-      notFilled.forEach(function(n){
-        h+='<span style="padding:4px 10px;background:var(--amber-lt);color:var(--amber);border-radius:20px;font-size:11px;font-weight:600">'+n.name+'</span>';
-      });
-      h+='</div></div>';
-
-      // Actions for late nurses
-      h+='<div style="display:flex;gap:8px;flex-wrap:wrap">';
-      h+='<button onclick="aiScheduleLate(''+dept+'')" style="padding:8px 16px;border:none;border-radius:8px;background:linear-gradient(135deg,var(--navy),var(--blue));color:white;font-family:Tajawal,sans-serif;font-size:12px;font-weight:700;cursor:pointer">🤖 '+(T?'AI يعبّي المتأخرات':'AI Fill Late')+'</button>';
-      h+='<button onclick="manualFillMode(''+dept+'')" style="padding:8px 16px;border:none;border-radius:8px;background:var(--s2);border:1.5px solid var(--b1);color:var(--text);font-family:Tajawal,sans-serif;font-size:12px;font-weight:700;cursor:pointer">✏️ '+(T?'تعبئة يدوية':'Manual Fill')+'</button>';
-      h+='</div>';
-    }
-
-    // AI suggestions for open mode
-    if(isOpen&&filled>0){
-      h+='<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--b1)">';
-      h+='<button onclick="aiSuggestFix(''+dept+'')" style="padding:8px 16px;border:none;border-radius:8px;background:var(--purple-lt);color:var(--purple);font-family:Tajawal,sans-serif;font-size:12px;font-weight:700;cursor:pointer">✨ '+(T?'AI يقترح تحسينات للتغطية':'AI Suggest Coverage Fixes')+'</button>';
-      h+='</div>';
-    }
-
-    h+='<div id="mode-result-'+dept.replace(/\s/g,'_')+'"></div>';
-    h+='</div>';
-  });
-
-  pg.innerHTML=h;
-};
-
-window.toggleDeptMode=async function(dept,mode){
-  await fsSet('schedule_modes',dept,{dept:dept,mode:mode,updated_by:ME.id,updated_at:new Date().toISOString()});
-  toast(LANG==='ar'?(mode==='open'?'تم فتح التعبئة':'تم قفل التعبئة'):(mode==='open'?'Mode: Open':'Mode: HN Only'),'ts');
-  renderMode();
-};
-
-window.aiScheduleLate=async function(dept){
-  var T=LANG==='ar';
-  var nurses=Object.values(ALL_P).filter(function(p){
-    return p.role==='nurse'&&p.dept===dept&&(!ALL_ST[p.id]||ALL_ST[p.id].status==='draft');
-  });
-  if(!nurses.length){toast(T?'لا يوجد متأخرات':'No late nurses','ti');return;}
-
-  var y=MONTH.getFullYear(),m=MONTH.getMonth(),days=new Date(y,m+1,0).getDate();
-  var deptCaps=ALL_D[dept]||{m:3,e:3,n:3};
-
-  toast(T?'AI يعمل...':'AI working...','ti');
-
-  var existingSchedule={};
-  Object.values(ALL_P).filter(function(p){return p.role==='nurse'&&p.dept===dept&&ALL_ST[p.id]&&ALL_ST[p.id].status!=='draft';}).forEach(function(n){
-    existingSchedule[n.name]=ALL_S[n.id]||{};
-  });
-
-  var prompt='Fill schedule for late nurses in '+dept+' for '+new Date(y,m).toLocaleDateString('en',{month:'long',year:'numeric'})+'.
-';
-  prompt+='Late nurses: '+nurses.map(function(n){return n.name+(n.shift_type?' ('+n.shift_type+')':'');}).join(', ')+'
-';
-  prompt+='Dept needs per day: morning='+deptCaps.m+', evening='+deptCaps.e+', night='+deptCaps.n+'
-';
-  prompt+='Already filled nurses coverage (check gaps): '+JSON.stringify(Object.keys(existingSchedule))+'
-';
-  prompt+='Rules: min 6 rest days, fill coverage gaps first, respect shift_type (12h nurses get long_day/long_night, 9h get morning/evening/night)
-';
-  prompt+='Return ONLY JSON: {"schedule":{"NurseName":{"1":"morning",...all '+days+' days}},"summary":"brief Arabic summary"}';
-
-  try{
-    var resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:4000,messages:[{role:'user',content:prompt}]})});
-    var data=await resp.json();
-    var text=data.content&&data.content[0]&&data.content[0].text||'';
-    var jm=text.match(/\{[\s\S]*\}/);if(!jm)throw new Error('no json');
-    var result=JSON.parse(jm[0]);
-
-    // Apply schedule
-    var count=0;
-    for(var i=0;i<nurses.length;i++){
-      var nurse=nurses[i];
-      var sh=result.schedule[nurse.name];if(!sh)continue;
-      for(var d=1;d<=days;d++){
-        var shift=sh[String(d)]||sh[d];if(!shift||shift==='off')continue;
-        var ds=y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
-        await fsSet('schedules',nurse.id+'_'+ds,{nurse_id:nurse.id,date:ds,shift:shift,flag:null});
-        if(!ALL_S[nurse.id])ALL_S[nurse.id]={};
-        ALL_S[nurse.id][ds]={shift:shift,flag:null,docId:nurse.id+'_'+ds};
-        count++;
-      }
-      // Mark as submitted
-      await fsSet('schedule_status',nurse.id,{nurse_id:nurse.id,status:'submitted',submitted_at:new Date().toISOString(),auto_filled:true});
-      ALL_ST[nurse.id]={nurse_id:nurse.id,status:'submitted',auto_filled:true};
-    }
-
-    var resultDiv=document.getElementById('mode-result-'+dept.replace(/\s/g,'_'));
-    if(resultDiv)resultDiv.innerHTML='<div class="alert aw" style="margin-top:10px">✅ '+(result.summary||('تم تعبئة '+count+' يوم'))+'</div>';
-    toast(T?'تم التعبئة التلقائية ✓':'Auto-filled ✓','ts');
-    renderMode();
-  }catch(e){
-    toast(e.message,'td');
-  }
-};
-
-window.aiSuggestFix=async function(dept){
-  var T=LANG==='ar';
-  var y=MONTH.getFullYear(),m=MONTH.getMonth(),days=new Date(y,m+1,0).getDate();
-  var deptCaps=ALL_D[dept]||{m:3,e:3,n:3};
-  var nurses=Object.values(ALL_P).filter(function(p){return p.role==='nurse'&&p.dept===dept;});
-
-  toast(T?'AI يحلل الجدول...':'AI analyzing...','ti');
-
-  // Build coverage gaps
-  var gaps=[];
-  for(var d=1;d<=days;d++){
-    var ds=y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
-    ['morning','evening','night'].forEach(function(sh){
-      var cur=shiftCount(dept,ds,sh);
-      var cap=shiftCap(dept,sh);
-      if(cap<99&&cur<cap)gaps.push({date:ds,shift:sh,have:cur,need:cap});
-    });
-  }
-
-  if(!gaps.length){
-    var resultDiv=document.getElementById('mode-result-'+dept.replace(/\s/g,'_'));
-    if(resultDiv)resultDiv.innerHTML='<div class="alert" style="background:var(--green-lt);border-color:#6ee7b7;color:var(--green);border:1.5px solid;border-radius:10px;padding:12px 16px;margin-top:10px;font-size:13px;font-weight:700">✅ '+(T?'التغطية مكتملة! لا يوجد نقص':'Coverage is complete! No gaps')+'</div>';
-    return;
-  }
-
-  var nurseSchedules=nurses.map(function(n){
-    var shifts=Object.entries(ALL_S[n.id]||{}).filter(function(e){var d2=new Date(e[0]+'T00:00:00');return d2.getFullYear()===y&&d2.getMonth()===m;}).map(function(e){return e[0].slice(8)+':'+e[1].shift;});
-    return n.name+'('+n.shift_type+'): '+shifts.join(',');
-  }).join('
-');
-
-  var prompt='Analyze nurse schedule for '+dept+' and suggest specific changes to fix coverage gaps.
-';
-  prompt+='Gaps: '+JSON.stringify(gaps.slice(0,20))+'
-';
-  prompt+='Current schedules:
-'+nurseSchedules+'
-';
-  prompt+='Rules: suggest specific swaps or changes, minimize disruption, respect off days requests
-';
-  prompt+='Return ONLY JSON: {"suggestions":[{"nurse":"name","date":"YYYY-MM-DD","from":"current_shift","to":"new_shift","reason":"why"}],"summary":"Arabic summary of changes"}';
-
-  try{
-    var resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:3000,messages:[{role:'user',content:prompt}]})});
-    var data=await resp.json();
-    var text=data.content&&data.content[0]&&data.content[0].text||'';
-    var jm=text.match(/\{[\s\S]*\}/);if(!jm)throw new Error('no json');
-    var result=JSON.parse(jm[0]);
-
-    var suggestions=result.suggestions||[];
-    var resultDiv=document.getElementById('mode-result-'+dept.replace(/\s/g,'_'));
-    if(!resultDiv)return;
-
-    var rh='<div style="margin-top:12px;padding:14px;background:var(--s2);border-radius:10px;border:1px solid var(--b1)">';
-    rh+='<div style="font-size:13px;font-weight:700;color:var(--purple);margin-bottom:10px">✨ '+(T?'مقترحات AI:':'AI Suggestions:')+'</div>';
-    if(result.summary)rh+='<div style="font-size:12px;color:var(--muted);margin-bottom:10px;padding:8px;background:var(--purple-lt);border-radius:8px">'+result.summary+'</div>';
-
-    suggestions.slice(0,10).forEach(function(s,i){
-      rh+='<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--b1);font-size:12px">';
-      rh+='<span style="font-weight:700;color:var(--navy)">'+s.nurse+'</span>';
-      rh+='<span style="color:var(--muted)">'+s.date+'</span>';
-      rh+='<span style="color:var(--red)">'+( s.from||'off')+'</span>';
-      rh+='<span>→</span>';
-      rh+='<span style="color:var(--green)">'+s.to+'</span>';
-      rh+='<span style="flex:1;color:var(--muted);font-size:11px">'+( s.reason||'')+'</span>';
-      rh+='<button onclick="applySuggestion('+i+',''+dept+'')" style="padding:4px 10px;border:none;border-radius:6px;background:var(--blue-lt);color:var(--blue);font-family:Tajawal,sans-serif;font-size:11px;font-weight:700;cursor:pointer">'+(T?'تطبيق':'Apply')+'</button>';
-      rh+='</div>';
-    });
-
-    rh+='<button onclick="applyAllSuggestions(''+dept+'')" style="margin-top:10px;padding:8px 16px;border:none;border-radius:8px;background:linear-gradient(135deg,var(--navy),var(--blue));color:white;font-family:Tajawal,sans-serif;font-size:12px;font-weight:700;cursor:pointer">'+(T?'تطبيق الكل':'Apply All')+'</button>';
-    rh+='</div>';
-
-    window._aiSuggestions=window._aiSuggestions||{};
-    window._aiSuggestions[dept]=suggestions;
-
-    resultDiv.innerHTML=rh;
-  }catch(e){
-    toast(e.message,'td');
-  }
-};
-
-window.applySuggestion=async function(idx,dept){
-  var T=LANG==='ar';
-  var suggestions=(window._aiSuggestions||{})[dept]||[];
-  var s=suggestions[idx];if(!s)return;
-  var nurse=Object.values(ALL_P).find(function(p){return p.name===s.nurse&&p.dept===dept;});
-  if(!nurse)return toast(T?'الممرضة غير موجودة':'Nurse not found','tw');
-  await fsSet('schedules',nurse.id+'_'+s.date,{nurse_id:nurse.id,date:s.date,shift:s.to,flag:null});
-  if(!ALL_S[nurse.id])ALL_S[nurse.id]={};
-  ALL_S[nurse.id][s.date]={shift:s.to,flag:null,docId:nurse.id+'_'+s.date};
-  toast(T?'تم التطبيق ✓':'Applied ✓','ts');
-  aiSuggestFix(dept);
-};
-
-window.applyAllSuggestions=async function(dept){
-  var T=LANG==='ar';
-  var suggestions=(window._aiSuggestions||{})[dept]||[];
-  for(var i=0;i<suggestions.length;i++){
-    var s=suggestions[i];
-    var nurse=Object.values(ALL_P).find(function(p){return p.name===s.nurse&&p.dept===dept;});
-    if(!nurse)continue;
-    await fsSet('schedules',nurse.id+'_'+s.date,{nurse_id:nurse.id,date:s.date,shift:s.to,flag:null});
-    if(!ALL_S[nurse.id])ALL_S[nurse.id]={};
-    ALL_S[nurse.id][s.date]={shift:s.to,flag:null,docId:nurse.id+'_'+s.date};
-  }
-  toast(T?'تم تطبيق الكل ✓':'All applied ✓','ts');
-  renderMode();
-};
-
-window.manualFillMode=function(dept){
-  // Switch to team schedule view filtered by dept
-  switchPg('pg-team');
-};
-
-// ── CHECK SCHEDULE MODE (called before nurse can edit) ──
-async function checkScheduleMode(){
-  if(!ME||ME.role!=='nurse')return true;
-  var modes=await fsGetAll('schedule_modes');
-  var deptMode=modes.find(function(m){return m.dept===ME.dept;});
-  if(deptMode&&deptMode.mode==='hn_only'){
-    toast(LANG==='ar'?'التعبئة مقفلة من قِبل الهيد نيرس':'Schedule locked by Head Nurse','tw');
-    return false;
-  }
-  return true;
-}
-
-
-// ── ADD NEW STAFF VIA FIREBASE REST API ──
 window.addNewStaff=async function(){
   var T=LANG==='ar';
   var name=document.getElementById('new-name').value.trim();
@@ -1946,58 +1527,33 @@ window.addNewStaff=async function(){
   var role=document.getElementById('new-role').value;
   var dept=document.getElementById('new-dept').value;
   var shiftType=document.getElementById('new-shift-type').value;
-
-  if(!name||!email||!pass){toast(T?'أدخلي جميع البيانات المطلوبة':'Fill all required fields','tw');return;}
-  if(pass.length<6){toast(T?'كلمة المرور 6 أحرف على الأقل':'Password min 6 chars','tw');return;}
-
+  if(!name||!email||!pass){toast(T?'\u0623\u062f\u062e\u0644\u064a \u0627\u0644\u0628\u064a\u0627\u0646\u0627\u062a':'Fill all fields','tw');return;}
+  if(pass.length<6){toast(T?'\u0643\u0644\u0645\u0629 \u0627\u0644\u0645\u0631\u0648\u0631 6 \u0623\u062d\u0631\u0641 \u0639\u0644\u0649 \u0627\u0644\u0623\u0642\u0644':'Min 6 chars','tw');return;}
   var btn=document.getElementById('add-staff-btn');
   var resultDiv=document.getElementById('add-staff-result');
-  btn.disabled=true;btn.innerHTML='<span class="loader"></span> '+(T?'جارٍ الإضافة...':'Adding...');
-
+  btn.disabled=true;btn.innerHTML='<span class="loader"></span>';
   try{
-    // Get current user token
-    var token=await auth.currentUser.getIdToken();
     var apiKey='AIzaSyDC2cmBlwZDoOdCJXgQ7dc9X6MBqmlMf5w';
-
-    // Create user via Firebase Auth REST API
     var resp=await fetch('https://identitytoolkit.googleapis.com/v1/accounts:signUp?key='+apiKey,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
+      method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({email:email,password:pass,returnSecureToken:true})
     });
     var data=await resp.json();
-
-    if(data.error){
-      var msg=data.error.message;
-      if(msg==='EMAIL_EXISTS')msg=T?'الإيميل مستخدم مسبقاً':'Email already exists';
-      throw new Error(msg);
-    }
-
+    if(data.error){var msg=data.error.message;if(msg==='EMAIL_EXISTS')msg=T?'\u0627\u0644\u0625\u064a\u0645\u064a\u0644 \u0645\u0633\u062a\u062e\u062f\u0645':'Email exists';throw new Error(msg);}
     var uid=data.localId;
-
-    // Save profile to Firestore
-    await fsSet('user_profiles',uid,{
-      name:name,email:email,role:role,dept:dept,
-      shift_type:shiftType,created_by:ME.id,created_at:new Date().toISOString()
-    });
-
-    // Update local cache
+    await fsSet('user_profiles',uid,{name:name,email:email,role:role,dept:dept,shift_type:shiftType,created_by:ME.id,created_at:new Date().toISOString()});
     ALL_P[uid]={id:uid,name:name,email:email,role:role,dept:dept,shift_type:shiftType};
-
-    // Clear form
     document.getElementById('new-name').value='';
     document.getElementById('new-email').value='';
     document.getElementById('new-pass').value='';
-
-    resultDiv.innerHTML='<div style="padding:10px 14px;background:var(--green-lt);border:1.5px solid #6ee7b7;border-radius:8px;color:var(--green);font-size:13px;font-weight:700">✅ '+(T?'تم إضافة '+name+' بنجاح':'Added '+name+' successfully')+'</div>';
-    toast(T?'تم الإضافة ✓':'Added ✓','ts');
-    renderUpload();
-
+    resultDiv.innerHTML='<div style="padding:10px;background:var(--green-lt);border-radius:8px;color:var(--green);font-weight:700">\u2705 '+(T?'\u062a\u0645 \u0625\u0636\u0627\u0641\u0629 '+name:'Added '+name)+'</div>';
+    toast(T?'\u062a\u0645 \u2713':'Added \u2713','ts');
+    window.renderUpload();
   }catch(e){
-    resultDiv.innerHTML='<div style="padding:10px 14px;background:var(--red-lt);border:1.5px solid #fca5a5;border-radius:8px;color:var(--red);font-size:13px;font-weight:700">❌ '+e.message+'</div>';
+    if(resultDiv)resultDiv.innerHTML='<div style="padding:10px;background:var(--red-lt);border-radius:8px;color:var(--red);font-weight:700">\u274c '+e.message+'</div>';
     toast(e.message,'td');
   }finally{
-    btn.disabled=false;btn.textContent=T?'➕ إضافة الموظفة':'➕ Add Staff Member';
+    btn.disabled=false;btn.textContent=T?'\u2795 \u0625\u0636\u0627\u0641\u0629':'\u2795 Add';
   }
 };
 
@@ -2009,17 +1565,16 @@ window.saveExistingStaff=async function(uid){
   if(!role||!dept)return;
   await fsSet('user_profiles',uid,{role:role.value,dept:dept.value.trim(),shift_type:shift?shift.value:''});
   if(ALL_P[uid]){ALL_P[uid].role=role.value;ALL_P[uid].dept=dept.value.trim();if(shift)ALL_P[uid].shift_type=shift.value;}
-  toast(T?'تم الحفظ ✓':'Saved ✓','ts');
+  toast(T?'\u062a\u0645 \u2713':'Saved \u2713','ts');
 };
 
-window.triggerBulkUpload=function(){var el=document.getElementById("bulk-file");if(el)el.click();};
+window.triggerBulkUpload=function(){var el=document.getElementById('bulk-file');if(el)el.click();};
 
 window.handleBulkUpload=async function(input){
   var T=LANG==='ar';
   var file=input.files[0];if(!file)return;
   var resultDiv=document.getElementById('bulk-result');
-  resultDiv.innerHTML='<div style="color:var(--muted);font-size:12px">'+(T?'جارٍ المعالجة...':'Processing...')+'</div>';
-
+  resultDiv.innerHTML='<div style="color:var(--muted);font-size:12px">'+(T?'\u062c\u0627\u0631\u064a...':'Processing...')+'</div>';
   var reader=new FileReader();
   reader.onload=async function(e){
     try{
@@ -2027,56 +1582,241 @@ window.handleBulkUpload=async function(input){
       var wb=XLSX.read(data,{type:'array'});
       var ws=wb.Sheets[wb.SheetNames[0]];
       var rows=XLSX.utils.sheet_to_json(ws,{header:1});
-      if(rows.length<2){toast(T?'الملف فارغ':'Empty file','tw');return;}
-
+      if(rows.length<2){toast(T?'\u0627\u0644\u0645\u0644\u0641 \u0641\u0627\u0631\u063a':'Empty file','tw');return;}
       var apiKey='AIzaSyDC2cmBlwZDoOdCJXgQ7dc9X6MBqmlMf5w';
       var results=[];
-      var rows2=rows.slice(1).filter(function(r){return r[0]&&r[1]&&r[2];});
-
-      for(var i=0;i<rows2.length;i++){
-        var row=rows2[i];
+      var validRows=rows.slice(1).filter(function(r){return r[0]&&r[1]&&r[2];});
+      for(var i=0;i<validRows.length;i++){
+        var row=validRows[i];
         var rname=String(row[0]||'').trim();
         var remail=String(row[1]||'').trim().toLowerCase();
         var rpass=String(row[2]||'1234').trim();
         var rrole=String(row[3]||'nurse').trim();
         var rdept=String(row[4]||'').trim();
         var rshift=String(row[5]||'').trim();
-
-        resultDiv.innerHTML='<div style="color:var(--muted);font-size:12px">'+(T?'جارٍ إضافة ':'Adding ')+(i+1)+'/'+rows2.length+': '+rname+'</div>';
-
+        resultDiv.innerHTML='<div style="color:var(--muted);font-size:12px">'+(T?'\u062c\u0627\u0631\u064a \u0625\u0636\u0627\u0641\u0629 ':'Adding ')+(i+1)+'/'+validRows.length+': '+rname+'</div>';
         try{
-          var resp=await fetch('https://identitytoolkit.googleapis.com/v1/accounts:signUp?key='+apiKey,{
-            method:'POST',headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({email:remail,password:rpass,returnSecureToken:true})
-          });
+          var resp=await fetch('https://identitytoolkit.googleapis.com/v1/accounts:signUp?key='+apiKey,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:remail,password:rpass,returnSecureToken:true})});
           var rd=await resp.json();
-          if(rd.error){throw new Error(rd.error.message);}
-          var uid=rd.localId;
-          await fsSet('user_profiles',uid,{name:rname,email:remail,role:rrole,dept:rdept,shift_type:rshift,created_by:ME.id,created_at:new Date().toISOString()});
-          ALL_P[uid]={id:uid,name:rname,email:remail,role:rrole,dept:rdept,shift_type:rshift};
+          if(rd.error)throw new Error(rd.error.message);
+          await fsSet('user_profiles',rd.localId,{name:rname,email:remail,role:rrole,dept:rdept,shift_type:rshift,created_by:ME.id,created_at:new Date().toISOString()});
+          ALL_P[rd.localId]={id:rd.localId,name:rname,email:remail,role:rrole,dept:rdept,shift_type:rshift};
           results.push({name:rname,ok:true});
-        }catch(err){
-          results.push({name:rname,ok:false,msg:err.message});
-        }
+        }catch(err){results.push({name:rname,ok:false,msg:err.message});}
       }
-
       var ok=results.filter(function(r){return r.ok;}).length;
       var fail=results.filter(function(r){return !r.ok;});
-      var rh='<div style="padding:12px;background:var(--green-lt);border-radius:8px;margin-bottom:8px;font-size:13px;font-weight:700;color:var(--green)">✅ '+(T?'تم إضافة ':'Added ')+ok+(T?' موظفة بنجاح':' staff successfully')+'</div>';
-      if(fail.length){
-        rh+='<div style="font-size:12px;color:var(--red);font-weight:700;margin-bottom:6px">❌ '+(T?'فشل إضافة:':'Failed:')+'</div>';
-        fail.forEach(function(f){rh+='<div style="font-size:11px;color:var(--muted);margin-bottom:3px">• '+f.name+': '+f.msg+'</div>';});
-      }
+      var rh='<div style="padding:10px;background:var(--green-lt);border-radius:8px;color:var(--green);font-weight:700">\u2705 '+ok+(T?' \u062a\u0645 \u0625\u0636\u0627\u0641\u062a\u0647\u0645':' added')+'</div>';
+      if(fail.length){rh+='<div style="margin-top:6px;font-size:11px;color:var(--red)">\u274c '+fail.map(function(f){return f.name+': '+f.msg;}).join(' | ')+'</div>';}
       resultDiv.innerHTML=rh;
-      renderUpload();
-    }catch(err){
-      resultDiv.innerHTML='<div style="color:var(--red);font-size:12px">❌ '+err.message+'</div>';
-    }
+      window.renderUpload();
+    }catch(err){resultDiv.innerHTML='<div style="color:var(--red)">\u274c '+err.message+'</div>';}
   };
   reader.readAsArrayBuffer(file);
 };
 
-l
+window.renderRoles=function(){
+  var pg=document.getElementById('pg-roles'),T=LANG==='ar';if(!pg)return;
+  if(ME.role!=='manager'&&ME.role!=='admin'){pg.innerHTML='';return;}
+  var myDepts=ME.role==='manager'?(ALL_MD[ME.id]||[]):null;
+  var staff=Object.values(ALL_P).filter(function(p){
+    if(p.role==='admin')return false;
+    if(myDepts)return myDepts.indexOf(p.dept)>=0;
+    return true;
+  });
+  var depts=Array.from(new Set(staff.map(function(p){return p.dept||'';})));
+  var h='<div class="phdr"><div class="ptitle">\uD83D\uDC65 '+(T?'\u0625\u062f\u0627\u0631\u0629 \u0627\u0644\u0623\u062f\u0648\u0627\u0631':'Role Management')+'</div></div>';
+  h+='<div class="balcard" style="padding:14px"><div style="display:flex;gap:10px;flex-wrap:wrap">';
+  h+='<input id="role-search" oninput="filterRoles()" placeholder="'+(T?'\u0628\u062d\u062b...':'Search...')+'" style="flex:2;min-width:140px;padding:9px 12px;background:var(--s2);border:1.5px solid var(--b1);border-radius:8px;color:var(--text);font-family:Tajawal,sans-serif;font-size:13px;outline:none">';
+  h+='<select id="role-filter-dept" onchange="filterRoles()" style="flex:1;min-width:110px;padding:9px;background:var(--s2);border:1.5px solid var(--b1);border-radius:8px;color:var(--text);font-family:Tajawal,sans-serif;font-size:13px;outline:none"><option value="">'+(T?'\u0643\u0644 \u0627\u0644\u0623\u0642\u0633\u0627\u0645':'All Depts')+'</option>'+depts.map(function(d){return d?'<option value="'+d+'">'+d+'</option>':'';}).join('')+'</select>';
+  h+='<select id="role-filter-role" onchange="filterRoles()" style="flex:1;min-width:110px;padding:9px;background:var(--s2);border:1.5px solid var(--b1);border-radius:8px;color:var(--text);font-family:Tajawal,sans-serif;font-size:13px;outline:none"><option value="">'+(T?'\u0643\u0644 \u0627\u0644\u0623\u062f\u0648\u0627\u0631':'All Roles')+'</option><option value="nurse">Nurse</option><option value="head_nurse">Head Nurse</option><option value="manager">Manager</option></select>';
+  h+='<select id="role-filter-shift" onchange="filterRoles()" style="flex:1;min-width:80px;padding:9px;background:var(--s2);border:1.5px solid var(--b1);border-radius:8px;color:var(--text);font-family:Tajawal,sans-serif;font-size:13px;outline:none"><option value="">All</option><option value="9h">9h</option><option value="12h">12h</option></select>';
+  h+='</div></div>';
+  h+='<div class="calwrap twrap"><table><thead><tr><th style="text-align:right;padding-right:14px">'+(T?'\u0627\u0644\u0627\u0633\u0645':'Name')+'</th><th>'+(T?'\u0627\u0644\u0642\u0633\u0645':'Dept')+'</th><th>'+(T?'\u0627\u0644\u062f\u0648\u0631':'Role')+'</th><th>'+(T?'\u0633\u0627\u0639\u0627\u062a':'Hours')+'</th><th>'+(T?'\u062d\u0641\u0638':'Save')+'</th></tr></thead><tbody id="roles-tbody">';
+  staff.forEach(function(p){
+    var canEditRole=ME.role==='admin'||(ME.role==='manager'&&(p.role==='nurse'||p.role==='head_nurse'));
+    h+='<tr data-name="'+(p.name||'').toLowerCase()+'" data-dept="'+(p.dept||'')+'" data-role="'+(p.role||'')+'" data-shift="'+(p.shift_type||'')+'">';
+    h+='<td style="text-align:right;padding-right:14px"><div class="nrow"><div class="mav">'+(p.name?p.name.slice(0,2):'?')+'</div>'+(p.name||'-')+'</div></td>';
+    h+='<td>'+(p.dept||'-')+'</td><td>';
+    if(canEditRole){h+='<select id="r-role-'+p.id+'" style="padding:5px 8px;background:var(--s2);border:1px solid var(--b1);border-radius:6px;color:var(--text);font-family:Tajawal,sans-serif;font-size:12px;outline:none"><option value="nurse"'+(p.role==='nurse'?' selected':'')+'>Nurse</option><option value="head_nurse"'+(p.role==='head_nurse'?' selected':'')+'>Head Nurse</option>'+(ME.role==='admin'?'<option value="manager"'+(p.role==='manager'?' selected':'')+'>Manager</option>':'')+'</select>';}
+    else{h+='<span class="stpl '+(p.role==='head_nurse'?'st-rv':'st-d')+'">'+p.role+'</span>';}
+    h+='</td><td><select id="r-shift-'+p.id+'" style="padding:5px 8px;background:var(--s2);border:1px solid var(--b1);border-radius:6px;color:var(--text);font-family:Tajawal,sans-serif;font-size:12px;outline:none"><option value="">-</option><option value="9h"'+(p.shift_type==='9h'?' selected':'')+'>9h</option><option value="12h"'+(p.shift_type==='12h'?' selected':'')+'>12h</option></select></td>';
+    h+='<td><button data-uid="'+p.id+'" onclick="saveRoleEdit(this.dataset.uid)" style="padding:5px 14px;border:none;border-radius:7px;background:var(--blue-lt);color:var(--blue);font-family:Tajawal,sans-serif;font-size:12px;font-weight:700;cursor:pointer">'+(T?'\u062d\u0641\u0638':'Save')+'</button></td></tr>';
+  });
+  h+='</tbody></table></div>';
+  if(!staff.length)h='<div class="balcard" style="text-align:center;color:var(--muted);padding:40px">'+(T?'\u0644\u0627 \u064a\u0648\u062c\u062f \u0645\u0648\u0638\u0641\u0648\u0646':'No staff found')+'</div>';
+  pg.innerHTML=h;
+};
+
+window.filterRoles=function(){
+  var s=(document.getElementById('role-search')||{}).value||'';
+  var df=(document.getElementById('role-filter-dept')||{}).value||'';
+  var rf=(document.getElementById('role-filter-role')||{}).value||'';
+  var shf=(document.getElementById('role-filter-shift')||{}).value||'';
+  document.querySelectorAll('#roles-tbody tr').forEach(function(row){
+    var show=(!s||row.dataset.name.includes(s.toLowerCase()))&&(!df||row.dataset.dept===df)&&(!rf||row.dataset.role===rf)&&(!shf||row.dataset.shift===shf);
+    row.style.display=show?'':'none';
+  });
+};
+
+window.saveRoleEdit=async function(uid){
+  var T=LANG==='ar';
+  var r=document.getElementById('r-role-'+uid);
+  var s=document.getElementById('r-shift-'+uid);
+  var updates={};
+  if(r)updates.role=r.value;
+  if(s)updates.shift_type=s.value;
+  await fsSet('user_profiles',uid,updates);
+  if(ALL_P[uid]){if(r)ALL_P[uid].role=r.value;if(s)ALL_P[uid].shift_type=s.value;}
+  toast(T?'\u062a\u0645 \u2713':'Saved \u2713','ts');
+};
+
+window.renderMode=async function(){
+  var pg=document.getElementById('pg-mode'),T=LANG==='ar';if(!pg)return;
+  if(ME.role!=='head_nurse'&&ME.role!=='manager'&&ME.role!=='admin'){pg.innerHTML='';return;}
+  var modes=await fsGetAll('schedule_modes');
+  var modeMap={};modes.forEach(function(m){modeMap[m.dept]=m;});
+  var myDepts=ME.role==='head_nurse'?[ME.dept]:(ME.role==='manager'?(ALL_MD[ME.id]||[]):Object.keys(ALL_D));
+  var h='<div class="phdr"><div class="ptitle">\u23F0 '+(T?'\u0648\u0636\u0639 \u0627\u0644\u062c\u062f\u0648\u0644':'Schedule Mode')+'</div></div>';
+  myDepts.forEach(function(dept){
+    var mode=modeMap[dept]||{dept:dept,mode:'open'};
+    var nurses=Object.values(ALL_P).filter(function(p){return p.role==='nurse'&&p.dept===dept;});
+    var notFilled=nurses.filter(function(n){return !ALL_ST[n.id]||ALL_ST[n.id].status==='draft';});
+    var isOpen=mode.mode==='open';
+    h+='<div class="balcard">';
+    h+='<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px">';
+    h+='<div><div class="baltitle">\uD83C\uDFE5 '+dept+'</div><div style="font-size:11px;color:var(--muted)">'+(nurses.length-notFilled.length)+'/'+nurses.length+' '+(T?'\u0639\u0628\u0651\u0648\u0627':'filled')+'</div></div>';
+    h+='<div style="display:flex;gap:8px">';
+    h+='<button data-dept="'+dept+'" data-mode="open" onclick="toggleDeptMode(this.dataset.dept,this.dataset.mode)" style="padding:6px 14px;border-radius:7px;border:1.5px solid '+(isOpen?'var(--green)':'var(--b1)')+';background:'+(isOpen?'var(--green-lt)':'transparent')+';color:'+(isOpen?'var(--green)':'var(--muted)')+';font-family:Tajawal,sans-serif;font-size:12px;font-weight:700;cursor:pointer">\uD83D\uDC50 '+(T?'\u0645\u0641\u062a\u0648\u062d':'Open')+'</button>';
+    h+='<button data-dept="'+dept+'" data-mode="hn_only" onclick="toggleDeptMode(this.dataset.dept,this.dataset.mode)" style="padding:6px 14px;border-radius:7px;border:1.5px solid '+(!isOpen?'var(--blue)':'var(--b1)')+';background:'+(!isOpen?'var(--blue-lt)':'transparent')+';color:'+(!isOpen?'var(--blue)':'var(--muted)')+';font-family:Tajawal,sans-serif;font-size:12px;font-weight:700;cursor:pointer">\uD83D\uDD12 HN Only</button>';
+    h+='</div></div>';
+    if(notFilled.length){
+      h+='<div style="margin-bottom:10px"><div style="font-size:11px;font-weight:700;color:var(--amber);margin-bottom:6px">\u26A0\uFE0F '+(T?'\u0644\u0645 \u064a\u0639\u0628\u0651\u0648\u0627:':'Not filled:')+'</div>';
+      h+='<div style="display:flex;flex-wrap:wrap;gap:5px">'+notFilled.map(function(n){return'<span style="padding:3px 10px;background:var(--amber-lt);color:var(--amber);border-radius:20px;font-size:11px">'+n.name+'</span>';}).join('')+'</div></div>';
+      h+='<div style="display:flex;gap:8px;flex-wrap:wrap">';
+      h+='<button data-dept="'+dept+'" onclick="aiScheduleLate(this.dataset.dept)" style="padding:7px 14px;border:none;border-radius:8px;background:linear-gradient(135deg,var(--navy),var(--blue));color:white;font-family:Tajawal,sans-serif;font-size:12px;font-weight:700;cursor:pointer">\uD83E\uDD16 '+(T?'AI \u062a\u0639\u0628\u0626\u0629 \u062a\u0644\u0642\u0627\u0626\u064a\u0629':'AI Fill')+'</button>';
+      h+='</div>';
+    }
+    if(isOpen&&nurses.length-notFilled.length>0){
+      h+='<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--b1)">';
+      h+='<button data-dept="'+dept+'" onclick="aiSuggestFix(this.dataset.dept)" style="padding:7px 14px;border:none;border-radius:8px;background:var(--purple-lt);color:var(--purple);font-family:Tajawal,sans-serif;font-size:12px;font-weight:700;cursor:pointer">\u2728 '+(T?'AI \u0645\u0642\u062a\u0631\u062d\u0627\u062a':'AI Suggestions')+'</button>';
+      h+='</div>';
+    }
+    h+='<div id="mode-result-'+dept.replace(/\s/g,'_')+'"></div></div>';
+  });
+  pg.innerHTML=h;
+};
+
+window.toggleDeptMode=async function(dept,mode){
+  await fsSet('schedule_modes',dept,{dept:dept,mode:mode,updated_by:ME.id,updated_at:new Date().toISOString()});
+  toast(LANG==='ar'?(mode==='open'?'\u0641\u062a\u062d \u2713':'\u0642\u0641\u0644 \u2713'):(mode==='open'?'Open':'Locked'),'ts');
+  window.renderMode();
+};
+
+window.aiScheduleLate=async function(dept){
+  var T=LANG==='ar';
+  var nurses=Object.values(ALL_P).filter(function(p){return p.role==='nurse'&&p.dept===dept&&(!ALL_ST[p.id]||ALL_ST[p.id].status==='draft');});
+  if(!nurses.length){toast(T?'\u0644\u0627 \u064a\u0648\u062c\u062f \u0645\u062a\u0623\u062e\u0631\u0627\u062a':'No late nurses','ti');return;}
+  var y=MONTH.getFullYear(),m=MONTH.getMonth(),days=new Date(y,m+1,0).getDate();
+  var deptCaps=ALL_D[dept]||{m:3,e:3,n:3};
+  toast(T?'AI \u064a\u0639\u0645\u0644...':'AI working...','ti');
+  var prompt='Fill schedule for '+nurses.length+' late nurses in '+dept+'. Month: '+new Date(y,m).toLocaleDateString('en',{month:'long',year:'numeric'})+'. Nurses: '+nurses.map(function(n){return n.name+(n.shift_type?' ('+n.shift_type+')':'');}).join(', ')+'. Daily needs: morning='+deptCaps.m+', evening='+deptCaps.e+', night='+deptCaps.n+'. Min 6 rest days. 12h nurses: long_day/long_night shifts. 9h: morning/evening/night. Return ONLY JSON: {"schedule":{"Name":{"1":"shift",...'+days+' days}},"summary":"brief summary"}';
+  try{
+    var resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:4000,messages:[{role:'user',content:prompt}]})});
+    var data=await resp.json();
+    var text=data.content&&data.content[0]&&data.content[0].text||'';
+    var jm=text.match(/\{[\s\S]*\}/);if(!jm)throw new Error('no json');
+    var result=JSON.parse(jm[0]);
+    var count=0;
+    for(var i=0;i<nurses.length;i++){
+      var nurse=nurses[i];var sh=result.schedule[nurse.name];if(!sh)continue;
+      for(var d=1;d<=days;d++){
+        var shift=sh[String(d)]||sh[d];if(!shift||shift==='off')continue;
+        var ds=y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+        await fsSet('schedules',nurse.id+'_'+ds,{nurse_id:nurse.id,date:ds,shift:shift,flag:null});
+        if(!ALL_S[nurse.id])ALL_S[nurse.id]={};
+        ALL_S[nurse.id][ds]={shift:shift,flag:null,docId:nurse.id+'_'+ds};
+        count++;
+      }
+      await fsSet('schedule_status',nurse.id,{nurse_id:nurse.id,status:'submitted',submitted_at:new Date().toISOString(),auto_filled:true});
+      ALL_ST[nurse.id]={nurse_id:nurse.id,status:'submitted',auto_filled:true};
+    }
+    toast((T?'\u062a\u0645 \u062a\u0639\u0628\u0626\u0629 ':'Auto-filled ')+count+(T?' \u064a\u0648\u0645':' days'),'ts');
+    window.renderMode();
+  }catch(e){toast(e.message,'td');}
+};
+
+window.aiSuggestFix=async function(dept){
+  var T=LANG==='ar';
+  var y=MONTH.getFullYear(),m=MONTH.getMonth(),days=new Date(y,m+1,0).getDate();
+  var deptCaps=ALL_D[dept]||{m:3,e:3,n:3};
+  var nurses=Object.values(ALL_P).filter(function(p){return p.role==='nurse'&&p.dept===dept;});
+  var gaps=[];
+  for(var d=1;d<=days;d++){
+    var ds=y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    ['morning','evening','night'].forEach(function(sh){
+      var cur=shiftCount(dept,ds,sh),cap=shiftCap(dept,sh);
+      if(cap<99&&cur<cap)gaps.push({date:ds,shift:sh,have:cur,need:cap});
+    });
+  }
+  var resultDiv=document.getElementById('mode-result-'+dept.replace(/\s/g,'_'));
+  if(!gaps.length){if(resultDiv)resultDiv.innerHTML='<div class="alert" style="background:var(--green-lt);border:1.5px solid #6ee7b7;color:var(--green);border-radius:10px;padding:12px;margin-top:10px;font-weight:700">\u2705 '+(T?'\u0627\u0644\u062a\u063a\u0637\u064a\u0629 \u0645\u0643\u062a\u0645\u0644\u0629':'Coverage complete')+'</div>';return;}
+  toast(T?'AI \u064a\u062d\u0644\u0644...':'AI analyzing...','ti');
+  var schedSummary=nurses.slice(0,10).map(function(n){var s=Object.entries(ALL_S[n.id]||{}).filter(function(e){var dt=new Date(e[0]+'T00:00:00');return dt.getFullYear()===y&&dt.getMonth()===m;}).slice(0,5).map(function(e){return e[0].slice(8)+':'+e[1].shift;}).join(',');return n.name+'('+n.shift_type+'): '+s;}).join('; ');
+  var prompt='Suggest schedule changes to fix coverage gaps in '+dept+'. Gaps: '+JSON.stringify(gaps.slice(0,15))+'. Nurses: '+schedSummary+'. Return ONLY JSON: {"suggestions":[{"nurse":"name","date":"YYYY-MM-DD","from":"shift","to":"shift","reason":"why"}],"summary":"Arabic summary"}';
+  try{
+    var resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:2000,messages:[{role:'user',content:prompt}]})});
+    var data=await resp.json();
+    var text=data.content&&data.content[0]&&data.content[0].text||'';
+    var jm=text.match(/\{[\s\S]*\}/);if(!jm)throw new Error('no json');
+    var result=JSON.parse(jm[0]);
+    window._aiSuggestions=window._aiSuggestions||{};window._aiSuggestions[dept]=result.suggestions||[];
+    var rh='<div style="margin-top:12px;padding:14px;background:var(--s2);border-radius:10px;border:1px solid var(--b1)">';
+    rh+='<div style="font-size:13px;font-weight:700;color:var(--purple);margin-bottom:8px">\u2728 AI Suggestions</div>';
+    if(result.summary)rh+='<div style="font-size:12px;color:var(--muted);margin-bottom:10px;padding:8px;background:var(--purple-lt);border-radius:8px">'+result.summary+'</div>';
+    (result.suggestions||[]).slice(0,8).forEach(function(s,i){
+      rh+='<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--b1);font-size:12px"><span style="font-weight:700">'+s.nurse+'</span><span style="color:var(--muted)">'+s.date+'</span><span style="color:var(--red)">'+(s.from||'off')+'</span><span>\u2192</span><span style="color:var(--green)">'+s.to+'</span><span style="flex:1;color:var(--muted);font-size:10px">'+(s.reason||'')+'</span>';
+      rh+='<button data-idx="'+i+'" data-dept="'+dept+'" onclick="applySuggestion(parseInt(this.dataset.idx),this.dataset.dept)" style="padding:3px 8px;border:none;border-radius:5px;background:var(--blue-lt);color:var(--blue);font-family:Tajawal,sans-serif;font-size:10px;font-weight:700;cursor:pointer">Apply</button></div>';
+    });
+    rh+='<button data-dept="'+dept+'" onclick="applyAllSuggestions(this.dataset.dept)" style="margin-top:10px;padding:7px 14px;border:none;border-radius:8px;background:linear-gradient(135deg,var(--navy),var(--blue));color:white;font-family:Tajawal,sans-serif;font-size:12px;font-weight:700;cursor:pointer">Apply All</button></div>';
+    if(resultDiv)resultDiv.innerHTML=rh;
+  }catch(e){toast(e.message,'td');}
+};
+
+window.applySuggestion=async function(idx,dept){
+  var T=LANG==='ar';
+  var s=((window._aiSuggestions||{})[dept]||[])[idx];if(!s)return;
+  var nurse=Object.values(ALL_P).find(function(p){return p.name===s.nurse&&p.dept===dept;});
+  if(!nurse)return toast(T?'\u0644\u0645 \u062a\u0648\u062c\u062f':'Not found','tw');
+  await fsSet('schedules',nurse.id+'_'+s.date,{nurse_id:nurse.id,date:s.date,shift:s.to,flag:null});
+  if(!ALL_S[nurse.id])ALL_S[nurse.id]={};
+  ALL_S[nurse.id][s.date]={shift:s.to,flag:null,docId:nurse.id+'_'+s.date};
+  toast(T?'\u062a\u0645 \u2713':'Applied \u2713','ts');
+  window.aiSuggestFix(dept);
+};
+
+window.applyAllSuggestions=async function(dept){
+  var T=LANG==='ar';
+  var suggestions=((window._aiSuggestions||{})[dept]||[]);
+  for(var i=0;i<suggestions.length;i++){
+    var s=suggestions[i];
+    var nurse=Object.values(ALL_P).find(function(p){return p.name===s.nurse&&p.dept===dept;});
+    if(!nurse)continue;
+    await fsSet('schedules',nurse.id+'_'+s.date,{nurse_id:nurse.id,date:s.date,shift:s.to,flag:null});
+    if(!ALL_S[nurse.id])ALL_S[nurse.id]={};
+    ALL_S[nurse.id][s.date]={shift:s.to,flag:null,docId:nurse.id+'_'+s.date};
+  }
+  toast(T?'\u062a\u0645 \u0627\u0644\u0643\u0644 \u2713':'All Applied \u2713','ts');
+  window.renderMode();
+};
+
+async function checkScheduleMode(){
+  if(!ME||ME.role!=='nurse')return true;
+  var modes=await fsGetAll('schedule_modes');
+  var deptMode=modes.find(function(m){return m.dept===ME.dept;});
+  if(deptMode&&deptMode.mode==='hn_only'){toast(LANG==='ar'?'\u0627\u0644\u062a\u0639\u0628\u0626\u0629 \u0645\u0642\u0641\u0644\u0629':'Schedule locked','tw');return false;}
+  return true;
+}
 
 onAuthStateChanged(auth,async function(user){
   if(user){await loadMe(user.uid);}
@@ -2088,6 +1828,5 @@ onAuthStateChanged(auth,async function(user){
 });
 
 </script>
-
 </body>
 </html>
