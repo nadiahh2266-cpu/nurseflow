@@ -144,11 +144,21 @@ main{max-width:1180px;margin:0 auto;padding:24px 16px 60px}
 /* ---------- Forms ---------- */
 label.fld{display:block;font-weight:700;font-size:13.5px;color:var(--ink);margin-bottom:7px}
 .req::after{content:" *";color:var(--coral)}
-input[type=text],input[type=number],select,textarea{
+input[type=text],input[type=number],input[type=password],input[type=date],select,textarea{
   width:100%;padding:11px 13px;border:1.5px solid var(--line);border-radius:7px;font-family:inherit;font-size:14.5px;
   background:#fbfdfd;color:var(--text);transition:.15s
 }
 input:focus,select:focus,textarea:focus{outline:none;border-color:var(--teal);background:#fff;box-shadow:0 0 0 3px var(--teal-soft)}
+.pass-wrap{position:relative;display:block}
+.pass-wrap input{width:100%;padding-inline-end:44px}
+.pass-eye{position:absolute;top:50%;transform:translateY(-50%);inset-inline-end:6px;width:32px;height:32px;display:grid;place-items:center;border:none;background:none;color:var(--muted);cursor:pointer;border-radius:6px;padding:0}
+.pass-eye:hover{color:var(--teal);background:var(--teal-soft)}
+.pass-eye.on{color:var(--teal)}
+.link-btn{border:none;background:none;color:var(--teal);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;padding:2px 0;text-decoration:none}
+.link-btn:hover{text-decoration:underline}
+.link-btn:disabled{opacity:.5;cursor:default;text-decoration:none}
+.month-sel{padding:8px 12px;border:1.5px solid var(--line);border-radius:7px;background:#fff;font-family:inherit;font-size:13.5px;font-weight:700;color:var(--ink);cursor:pointer;width:auto;min-width:150px}
+.month-sel:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px var(--teal-soft)}
 textarea{resize:vertical;min-height:70px}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
@@ -371,7 +381,7 @@ tbody tr:hover{background:#f8fbfb}
 }
 /* iOS zooms the page when a field's text is under 16px — keep inputs at 16px */
 @media(max-width:640px){
-  input[type=text],input[type=number],input[type=password],select,textarea{font-size:16px}
+  input[type=text],input[type=number],input[type=password],input[type=date],select,textarea{font-size:16px}
 }
 </style>
 </head>
@@ -394,7 +404,13 @@ tbody tr:hover{background:#f8fbfb}
     <label class="fld req" id="lg_email_l">البريد الإلكتروني</label>
     <input type="text" id="loginEmail" placeholder="name@example.com" autocomplete="username" style="margin-bottom:16px">
     <label class="fld req" id="lg_pass_l">كلمة المرور</label>
-    <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password" style="margin-bottom:20px" onkeydown="if(event.key==='Enter')doLogin()">
+    <div class="pass-wrap">
+      <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+      <button type="button" class="pass-eye" id="passEye" onclick="togglePass()" aria-label="إظهار كلمة المرور">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+      </button>
+    </div>
+    <div style="text-align:end;margin:-6px 0 18px"><button type="button" class="link-btn" id="forgotLink" onclick="forgotPass()">نسيت كلمة المرور؟</button></div>
     <button class="btn btn-primary" id="loginBtn" style="width:100%;justify-content:center" onclick="doLogin()">تسجيل الدخول</button>
     <p class="hint" id="lg_note" style="text-align:center;margin-top:16px">الدخول للموظفات المصرّح لهنّ فقط. للحصول على حساب راجعي الإدارة.</p>
     <p class="hint" id="loginMsg" style="text-align:center;color:var(--coral);font-weight:700;min-height:18px"></p>
@@ -464,7 +480,7 @@ const firebaseConfig = {
   messagingSenderId: "1005946269057",
   appId:             "1:1005946269057:web:7f27d61f49187448d28c80"
 };
-const RC='rounds', UC='users';
+const RC='rounds', UC='users', PC='patient_counts';
 const USE_FIREBASE = firebaseConfig.projectId && !firebaseConfig.projectId.includes('PASTE');
 
 /* ---- roles & permissions ---- */
@@ -478,11 +494,11 @@ const USE_FIREBASE = firebaseConfig.projectId && !firebaseConfig.projectId.inclu
 const OWNER_UID='tddkmx91NtY9rR8aHDsDSk2aZWD2';
 
 /* ===== إعدادات المتابعة — عدّليها متى ما تغيّرت سياستكم =====
-   SAT_TARGET  : هدف الرضا بالنسبة المئوية (٥/٥ = ١٠٠٪، فـ ٩٥٪ تعني متوسط ٤.٧٥)
+   SAT_TARGET  : هدف الرضا بالنسبة المئوية (٥/٥ = ١٠٠٪، فـ ٩٠٪ تعني متوسط ٤.٥)
    ESC_WARN_D  : بعد كم يوم تُعتبر المشكلة المصعّدة متأخرة (تنبيه برتقالي)
    ESC_CRIT_D  : بعد كم يوم تصير حرجة (تنبيه أحمر)
    REPEAT_MIN  : كم تكرار للبند في نفس القسم حتى يُعتبر خللاً متكرراً */
-const SAT_TARGET=95, ESC_WARN_D=3, ESC_CRIT_D=7, REPEAT_MIN=3;
+const SAT_TARGET=90, ESC_WARN_D=3, ESC_CRIT_D=7, REPEAT_MIN=3;
 
 const ROLE   ={tech:'القائم بالجولة',head:'رئيس القسم',sup:'مشرف الأقسام',admin:'الإدارة'};
 const ROLE_IC={tech:'🩺',head:'🧑‍⚕️',sup:'👩‍⚕️',admin:'🏛️'};
@@ -538,7 +554,17 @@ const I18N={
   tab_new:'جولة جديدة',tab_myrounds:'جولات قسمي',tab_problems:'المشاكل',tab_all_all:'كل الجولات',tab_all_dept:'جولات القسم',tab_dash:'الداشبورد',st_title:'إنتاجية الفريق',st_sub:'جولات كل موظفة ومعدّلها اليومي ومستوى الرضا في جولاتها.',st_kpi_staff:'موظفات نشطات',st_kpi_rounds:'إجمالي الجولات',st_kpi_avg_per:'متوسط الجولات للموظفة',st_kpi_top:'الأعلى إنتاجية',st_th_name:'الموظفة',st_th_rounds:'الجولات',st_th_perday:'المعدل اليومي',st_th_days:'أيام العمل',st_th_sat:'متوسط الرضا',st_th_issues:'مشاكل رصدتها',st_th_res:'حلّتها',st_th_esc:'صعّدتها',st_th_last:'آخر جولة',st_none:'ما فيه جولات في هذه الفترة',st_none_sub:'غيّري الفترة أو القسم.',st_inactive:'بدون جولات في الفترة',st_detail:'تفصيل يومي — {name}',st_back:'رجوع للقائمة',st_day:'اليوم',st_rounds_day:'الجولات',st_sat_day:'متوسط الرضا',st_no_days:'ما فيه أيام مسجّلة في هذه الفترة.',st_click_hint:'اضغطي على أي موظفة لعرض تفصيلها اليومي.',st_staff_note:'القائمة تشمل الموظفات في أقسامك. اللي ما سوّت جولات تظهر في الآخر.',tab_staff:'الإنتاجية',tab_users:'المستخدمون',
   login_quote:'قد ينسى المريض أسماءنا، لكنه لن ينسى من جلس معه دقيقة وسأل: كيف حالك اليوم؟',login_title:'نظام جولات رضا المرضى',login_sub:'مستشفى الجبيل العام · جميع الأقسام',
   email:'البريد الإلكتروني',password:'كلمة المرور',login_btn:'تسجيل الدخول',login_note:'الدخول للموظفات المصرّح لهنّ فقط. للحصول على حساب راجعي الإدارة.',login_signingin:'جارِ الدخول…',
-  err_fill_login:'اكتبي البريد وكلمة المرور',err_noserver:'لا يوجد اتصال بالخادم',err_login_generic:'تعذّر تسجيل الدخول',
+  err_fill_login:'اكتبي البريد وكلمة المرور',kpi_coverage:'نسبة التغطية',cov_sub:'{r} جولة من {e} مريض',cov_nodata:'أدخلي أعداد المرضى',
+  pc_title:'أعداد المرضى (يومي)',pc_hint:'أدخلي إجمالي المرضى والمستثنين لكل يوم لمقارنتها بعدد الجولات.',
+  pc_date:'التاريخ',pc_total:'إجمالي المرضى',pc_excluded:'عدد المستثنين',pc_save:'حفظ العدد',
+  pc_last_by:'آخر إدخال',pc_saved:'تم حفظ عدد المرضى',pc_noperm:'إدخال الأعداد متاح لرئيس القسم فقط',
+  pc_err_excl:'عدد المستثنين لا يمكن أن يتجاوز الإجمالي',
+  chart_bar:'أعمدة',chart_radar:'رادار',radar_actual:'الأداء الفعلي',radar_target:'الهدف {tg}٪',rc_prompt:'بعد حل المشكلة — هل صار المريض راضٍ؟',
+  rc_satisfied:'راضٍ',rc_neutral:'محايد',rc_unsatisfied:'غير راضٍ',
+  rc_done_label:'تقييم ما بعد الحل',rc_newscore:'الدرجة الجديدة',
+  rc_saved:'تم تحديث تقييم الرضا بعد حل المشكلة',err_noperm_recheck:'إعادة التقييم متاحة للقائم بالجولة أو الإدارة',month_all:'كل الأشهر',export_month:'⬇ تصدير الشهر',no_rounds_month:'لا توجد جولات في هذا الشهر',pass_show:'إظهار كلمة المرور',pass_hide:'إخفاء كلمة المرور',
+  forgot_pass:'نسيت كلمة المرور؟',fp_need_email:'اكتبي بريدك الإلكتروني أولاً ثم اضغطي «نسيت كلمة المرور»',
+  fp_sending:'جارِ إرسال رابط التغيير…',fp_sent:'أرسلنا رابط تغيير كلمة المرور إلى بريدك. تحققي من صندوق الوارد (والـ Spam).',err_noserver:'لا يوجد اتصال بالخادم',err_login_generic:'تعذّر تسجيل الدخول',
   e_invalid_email:'صيغة البريد غير صحيحة',e_user_not_found:'لا يوجد حساب بهذا البريد',e_wrong_pass:'كلمة المرور غير صحيحة',e_invalid_cred:'البريد أو كلمة المرور غير صحيحة',e_too_many:'محاولات كثيرة، انتظري قليلاً ثم أعيدي المحاولة',e_disabled:'هذا الحساب موقوف',e_in_use:'هذا البريد مستخدم لحساب موجود',e_weak:'كلمة المرور قصيرة (٦ أحرف على الأقل)',
   err_fb_load:'تعذّر تحميل Firebase — تأكدي من اتصال الإنترنت.',err_server:'تعذّر الاتصال بالخادم.',btn_retry:'🔄 إعادة المحاولة',connecting:'جارِ الاتصال…',e_network:'ما فيه اتصال بالإنترنت — تأكدي من الشبكة وأعيدي المحاولة',err_unauth:'حسابك غير مُصرّح له بعد. راجعي الإدارة.',err_load_acct:'تعذّر تحميل بيانات الحساب.',toast_admin_created:'تم إنشاء حساب الإدارة',toast_cloud_lost:'انقطع الاتصال بالسحابة',toast_cloud_savefail:'تعذّر الحفظ في السحابة',
   nr_title:'جولة جديدة',nr_sub:'قيّمي كل بند من ١ (ضعيف) إلى ٥ (ممتاز). أي بند بتقييم ٢ أو أقل يُرصد كمشكلة تلقائياً.',
@@ -581,7 +607,17 @@ const I18N={
   tab_new:'New Round',tab_myrounds:'My Rounds',tab_problems:'Issues',tab_all_all:'All Rounds',tab_all_dept:'Department Rounds',tab_dash:'Dashboard',st_title:'Team Productivity',st_sub:'Rounds per staff member, daily rate, and the satisfaction level in their rounds.',st_kpi_staff:'Active staff',st_kpi_rounds:'Total rounds',st_kpi_avg_per:'Avg. rounds per person',st_kpi_top:'Top performer',st_th_name:'Staff member',st_th_rounds:'Rounds',st_th_perday:'Per day',st_th_days:'Active days',st_th_sat:'Avg. satisfaction',st_th_issues:'Issues found',st_th_res:'Resolved',st_th_esc:'Escalated',st_th_last:'Last round',st_none:'No rounds in this period',st_none_sub:'Try a different period or department.',st_inactive:'No rounds this period',st_detail:'Daily breakdown — {name}',st_back:'Back to list',st_day:'Day',st_rounds_day:'Rounds',st_sat_day:'Avg. satisfaction',st_no_days:'No days recorded in this period.',st_click_hint:'Tap any staff member to see their daily breakdown.',st_staff_note:'The list covers staff in your departments. Anyone with no rounds appears at the bottom.',tab_staff:'Productivity',tab_users:'Users',
   login_quote:'A patient may forget our names, but never the one who sat with them a minute and asked: how are you today?',login_title:'Patient Satisfaction Rounds',login_sub:'Jubail General Hospital · All Departments',
   email:'Email',password:'Password',login_btn:'Sign in',login_note:'Access is limited to authorized staff. Contact administration for an account.',login_signingin:'Signing in…',
-  err_fill_login:'Enter your email and password',err_noserver:'No server connection',err_login_generic:'Sign-in failed',
+  err_fill_login:'Enter your email and password',kpi_coverage:'Coverage',cov_sub:'{r} rounds of {e} patients',cov_nodata:'Enter patient counts',
+  pc_title:'Patient counts (daily)',pc_hint:'Enter total and excluded patients per day to compare against rounds.',
+  pc_date:'Date',pc_total:'Total patients',pc_excluded:'Excluded',pc_save:'Save count',
+  pc_last_by:'Last entry',pc_saved:'Patient count saved',pc_noperm:'Only the head nurse can enter counts',
+  pc_err_excl:'Excluded cannot exceed total',
+  chart_bar:'Bars',chart_radar:'Radar',radar_actual:'Actual',radar_target:'Target {tg}%',rc_prompt:'After resolving — is the patient satisfied now?',
+  rc_satisfied:'Satisfied',rc_neutral:'Neutral',rc_unsatisfied:'Not satisfied',
+  rc_done_label:'Post-resolution check',rc_newscore:'New score',
+  rc_saved:'Satisfaction updated after resolution',err_noperm_recheck:'Re-check is available to the rounds conductor or administration',month_all:'All months',export_month:'⬇ Export month',no_rounds_month:'No rounds in this month',pass_show:'Show password',pass_hide:'Hide password',
+  forgot_pass:'Forgot password?',fp_need_email:'Enter your email first, then tap "Forgot password"',
+  fp_sending:'Sending reset link…',fp_sent:'A password reset link was sent to your email. Check your inbox (and Spam).',err_noserver:'No server connection',err_login_generic:'Sign-in failed',
   e_invalid_email:'Invalid email format',e_user_not_found:'No account with this email',e_wrong_pass:'Incorrect password',e_invalid_cred:'Incorrect email or password',e_too_many:'Too many attempts, wait a moment and try again',e_disabled:'This account is disabled',e_in_use:'This email is already in use',e_weak:'Password too short (at least 6 characters)',
   err_fb_load:'Failed to load Firebase — check your internet connection.',err_server:'Failed to connect to the server.',btn_retry:'🔄 Try again',connecting:'Connecting…',e_network:'No internet connection — check your network and try again',err_unauth:'Your account is not authorized yet. Contact administration.',err_load_acct:'Failed to load account data.',toast_admin_created:'Administrator account created',toast_cloud_lost:'Cloud connection lost',toast_cloud_savefail:'Failed to save to cloud',
   nr_title:'New Round',nr_sub:'Rate each item from 1 (Poor) to 5 (Excellent). Any item rated 2 or below is automatically flagged as an issue.',
@@ -650,8 +686,43 @@ const DB={
     ROUNDS=ROUNDS.filter(r=>r.id!==id);
     if(!cloud)saveLocal();
     return true;
+  },
+  async saveCount(rec){
+    // rec: {id: dept__YYYY-MM-DD, dept, date, total, excluded, by, ts}
+    PCOUNTS[rec.id]=rec;
+    if(cloud){
+      try{ await db.collection(PC).doc(rec.id).set(rec); }
+      catch(e){ console.error(e); toast(t('toast_cloud_savefail'),'err'); return false; }
+    }else{ saveLocalCounts(); }
+    return true;
   }
 };
+/* patient-count records, keyed by dept__date */
+let PCOUNTS={};
+function countId(dept,date){return dept+'__'+date;}
+function saveLocalCounts(){try{localStorage.setItem('jhn_pcounts_v1',JSON.stringify(PCOUNTS));}catch(e){}}
+function loadLocalCounts(){try{const s=localStorage.getItem('jhn_pcounts_v1');if(s)PCOUNTS=JSON.parse(s);}catch(e){}}
+let pcUnsubs=[];
+function unsubscribeCounts(){pcUnsubs.forEach(u=>{try{u();}catch(e){}});pcUnsubs=[];for(const k in PCOUNTS)delete PCOUNTS[k];}
+function subscribeCounts(){
+  if(!cloud||!db){loadLocalCounts();return;}
+  const errH=e=>console.error('counts:',e);
+  if(seesAllDepts(USER)){
+    pcUnsubs.push(db.collection(PC).onSnapshot(snap=>{
+      for(const k in PCOUNTS)delete PCOUNTS[k];
+      snap.docs.forEach(d=>{PCOUNTS[d.id]=d.data();});
+      if(current==='dash'||current==='staff')render();
+    },errH));
+  }else{
+    const ds=userDepts(USER);
+    ds.forEach(d=>{
+      pcUnsubs.push(db.collection(PC).where('dept','==',d).onSnapshot(snap=>{
+        snap.docs.forEach(x=>{PCOUNTS[x.id]=x.data();});
+        if(current==='dash'||current==='staff')render();
+      },errH));
+    });
+  }
+}
 
 let PENDING=0, FROM_CACHE=false;
 function setStatus(ok){
@@ -714,7 +785,7 @@ async function retryConnect(){
 
 /* runs on login/logout */
 async function handleAuth(fbUser){
-  if(!fbUser){USER=null;current='';ROUNDS=[];unsubscribeRounds();showLogin();return;}
+  if(!fbUser){USER=null;current='';ROUNDS=[];unsubscribeRounds();unsubscribeCounts();showLogin();return;}
   try{
     const snap=await db.collection(UC).doc(fbUser.uid).get();
     let prof=snap.exists?snap.data():null;
@@ -733,7 +804,7 @@ async function handleAuth(fbUser){
     }
     if(prof.active===false){ loginMsg(t('err_unauth')); await auth.signOut(); return; }
     USER={uid:fbUser.uid,email:fbUser.email,...prof};
-    loginMsg(''); hideLogin(); subscribeRounds(); boot();
+    loginMsg(''); hideLogin(); subscribeRounds(); subscribeCounts(); boot();
   }catch(e){console.error(e);loginMsg(t('err_load_acct'));}
 }
 
@@ -838,6 +909,26 @@ function authErr(e){
     'auth/email-already-in-use':'e_in_use','auth/weak-password':'e_weak',
     'auth/network-request-failed':'e_network','auth/internal-error':'e_network'};
   return t(m[e&&e.code]||'err_login_generic');
+}
+function togglePass(){
+  const inp=$('#loginPass'),eye=$('#passEye');if(!inp)return;
+  const show=inp.type==='password';
+  inp.type=show?'text':'password';
+  eye.classList.toggle('on',show);
+  eye.setAttribute('aria-label',show?t('pass_hide'):t('pass_show'));
+}
+async function forgotPass(){
+  const email=$('#loginEmail').value.trim();
+  if(!email){loginMsg(t('fp_need_email'));$('#loginEmail').focus();return;}
+  if(!auth){loginMsg(t('err_noserver'));return;}
+  const link=$('#forgotLink');if(link)link.disabled=true;
+  loginMsg(t('fp_sending'),true);
+  try{
+    await auth.sendPasswordResetEmail(email);
+    loginMsg(t('fp_sent'),true);
+  }catch(e){
+    loginMsg(authErr(e));
+  }finally{ if(link)link.disabled=false; }
 }
 function logout(){current='';USER=null;if(auth){auth.signOut();}showLogin();}
 
@@ -998,7 +1089,7 @@ function probLabel(p){return p&&p.qkey?t('q_'+p.qkey):((p&&p.label)||t('issue_wo
 function ptypeLabel(v){return v==='مريض'?t('opt_patient'):v==='مرافق'?t('opt_companion'):(v||'');}
 function renderLogin(){
   const set=(id,key)=>{const e=$('#'+id);if(e)e.textContent=t(key);};
-  set('lg_title','login_title');set('lg_sub','login_sub');set('lg_email_l','email');set('lg_pass_l','password');set('loginBtn','login_btn');set('lg_note','login_note');set('lg_quote','login_quote');
+  set('lg_title','login_title');set('lg_sub','login_sub');set('lg_email_l','email');set('lg_pass_l','password');set('loginBtn','login_btn');set('lg_note','login_note');set('lg_quote','login_quote');set('forgotLink','forgot_pass');
 }
 
 function renderQuestions(){
@@ -1204,12 +1295,44 @@ function commitRound(){
 
 /* ================= ROUNDS LISTS ================= */
 function viewMyRounds(){roundsList(scopedRounds(),t('mr_title'),t('mr_sub'));}
-function viewAll(){roundsList(scopedRounds(),seesAll(USER)?t('all_title_all'):t('all_title_dept'),seesAll(USER)?t('all_sub_all'):t('all_sub_dept'));}
-function roundsList(list,title,sub){
+let monthFilter='all'; // 'all' or 'YYYY-MM'
+function monthKey(ts){const d=new Date(ts);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
+function monthLabel(key){
+  if(key==='all')return t('month_all');
+  const [y,m]=key.split('-').map(Number);
+  return new Date(y,m-1,1).toLocaleDateString(dloc(),{month:'long',year:'numeric'});
+}
+function availableMonths(list){
+  const set=new Set(list.map(r=>monthKey(r.ts)));
+  return [...set].sort().reverse();
+}
+function applyMonth(list){
+  return monthFilter==='all'?list:list.filter(r=>monthKey(r.ts)===monthFilter);
+}
+function viewAll(){
+  const scoped=scopedRounds();
+  const filtered=applyMonth(scoped);
+  roundsList(filtered,seesAll(USER)?t('all_title_all'):t('all_title_dept'),
+    seesAll(USER)?t('all_sub_all'):t('all_sub_dept'),scoped);
+}
+function roundsList(list,title,sub,scopedForMonths){
   const app=$('#app');
+  const showMonth=scopedForMonths!==undefined;
+  const months=showMonth?availableMonths(scopedForMonths):[];
+  const monthPicker=showMonth?`<select id="monthSel" class="month-sel" onchange="monthFilter=this.value;render();">
+      <option value="all"${monthFilter==='all'?' selected':''}>${t('month_all')}</option>
+      ${months.map(mk=>`<option value="${mk}"${monthFilter===mk?' selected':''}>${monthLabel(mk)}</option>`).join('')}
+    </select>`:'';
+  const exportLbl=(showMonth&&monthFilter!=='all')?t('export_month'):t('export_csv');
   app.innerHTML=`<div class="page-head"><div><h2>${title}</h2><p>${sub}</p></div>
-    ${list.length&&canExport(USER)?'<button class="btn btn-outline btn-sm" onclick="exportCSV()">'+t('export_csv')+'</button>':''}</div>`;
-  if(!list.length){app.innerHTML+=emptyCard('📋',t('no_rounds_title'),USER.role==='tech'?t('no_rounds_tech'):t('no_rounds_mgr'));return;}
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      ${monthPicker}
+      ${(list.length&&canExport(USER))?'<button class="btn btn-outline btn-sm" onclick="exportCSV()">'+exportLbl+'</button>':''}
+    </div></div>`;
+  if(!list.length){
+    const emptyMsg=(showMonth&&monthFilter!=='all')?t('no_rounds_month'):(USER.role==='tech'?t('no_rounds_tech'):t('no_rounds_mgr'));
+    app.innerHTML+=emptyCard('📋',t('no_rounds_title'),emptyMsg);return;
+  }
   let html=`<div class="card"><div style="overflow-x:auto"><table><thead><tr><th>${t('th_date')}</th><th>${t('th_dept')}</th><th>${t('th_room')}</th><th>${t('th_pname')}</th><th>${t('th_mrn')}</th><th>${t('th_asked')}</th><th>${t('th_tech')}</th><th>${t('th_sat')}</th><th>${t('th_issues')}</th><th></th></tr></thead><tbody>`;
   list.forEach(r=>{
     const avg=roundAvg(r);const p=r.problems;
@@ -1338,10 +1461,43 @@ function viewProblems(){
         <div class="prob-body">
           ${item.note?`<div class="hint" style="color:var(--text);margin-bottom:6px"><b>${t('lbl_desc')}:</b> ${esc(item.note)}</div>`:''}
           ${plan?`<div style="background:var(--green-soft);border-radius:10px;padding:10px 13px"><b style="color:#146b48">${t('by_the_plan')}:</b> ${esc(plan)}<div class="hint">${t('by_word')} ${by} · ${fmtDate(r.ts)}${(()=>{const h=hoursBetween(escStart(item),item.resolvedTs);return h==null?'':' · '+t('resp_sub')+': '+fmtDur(h);})()}</div></div>`:''}
+          ${recheckHTML(item,r)}
         </div></div>`;
     });
     app.innerHTML+=html;
   }
+}
+/* Post-resolution satisfaction re-check: one question, replaces the original score for that item. */
+const RECHECK={5:{k:'satisfied',emoji:'😊'},3:{k:'neutral',emoji:'😐'},1:{k:'unsatisfied',emoji:'🙁'}};
+function canRecheck(u){return !!u&&['tech','head','sup','admin'].includes(u.role);}
+function recheckHTML(item,r){
+  if(item.status!=='resolved')return '';
+  // already re-checked → show the result
+  if(item.recheck){
+    const rc=RECHECK[item.recheck.score]||RECHECK[3];
+    return `<div style="background:var(--teal-soft);border-radius:10px;padding:10px 13px;margin-top:8px">
+      <b style="color:var(--ink)">${t('rc_done_label')}:</b> ${rc.emoji} ${t('rc_'+rc.k)}
+      <span class="tag" style="margin-inline-start:8px">${t('rc_newscore')}: ${arNum(item.recheck.score)}/5</span>
+      <div class="hint">${t('by_word')} ${esc(item.recheck.by||'')}${item.recheck.role?' · '+roleLabel(item.recheck.role):''}</div></div>`;
+  }
+  if(!canRecheck(USER))return '';
+  // prompt for the re-check
+  return `<div style="background:#fff;border:1.5px dashed var(--teal);border-radius:10px;padding:11px 13px;margin-top:8px">
+    <div style="font-weight:700;color:var(--ink);margin-bottom:8px">${t('rc_prompt')}</div>
+    <div class="seg" style="gap:7px">
+      <button type="button" class="seg-opt rc-opt" onclick="doRecheck('${r.id}','${item.id}',5)">😊 ${t('rc_satisfied')}</button>
+      <button type="button" class="seg-opt rc-opt" onclick="doRecheck('${r.id}','${item.id}',3)">😐 ${t('rc_neutral')}</button>
+      <button type="button" class="seg-opt rc-opt" onclick="doRecheck('${r.id}','${item.id}',1)">🙁 ${t('rc_unsatisfied')}</button>
+    </div></div>`;
+}
+function doRecheck(roundId,probId,score){
+  if(!canRecheck(USER)){toast(t('err_noperm_recheck'),'err');return;}
+  const r=ROUNDS.find(x=>x.id===roundId);if(!r)return;
+  const p=r.problems.find(x=>x.id===probId);if(!p)return;
+  p.recheck={score,by:USER.name,role:USER.role,ts:new Date().toISOString(),prevScore:(p.qkey&&r.ratings[p.qkey])||null};
+  // the new satisfaction replaces the original rating for that question
+  if(p.qkey&&r.ratings){r.ratings[p.qkey]=score;}
+  DB.save(r);toast(t('rc_saved'),'ok');render();
 }
 function resolveProblem(roundId,probId){
   if(!canManageProblems(USER)){toast(t('err_noperm_close'),'err');return;}
@@ -1354,7 +1510,100 @@ function resolveProblem(roundId,probId){
 }
 
 /* ================= DASHBOARD ================= */
-let dashPeriod='monthly',dashDept='all';
+/* patient counts: only رئيس القسم enters them; coverage = rounds / (total - excluded) */
+function canEditCounts(u){return !!u&&u.role==='head';}
+function todayKey(){const d=new Date();const p=n=>String(n).padStart(2,'0');return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate());}
+function countsInRange(dept,start,end){
+  return Object.values(PCOUNTS).filter(c=>c.dept===dept&&(()=>{const t=new Date(c.date+'T12:00:00');return t>=start&&t<=end;})());
+}
+function coverageFor(rounds,dept,start,end){
+  // sum patient counts across the period for the given dept(s)
+  const depts=dept==='all'?userDepts(USER):[dept];
+  let total=0,excluded=0,haveCounts=false;
+  depts.forEach(d=>countsInRange(d,start,end).forEach(c=>{total+=(+c.total||0);excluded+=(+c.excluded||0);haveCounts=true;}));
+  const eligible=Math.max(0,total-excluded);
+  const pct=eligible>0?Math.round(rounds.length/eligible*100):null;
+  return {total,excluded,eligible,rounds:rounds.length,pct,haveCounts};
+}
+let pcEditDate=null; // date being edited in the entry panel
+function patientCountPanel(dept){
+  if(!canEditCounts(USER))return '';
+  const d=dept==='all'?USER.dept:dept;
+  const date=pcEditDate||todayKey();
+  const existing=PCOUNTS[countId(d,date)]||{};
+  return `<div class="card card-pad" style="margin-bottom:20px">
+    <div class="section-title" style="margin-top:0">${t('pc_title')}</div>
+    <p class="hint" style="margin-top:0">${t('pc_hint')}</p>
+    <div class="grid3" style="align-items:end">
+      <div><label class="fld">${t('pc_date')}</label>
+        <input type="date" id="pcDate" value="${date}" max="${todayKey()}" onchange="pcEditDate=this.value;renderDash();"></div>
+      <div><label class="fld">${t('pc_total')}</label>
+        <input type="number" id="pcTotal" min="0" placeholder="0" value="${existing.total!=null?existing.total:''}"></div>
+      <div><label class="fld">${t('pc_excluded')}</label>
+        <input type="number" id="pcExcluded" min="0" placeholder="0" value="${existing.excluded!=null?existing.excluded:''}"></div>
+    </div>
+    <div style="margin-top:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <button class="btn btn-primary btn-sm" onclick="savePatientCount('${esc(d)}')">${t('pc_save')}</button>
+      ${existing.by?`<span class="hint">${t('pc_last_by')}: ${esc(existing.by)}</span>`:''}
+    </div></div>`;
+}
+function savePatientCount(dept){
+  if(!canEditCounts(USER)){toast(t('pc_noperm'),'err');return;}
+  const date=($('#pcDate')&&$('#pcDate').value)||todayKey();
+  const total=Math.max(0,parseInt($('#pcTotal').value||'0',10)||0);
+  const excluded=Math.max(0,parseInt($('#pcExcluded').value||'0',10)||0);
+  if(excluded>total){toast(t('pc_err_excl'),'err');return;}
+  const rec={id:countId(dept,date),dept,date,total,excluded,by:USER.name,role:USER.role,ts:new Date().toISOString()};
+  DB.saveCount(rec);toast(t('pc_saved'),'ok');pcEditDate=date;renderDash();
+}
+/* radar (strengths/weaknesses at a glance) vs target */
+function radarChart(rounds){
+  const qs=QRATED;
+  const vals=qs.map(q=>{const v=rounds.map(r=>r.ratings[q.k]).filter(x=>x);return v.length?v.reduce((a,b)=>a+b,0)/v.length:0;});
+  const n=qs.length, cx=150, cy=140, R=105;
+  const tg=SAT_TARGET/100*5; // target on the 0..5 scale
+  const ang=i=>(-90+i*360/n)*Math.PI/180;
+  const pt=(i,val)=>{const r=val/5*R;return [cx+r*Math.cos(ang(i)),cy+r*Math.sin(ang(i))];};
+  // rings
+  let rings='';for(let g=1;g<=5;g++){const pts=qs.map((_,i)=>pt(i,g).join(',')).join(' ');rings+=`<polygon points="${pts}" fill="none" stroke="#e6edf5" stroke-width="1"/>`;}
+  // spokes + labels
+  let spokes='',labels='';
+  qs.forEach((q,i)=>{
+    const [x,y]=pt(i,5);spokes+=`<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="#e6edf5" stroke-width="1"/>`;
+    const [lx,ly]=pt(i,5.9);
+    const anchor=Math.abs(lx-cx)<5?'middle':(lx>cx?'start':'end');
+    labels+=`<text x="${lx}" y="${ly}" font-size="9" fill="#82909F" text-anchor="${anchor}" dominant-baseline="middle">${arNum(i+3)}</text>`;
+  });
+  // target polygon
+  const tgPts=qs.map((_,i)=>pt(i,tg).join(',')).join(' ');
+  const tgPoly=`<polygon points="${tgPts}" fill="none" stroke="#9aa8bd" stroke-width="1.3" stroke-dasharray="4 3"/>`;
+  // data polygon
+  const dPts=qs.map((_,i)=>pt(i,vals[i]).join(',')).join(' ');
+  const dPoly=`<polygon points="${dPts}" fill="rgba(53,105,159,.18)" stroke="var(--teal)" stroke-width="2"/>`;
+  const dots=qs.map((_,i)=>{const [x,y]=pt(i,vals[i]);const col=vals[i]>=tg?'var(--green)':'var(--coral)';return `<circle cx="${x}" cy="${y}" r="3" fill="${col}"/>`;}).join('');
+  return `<svg viewBox="0 0 300 285" style="width:100%;max-width:340px;height:auto;display:block;margin:0 auto">
+    ${rings}${spokes}${tgPoly}${dPoly}${dots}${labels}</svg>
+    <div class="hint" style="text-align:center;margin-top:4px">
+      <span style="color:var(--teal)">●</span> ${t('radar_actual')} &nbsp;
+      <span style="color:#9aa8bd">┈</span> ${t('radar_target',{tg:num(SAT_TARGET)})}</div>`;
+}
+/* bar chart per question vs target line */
+function questionBars(rounds){
+  if(!rounds.length)return '<div class="hint">'+t('no_rounds_period')+'</div>';
+  const tg=SAT_TARGET/100*5;
+  return QRATED.map((q,i)=>{
+    const vals=rounds.map(r=>r.ratings[q.k]).filter(v=>v);
+    const a=vals.length?vals.reduce((x,y)=>x+y,0)/vals.length:0;
+    const below=a<tg;
+    const col=below?'var(--coral)':'var(--green)';
+    const lb=qLabel(q);
+    return `<div class="qbar"><div class="qbar-top"><span>${below?'<span style="color:var(--coral)">▼</span> ':''}${esc(lb.length>42?lb.slice(0,42)+'…':lb)}</span><span class="sc" style="color:${col}">${a.toFixed(1)}</span></div>
+      <div class="track" style="position:relative"><div class="fill" style="width:${a/5*100}%;background:${col}"></div>
+        <div style="position:absolute;top:-2px;bottom:-2px;inset-inline-start:${tg/5*100}%;width:2px;background:#33486B" title="${t('radar_target',{tg:num(SAT_TARGET)})}"></div>
+      </div></div>`;
+  }).join('');
+}
+let dashPeriod='monthly',dashDept='all',chartType='bar';
 function viewDash(){
   const app=$('#app');
   if(!isMultiDept(USER))dashDept=USER.dept; // single-department roles see only their dept
@@ -1404,6 +1653,10 @@ function renderDash(){
   const hitTarget=satPct!=null&&satPct>=SAT_TARGET;
   const respVals=probs.filter(p=>p.status==='resolved').map(p=>hoursBetween(escStart(p),p.resolvedTs)).filter(x=>x!=null);
   const respAvg=respVals.length?respVals.reduce((a,b)=>a+b,0)/respVals.length:null;
+  // coverage: rounds vs eligible patients over the current period
+  const curBucket=cur||{};
+  const pStart=curBucket.start,pEnd=curBucket.end;
+  const cov=(pStart&&pEnd)?coverageFor(curRounds,(isMultiDept(USER)?dashDept:USER.dept),pStart,pEnd):null;
   let html=`<div class="kpis">
     <div class="kpi ${satPct==null?'accent':hitTarget?'good':'danger'}"><div class="lbl">${t('kpi_avgsat_period',{period:periodLabel(dashPeriod)})}</div>
       <div class="val" style="${satPct==null?'':'color:'+(hitTarget?'var(--green)':'var(--coral)')}">${avg?avg.toFixed(1):'—'}<span style="font-size:16px">/5</span></div>
@@ -1412,7 +1665,13 @@ function renderDash(){
     <div class="kpi warn"><div class="lbl">${t('kpi_flagged_issues')}</div><div class="val">${num(probs.length)}</div><div class="sub">${t('open_word',{n:num(openc+escc)})}</div></div>
     <div class="kpi good"><div class="lbl">${t('kpi_resolve_rate')}</div><div class="val">${resRate==null?'—':num(resRate)+'%'}</div><div class="sub">${t('resolved_of',{a:num(resolved),b:num(probs.length)})}</div></div>
     <div class="kpi"><div class="lbl">${t('kpi_resptime')}</div><div class="val" style="font-size:21px">${respAvg==null?'—':fmtDur(respAvg)}</div><div class="sub">${respAvg==null?t('no_resp'):t('resp_sub')}</div></div>
+    ${cov?`<div class="kpi ${cov.pct==null?'accent':cov.pct>=90?'good':cov.pct>=70?'warn':'danger'}"><div class="lbl">${t('kpi_coverage')}</div>
+      <div class="val">${cov.pct==null?'—':num(cov.pct)+'%'}</div>
+      <div class="sub">${cov.haveCounts?t('cov_sub',{r:num(cov.rounds),e:num(cov.eligible)}):t('cov_nodata')}</div></div>`:''}
   </div>`;
+
+  // patient-count entry (رئيس القسم only)
+  html+=patientCountPanel(isMultiDept(USER)?dashDept:USER.dept);
 
   // trend chart
   html+=`<div class="card card-pad" style="margin-bottom:20px">
@@ -1423,7 +1682,13 @@ function renderDash(){
   html+=`<div class="grid2">`;
   // per-question strengths/weaknesses (over current period, fallback all)
   const scope=curRounds.length?curRounds:data;
-  html+=`<div class="card card-pad"><div class="section-title" style="margin-top:0">${t('sec_strengths')}</div>${questionAverages(scope)}</div>`;
+  html+=`<div class="card card-pad"><div class="row-between" style="align-items:center;margin-bottom:6px">
+      <div class="section-title" style="margin:0">${t('sec_strengths')}</div>
+      <div class="seg" style="gap:6px">
+        <div class="seg-opt${chartType==='bar'?' on':''}" style="min-width:auto;padding:6px 12px" onclick="chartType='bar';renderDash();">${t('chart_bar')}</div>
+        <div class="seg-opt${chartType==='radar'?' on':''}" style="min-width:auto;padding:6px 12px" onclick="chartType='radar';renderDash();">${t('chart_radar')}</div>
+      </div></div>
+    ${chartType==='radar'?radarChart(scope):questionBars(scope)}</div>`;
   // problems + department breakdown
   html+=`<div class="card card-pad"><div class="section-title" style="margin-top:0">${t('sec_issue_status')}</div>
     ${probStatusBar(t('bar_resolved'),resolved,probs.length,'var(--green)')}
@@ -1583,7 +1848,7 @@ function makeBuckets(period,data){
       label=num(yr);
     }
     const rounds=data.filter(r=>{const tt=new Date(r.ts);return tt>=start&&tt<=end;});
-    buckets.push({label,rounds});
+    buckets.push({label,rounds,start,end});
   }
   return buckets;
 }
@@ -1788,7 +2053,7 @@ function xlHeadRow(ws,row,h){
 function xlScoreColor(v){return v>=4?[XL.greenSoft,XL.green]:v>=3?[XL.amberSoft,'FF8A5F0E']:[XL.coralSoft,XL.coral];}
 async function exportCSV(){ // kept name: called from the toolbar button
   if(!canExport(USER)){toast(t('err_noperm_export'),'err');return;}
-  const list=scopedRounds();
+  const list=applyMonth(scopedRounds());
   if(!list.length){toast(t('no_data_export'),'err');return;}
   toast(t('exporting'),'');
   let EJS;
@@ -1984,7 +2249,7 @@ async function exportCSV(){ // kept name: called from the toolbar button
     const buf=await wb.xlsx.writeBuffer();
     const blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
     const d=new Date(),pad=n=>String(n).padStart(2,'0');
-    const stamp=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+    const stamp=(monthFilter!=='all')?monthFilter:(d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()));
     const a=document.createElement('a');
     a.href=URL.createObjectURL(blob);
     a.download=(LANG==='en'?'patient_satisfaction_rounds_':'جولات_رضا_المرضى_')+stamp+'.xlsx';
