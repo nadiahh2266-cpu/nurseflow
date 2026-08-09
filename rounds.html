@@ -11,12 +11,14 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 <script>
 /* Mobile networks often drop one of the three SDK files. Re-fetch whatever is missing. */
 window.__fbParts=[
   ['app','https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js'],
   ['auth','https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js'],
-  ['firestore','https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js']
+  ['firestore','https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js'],
+  ['storage','https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js']
 ];
 window.__fbMissing=function(){
   if(!window.firebase)return ['app','auth','firestore'];
@@ -315,6 +317,9 @@ tbody tr:hover{background:#f8fbfb}
 .esc-banner .eb-go{background:rgba(0,0,0,.14);border-radius:6px;padding:3px 10px;font-size:12.5px}
 @keyframes bellShake{0%,100%{transform:rotate(0)}20%{transform:rotate(-14deg)}40%{transform:rotate(12deg)}60%{transform:rotate(-8deg)}80%{transform:rotate(6deg)}}
 .btn-wa{background:#25D366;color:#fff;border:0}
+.ev-photo{max-width:180px;max-height:150px;border-radius:8px;border:1px solid var(--line);cursor:pointer;object-fit:cover;display:inline-block;vertical-align:middle}
+.photo-btn{display:inline-flex;align-items:center;gap:6px;margin-top:8px;padding:8px 14px;border:1.5px dashed var(--teal);border-radius:8px;color:var(--teal);font-size:14px;font-weight:600;cursor:pointer;background:#fff}
+.photo-btn:hover{background:var(--teal-soft)}
 .btn-wa:hover{background:#1eb658}
 .wa-list{display:flex;flex-direction:column;gap:9px}
 .wa-item{display:flex;align-items:center;gap:12px;padding:11px 13px;border:1px solid var(--line);border-radius:11px;text-decoration:none;color:var(--text);transition:.15s;background:var(--bg)}
@@ -530,7 +535,7 @@ const OWNER_UID='tddkmx91NtY9rR8aHDsDSk2aZWD2';
 const SAT_TARGET=90, ESC_WARN_D=3, ESC_CRIT_D=7, REPEAT_MIN=3;
 
 const ROLE   ={tech:'القائم بالجولة',head:'رئيس القسم',sup:'مشرف الأقسام',admin:'الإدارة'};
-const ROLE_IC={tech:'🩺',head:'🧑‍⚕️',sup:'👩‍⚕️',admin:'🏛️'};
+const ROLE_IC={tech:'🩺',head:'🧑‍⚕️',sup:'👩‍⚕️',admin:'🏛️',director:'⭐',support:'🛠️'};
 const DEPTS=[
  {ar:'جناح الرجال (باطني/جراحي)',en:'Male Medical/Surgical'},
  {ar:'جناح النساء (باطني/جراحي)',en:'Female Medical/Surgical'},
@@ -546,24 +551,40 @@ const DEPTS=[
  {ar:'الإجراءات الطبية والجراحية',en:'Medical & Surgical Procedures'},
  {ar:'العيادات الخارجية',en:'Outpatient Clinics (OPD)'}
 ];
+// support (non-nursing) departments a manager can escalate a problem out to
+const SUPPORT_DEPTS=[
+ {ar:'المغسلة',en:'Laundry'},
+ {ar:'التغذية',en:'Nutrition / Dietary'},
+ {ar:'الأخصائي الاجتماعي',en:'Social Worker'},
+ {ar:'العلاج الطبيعي',en:'Physiotherapy'},
+ {ar:'الصيانة العامة',en:'General Maintenance'},
+ {ar:'الأطباء (جراحة)',en:'Physicians (Surgery)'},
+ {ar:'الأطباء (باطنة)',en:'Physicians (Internal Medicine)'},
+ {ar:'الأطباء (نساء وتوليد)',en:'Physicians (Obstetrics & Gynecology)'},
+ {ar:'الأطباء (أطفال)',en:'Physicians (Pediatrics)'}
+];
+function supportLabel(ar){const d=SUPPORT_DEPTS.find(x=>x.ar===ar);return d?(LANG==='en'?d.en:d.ar):ar;}
 const DEPT_AR=DEPTS.map(d=>d.ar);
 function deptLabel(ar){const d=DEPTS.find(x=>x.ar===ar);return d?(LANG==='en'?d.en:d.ar):(ar||'');}
-function isMultiDept(u){return !!u&&(u.role==='sup'||u.role==='admin');}
+function isMultiDept(u){return !!u&&(u.role==='sup'||u.role==='admin'||u.role==='director');}
 function seesAll(u){return isMultiDept(u);}
 function userDepts(u){
   if(!u)return[];
   if(u.role==='tech'||u.role==='head')return u.dept?[u.dept]:[];
-  // sup/admin: no depts field at all = legacy account → treat as all departments
+  if(u.role==='support')return [];               // support dept scoped by support-queue, not nursing depts
+  // sup/admin/director: no depts field at all = legacy account → treat as all departments
   const d=(u.depts==null)?['*']:u.depts;
   return d.includes('*')?DEPT_AR.slice():d;
 }
 function seesAllDepts(u){return !!u&&isMultiDept(u)&&(u.depts==null||u.depts.includes('*'));}
-function canManageProblems(u){return !!u&&['head','sup','admin'].includes(u.role);}
+function canManageProblems(u){return !!u&&['head','sup','admin','director'].includes(u.role);}
 function canManageUsers(u){return !!u&&u.role==='admin';}
-function canExport(u){return !!u&&['head','sup','admin'].includes(u.role);}
+function canExport(u){return !!u&&['head','sup','admin','director'].includes(u.role);}
 function canDeleteRounds(u){return !!u&&(OWNER_UID?u.uid===OWNER_UID:u.role==='admin');}
-function canSeeStaff(u){return !!u&&['head','sup','admin'].includes(u.role);}
+function canSeeStaff(u){return !!u&&['head','sup','admin','director'].includes(u.role);}
 function canDoRounds(u){return !!u&&u.role==='tech';}
+function canEscalateExternal(u){return !!u&&['sup','admin','director'].includes(u.role);} // sup + admin + director
+function isSupportDept(u){return !!u&&u.role==='support';}
 function inScope(u,r){return !!r&&userDepts(u).includes(r.dept);}
 function scopedRounds(){return ROUNDS.filter(r=>inScope(USER,r));}
 
@@ -578,9 +599,9 @@ const I18N={
   app_title:'معك',app_tagline:'نهتم... ورضاك غايتنا',app_sub:'جولات رضا المرضى · مستشفى الجبيل العام',
   logout:'تسجيل الخروج',lang_btn:'EN',
   status_pending:'يُرفع لاحقاً ({n})',status_offline_ok:'بدون إنترنت · محفوظ',status_pending_hint:'الجولات محفوظة على الجهاز وتُرفع تلقائياً أول ما يرجع الاتصال — لا تقفلي الصفحة.',status_cloud:'متصل بالسحابة',status_local:'غير متصل',
-  role_tech:'القائم بالجولة',role_head:'رئيس القسم',role_sup:'مشرف الأقسام',role_admin:'الإدارة',
+  role_tech:'القائم بالجولة',role_head:'رئيس القسم',role_sup:'مشرف الأقسام',role_admin:'الإدارة',role_director:'مديرة إدارة التمريض',role_support:'قسم مساند',
   all_departments:'كل الأقسام',n_departments:'{n} أقسام',
-  tab_new:'جولة جديدة',tab_myrounds:'جولات قسمي',tab_problems:'المشاكل',tab_all_all:'كل الجولات',tab_all_dept:'جولات القسم',tab_dash:'الداشبورد',st_title:'إنتاجية الفريق',st_sub:'جولات كل موظفة ومعدّلها اليومي ومستوى الرضا في جولاتها.',st_kpi_staff:'موظفات نشطات',st_kpi_rounds:'إجمالي الجولات',st_kpi_avg_per:'متوسط الجولات للموظفة',st_kpi_top:'الأعلى إنتاجية',st_th_name:'الموظفة',st_th_rounds:'الجولات',st_th_perday:'المعدل اليومي',st_th_days:'أيام العمل',st_th_sat:'متوسط الرضا',st_th_issues:'مشاكل رصدتها',st_th_res:'حلّتها',st_th_esc:'صعّدتها',st_th_last:'آخر جولة',st_none:'ما فيه جولات في هذه الفترة',st_none_sub:'غيّري الفترة أو القسم.',st_inactive:'بدون جولات في الفترة',st_detail:'تفصيل يومي — {name}',st_back:'رجوع للقائمة',st_day:'اليوم',st_rounds_day:'الجولات',st_sat_day:'متوسط الرضا',st_no_days:'ما فيه أيام مسجّلة في هذه الفترة.',st_click_hint:'اضغطي على أي موظفة لعرض تفصيلها اليومي.',st_staff_note:'القائمة تشمل الموظفات في أقسامك. اللي ما سوّت جولات تظهر في الآخر.',tab_staff:'الإنتاجية',tab_users:'المستخدمون',
+  tab_new:'جولة جديدة',tab_myrounds:'جولات قسمي',tab_problems:'المشاكل',tab_all_all:'كل الجولات',tab_all_dept:'جولات القسم',tab_dash:'الداشبورد',st_title:'إنتاجية الفريق',st_sub:'جولات كل موظفة ومعدّلها اليومي ومستوى الرضا في جولاتها.',st_kpi_staff:'موظفات نشطات',st_kpi_rounds:'إجمالي الجولات',st_kpi_avg_per:'متوسط الجولات للموظفة',st_kpi_top:'الأعلى إنتاجية',st_th_name:'الموظفة',st_th_rounds:'الجولات',st_th_perday:'المعدل اليومي',st_th_days:'أيام العمل',st_th_sat:'متوسط الرضا',st_th_issues:'مشاكل رصدتها',st_th_res:'حلّتها',st_th_esc:'صعّدتها',st_th_last:'آخر جولة',st_none:'ما فيه جولات في هذه الفترة',st_none_sub:'غيّري الفترة أو القسم.',st_inactive:'بدون جولات في الفترة',st_detail:'تفصيل يومي — {name}',st_back:'رجوع للقائمة',st_day:'اليوم',st_rounds_day:'الجولات',st_sat_day:'متوسط الرضا',st_no_days:'ما فيه أيام مسجّلة في هذه الفترة.',st_click_hint:'اضغطي على أي موظفة لعرض تفصيلها اليومي.',st_staff_note:'القائمة تشمل الموظفات في أقسامك. اللي ما سوّت جولات تظهر في الآخر.',tab_staff:'الإنتاجية',tab_users:'المستخدمون',tab_support_queue:'المشاكل الواردة',
   login_quote:'قد ينسى المريض أسماءنا، لكنه لن ينسى من جلس معه دقيقة وسأل: كيف حالك اليوم؟',login_title:'معك',login_sub:'جولات رضا المرضى · مستشفى الجبيل العام',
   email:'البريد الإلكتروني',password:'كلمة المرور',login_btn:'تسجيل الدخول',login_note:'الدخول للموظفات المصرّح لهنّ فقط. للحصول على حساب راجعي الإدارة.',login_signingin:'جارِ الدخول…',
   err_fill_login:'اكتبي البريد وكلمة المرور',kpi_coverage:'نسبة التغطية',cov_sub:'{r} جولة من {e} مريض',cov_nodata:'أدخلي أعداد المرضى',
@@ -623,16 +644,20 @@ const I18N={
   badge_open:'{n} مفتوحة',badge_allresolved:'كلها محلولة',badge_noissues:'لا مشاكل',details_btn:'تفاصيل',
   btn_delete_round:'🗑 حذف الجولة',err_noperm_delete:'الحذف مقصور على حساب المالك',confirm_delete_round:'حذف هذه الجولة نهائياً؟\n\n{info}\n\nما يمكن التراجع عن الحذف.',toast_round_deleted:'تم حذف الجولة',err_delete_round:'تعذّر الحذف — تأكدي من صلاحيتك والاتصال',rd_title:'تفاصيل الجولة',by_word:'بواسطة',back:'→ رجوع',kpi_avgsat:'متوسط الرضا',kpi_overall:'التقييم العام',kpi_issues:'المشاكل',sec_ratings:'التقييمات',lbl_liked:'أبرز الجوانب',lbl_sugg:'مقترحات',exc_service:'🌟 خدمة استثنائية: {name}',sec_issues_plans:'المشاكل وخطط العمل',issue_word:'مشكلة',lbl_desc:'الوصف',lbl_tech_plan:'خطة القائم بالجولة',lbl_esc_reason:'سبب التصعيد',lbl_mgr_plan:'خطة المسؤول',
   pr_title:'المشاكل',pr_sub:'المشاكل المصعّدة تحتاج خطة عمل. المحلولة معروضة للمتابعة. أي مسؤول يقدر يكتب الخطة ويقفل.',kpi_needaction:'تحتاج إجراء',kpi_escalated:'مصعّدة',kpi_resolved:'تم حلها',kpi_inscope:'في نطاقك',
-  esc_alert:'تصعيد جديد في {dept}',esc_alert_more:' (و{n} غيره)',esc_banner:'عندك {n} تصعيد جديد يحتاج إجراء',esc_banner_go:'عرض المشاكل',
+  esc_alert:'تصعيد جديد في {dept}',sup_alert:'وصلك {n} مشكلة جديدة لقسمك',esc_alert_more:' (و{n} غيره)',esc_banner:'عندك {n} تصعيد جديد يحتاج إجراء',esc_banner_go:'عرض المشاكل',
   wa_share:'واتساب',wa_share_title:'إرسال تنبيه واتساب',wa_prefill:'🔔 تصعيد جديد — نظام معك\nالقسم: {dept}\nالمشكلة: {issue}\nصعّدها: {by}\nالوقت: {time}\nيرجى فتح النظام ومتابعة المشكلة.',wa_pick:'اختر المسؤول لإرسال التنبيه له عبر واتساب:',wa_no_numbers:'ما فيه مسؤولين لهم رقم جوال في هذا النطاق. أضيفي أرقامهم من صفحة المستخدمين.',wa_open:'فتح واتساب',wa_cancel:'إلغاء',wa_phone_label:'رقم الجوال (لتنبيهات واتساب)',wa_phone_ph:'مثال: 0555123456',
   sec_needaction:'تحتاج إجراء ({n})',no_esc_title:'ما فيه مشاكل مصعّدة',no_esc_sub:'كل شي تحت السيطرة. المصعّد الجديد بيظهر هنا.',esc_by:'صعّدها',lbl_patient_desc:'وصف المريض',lbl_tech_note:'ملاحظة القائم بالجولة',ap_label:'خطة العمل (Action Plan)',ap_ph:'وش الإجراء التصحيحي؟ ومين المسؤول عن التنفيذ؟',btn_save_close:'✔ حفظ الخطة وإقفال المشكلة',sec_resolved:'تم حلها ({n})',by_the_plan:'خطة العمل',
   err_noperm_close:'لا تملكين صلاحية إقفال المشاكل',err_write_plan:'اكتبي خطة العمل قبل الإقفال',toast_issue_closed:'تم إقفال المشكلة',
+  err_noperm:'لا تملكين هذه الصلاحية',cancel:'إلغاء',
+  ext_btn:'تصعيد لقسم مساند',ext_title:'تصعيد لقسم مساند',ext_help:'اختاري القسم المناسب واكتبي ملاحظة توضّح المطلوب. القسم بيشوف المشكلة ويرد عليها.',ext_pick_dept:'القسم المساند',ext_note_label:'ملاحظة للقسم',ext_note_ph:'وش المطلوب بالضبط؟',ext_confirm:'تصعيد',ext_done:'تم التصعيد للقسم المساند',ext_sent_to:'مُصعّدة إلى',ext_returned_from:'رجّعها القسم',ext_from_mgr:'مصعّدة من',ext_resolved_by_support:'حلّها قسم {d}',
+  sup_queue_sub:'المشاكل المصعّدة لقسمك. اكتبي خطة الحل وأقفليها، أو رجّعيها للتمريض مع ملاحظة.',sup_kpi_open:'تحتاج إجراء',sup_kpi_open_sub:'واردة جديدة',sup_kpi_closed:'تم حلها',sup_kpi_closed_sub:'مقفلة',sup_sec_open:'واردة تحتاج إجراء ({n})',sup_sec_closed:'تم حلها ({n})',sup_none_title:'ما فيه مشاكل واردة',sup_none_sub:'المصعّد لقسمك بيظهر هنا.',sup_st_incoming:'⬆ واردة',sup_plan_label:'خطة الحل',sup_plan_ph:'وش الإجراء اللي تم؟ (أو اكتبي سبب الإرجاع لو بترجّعينها)',sup_add_photo:'إضافة صورة',sup_resolve_btn:'✔ حفظ وإقفال',sup_return_btn:'إرجاع للتمريض',sup_closed_ok:'تم حل المشكلة وإقفالها',sup_returned_ok:'تم إرجاع المشكلة للتمريض',sup_the_plan:'خطة الحل',sup_need_return_note:'اكتبي سبب الإرجاع في خانة الخطة',
+  photo_remove:'حذف الصورة',photo_err:'تعذّر تحميل الصورة',photo_add:'إضافة صورة',
   sat_vs_target:'{mark} {n}٪ · الهدف {tg}٪',under_target:'{n} قسم تحت هدف {tg}٪',all_on_target:'كل الأقسام حققت هدف {tg}٪ ✔',sec_repeat:'مشاكل متكررة',repeat_hint:'تكرّر البند {n} مرات فأكثر في نفس القسم يشير إلى خلل نظام لا حادثة فردية — تستحق مشروع تحسين.',repeat_none:'ما فيه بند تكرر {n} مرات في قسم واحد خلال هذه الفترة.',repeat_count:'مرات التكرار',repeat_open:'ما زالت مفتوحة',sec_comments:'ملاحظات المرضى',comments_none:'ما فيه ملاحظات مكتوبة في هذه الفترة.',comments_count:'{n} ملاحظة',dash_title:'داشبورد رضا المرضى',dash_sub:'مؤشرات الرضا وحالة المشاكل حسب الفترة الزمنية.',f_period:'الفترة',p_daily:'يومي',p_weekly:'أسبوعي',p_monthly:'شهري',p_quarterly:'ربع سنوي',p_yearly:'سنوي',all_my_depts:'كل أقسامي',
   nodata_title:'لا توجد بيانات',nodata_sub:'ما تسجّلت جولات في نطاقك بعد.',kpi_avgsat_period:'متوسط الرضا ({period})',sat_pct:'{n}% رضا',no_rounds_word:'لا جولات',kpi_roundscount:'عدد الجولات',in_current_period:'في الفترة الحالية',kpi_flagged_issues:'مشاكل مرصودة',open_word:'مفتوحة: {n}',kpi_resolve_rate:'نسبة الحل',resolved_of:'تم حل {a} من {b}',
   sec_trend:'اتجاه الرضا عبر الفترات',sec_strengths:'نقاط القوة والضعف حسب البند',sec_issue_status:'حالة المشاكل (الفترة الحالية)',bar_resolved:'تم الحل',bar_escalated:'مُصعّدة',bar_open:'مفتوحة',sec_by_dept:'حسب القسم (كل الفترات)',no_rounds_period:'لا توجد جولات في هذه الفترة.',no_rounds_yet:'لا توجد جولات مسجّلة بعد.',rounds_unit:'جولة',
   pl_daily:'اليوم',pl_weekly:'هذا الأسبوع',pl_monthly:'هذا الشهر',pl_quarterly:'هذا الربع',pl_yearly:'هذي السنة',week_prefix:'أسبوع',quarter_prefix:'ربع',
   um_title:'إدارة المستخدمين',um_sub:'أنشئي حسابات الموظفات وحدّدي دور كل وحدة وقسمها. لا أحد يدخل النظام إلا من تنشئينه هنا.',loading:'جارِ التحميل…',add_staff:'إضافة موظفة جديدة',f_title:'المسمى الوظيفي',f_title_ph:'مثال: ممرضة · فني رعاية مرضى · منسقة جودة',th_title:'المسمى الوظيفي',no_title:'—',f_name:'الاسم',f_name_ph:'الاسم الكامل',f_temp_pass:'كلمة المرور المؤقتة',f_pass_ph:'٦ أحرف على الأقل',f_role:'الدور',f_dept_allowed:'الأقسام المسموح بالاطّلاع عليها',depts_hint:'أشّري الأقسام اللي يقدر هذا الحساب يطّلع عليها، أو اختاري «كل الأقسام».',create_account:'➕ إنشاء الحساب',creating:'جارِ الإنشاء…',accounts_word:'الحسابات ({n})',th_name:'الاسم',th_email:'البريد',th_role:'الدور',th_dept2:'القسم',no_users:'لا يوجد مستخدمون بعد',you_label:'أنتِ',revoke_access:'إلغاء الوصول',users_note:'ملاحظة: «إلغاء الوصول» يمنع الموظفة من دخول النظام فوراً. لحذف الحساب نهائياً من قاعدة المصادقة، احذفيه من Firebase Console ← Authentication.',
-  btn_edit:'تعديل',edit_title:'تعديل بيانات الحساب',save_changes:'💾 حفظ التعديلات',btn_cancel:'إلغاء',toast_user_updated:'تم تحديث بيانات الحساب',self_role_note:'ما تقدرين تغيّرين دور حسابك أنتِ.',admin_all_note:'حساب الإدارة يطّلع على كل الأقسام تلقائياً.',th_status:'الحالة',st_active:'نشط',st_disabled:'موقوف',btn_disable:'إيقاف الوصول',btn_enable:'إعادة التفعيل',confirm_disable:'إيقاف وصول {name}؟ ما راح تقدر تدخل النظام، وتقدرين ترجعينها متى ما تبين.',toast_disabled:'تم إيقاف الحساب',toast_enabled:'تم تفعيل الحساب',err_email_active:'هذا البريد له حساب فعّال بالفعل في القائمة تحت',toast_access_restored:'تم استرجاع الحساب القديم وتفعيله',err_restore_pass:'هذا البريد له حساب قديم في نظام الدخول. اكتبي كلمة المرور الأصلية لاسترجاعه، أو احذفي الحساب من Firebase Console ← Authentication وأعيدي المحاولة.',hint_disabled_note:'الحساب الموقوف يبقى محفوظ — ترجعينه بضغطة «إعادة التفعيل» بدون ما تنشئينه من جديد.',err_fill_user:'أكملي الاسم والبريد وكلمة المرور',err_pass_short:'كلمة المرور ٦ أحرف على الأقل',err_pick_dept:'اختاري قسم واحد على الأقل أو «كل الأقسام»',toast_account_created:'تم إنشاء الحساب',confirm_revoke:'إلغاء وصول {name}؟ لن تتمكن من دخول النظام بعدها.',err_cant_revoke_self:'لا يمكنك إلغاء وصولك',toast_revoked:'تم إلغاء الوصول',err_delete:'تعذّر الحذف',um_locked_title:'غير مصرّح',um_locked_sub:'هذه الصفحة للإدارة فقط.',
+  btn_edit:'تعديل',edit_title:'تعديل بيانات الحساب',save_changes:'💾 حفظ التعديلات',btn_cancel:'إلغاء',toast_user_updated:'تم تحديث بيانات الحساب',self_role_note:'ما تقدرين تغيّرين دور حسابك أنتِ.',admin_all_note:'حساب الإدارة يطّلع على كل الأقسام تلقائياً.',director_all_note:'مديرة إدارة التمريض تطّلع على كل الأقسام والجولات والتقارير تلقائياً (بدون إدارة الحسابات).',f_support_dept:'القسم المساند',support_dept_hint:'هذا الحساب بيشوف بس المشاكل المصعّدة لهذا القسم.',err_pick_support:'اختاري القسم المساند',th_status:'الحالة',st_active:'نشط',st_disabled:'موقوف',btn_disable:'إيقاف الوصول',btn_enable:'إعادة التفعيل',confirm_disable:'إيقاف وصول {name}؟ ما راح تقدر تدخل النظام، وتقدرين ترجعينها متى ما تبين.',toast_disabled:'تم إيقاف الحساب',toast_enabled:'تم تفعيل الحساب',err_email_active:'هذا البريد له حساب فعّال بالفعل في القائمة تحت',toast_access_restored:'تم استرجاع الحساب القديم وتفعيله',err_restore_pass:'هذا البريد له حساب قديم في نظام الدخول. اكتبي كلمة المرور الأصلية لاسترجاعه، أو احذفي الحساب من Firebase Console ← Authentication وأعيدي المحاولة.',hint_disabled_note:'الحساب الموقوف يبقى محفوظ — ترجعينه بضغطة «إعادة التفعيل» بدون ما تنشئينه من جديد.',err_fill_user:'أكملي الاسم والبريد وكلمة المرور',err_pass_short:'كلمة المرور ٦ أحرف على الأقل',err_pick_dept:'اختاري قسم واحد على الأقل أو «كل الأقسام»',toast_account_created:'تم إنشاء الحساب',confirm_revoke:'إلغاء وصول {name}؟ لن تتمكن من دخول النظام بعدها.',err_cant_revoke_self:'لا يمكنك إلغاء وصولك',toast_revoked:'تم إلغاء الوصول',err_delete:'تعذّر الحذف',um_locked_title:'غير مصرّح',um_locked_sub:'هذه الصفحة للإدارة فقط.',
   sc_5:'ممتاز',sc_4:'جيد جداً',sc_3:'جيد',sc_2:'مقبول',sc_1:'ضعيف',
   q_q3:'تعريف طاقم التمريض بأنفسهم',q_q4:'شرح واستئذان الفريق قبل الفحوصات والإجراءات (سحب دم، علامات حيوية، إعطاء دواء…)',q_q5:'لطف واهتمام فريق التمريض',q_q6:'سرعة الاستجابة لجرس الاستدعاء',q_q7:'مراعاة الفريق لاحتياجاتك الخاصة أو الشخصية',q_q8:'حرص الفريق على إطلاعك بما يجري'
  },
@@ -640,9 +665,9 @@ const I18N={
   app_title:'Ma\'ak',app_tagline:'We care… your satisfaction is our goal',app_sub:'Patient Satisfaction Rounds · Jubail General Hospital',
   logout:'Sign out',lang_btn:'ع',
   status_pending:'Will upload ({n})',status_offline_ok:'Offline · saved',status_pending_hint:'Rounds are saved on this device and upload automatically once you are back online — keep this page open.',status_cloud:'Cloud connected',status_local:'Offline',
-  role_tech:'Rounds Conductor',role_head:'Department Head',role_sup:'Departments Supervisor',role_admin:'Administration',
+  role_tech:'Rounds Conductor',role_head:'Department Head',role_sup:'Departments Supervisor',role_admin:'Administration',role_director:'Nursing Director',role_support:'Support Department',
   all_departments:'All Departments',n_departments:'{n} departments',
-  tab_new:'New Round',tab_myrounds:'My Rounds',tab_problems:'Issues',tab_all_all:'All Rounds',tab_all_dept:'Department Rounds',tab_dash:'Dashboard',st_title:'Team Productivity',st_sub:'Rounds per staff member, daily rate, and the satisfaction level in their rounds.',st_kpi_staff:'Active staff',st_kpi_rounds:'Total rounds',st_kpi_avg_per:'Avg. rounds per person',st_kpi_top:'Top performer',st_th_name:'Staff member',st_th_rounds:'Rounds',st_th_perday:'Per day',st_th_days:'Active days',st_th_sat:'Avg. satisfaction',st_th_issues:'Issues found',st_th_res:'Resolved',st_th_esc:'Escalated',st_th_last:'Last round',st_none:'No rounds in this period',st_none_sub:'Try a different period or department.',st_inactive:'No rounds this period',st_detail:'Daily breakdown — {name}',st_back:'Back to list',st_day:'Day',st_rounds_day:'Rounds',st_sat_day:'Avg. satisfaction',st_no_days:'No days recorded in this period.',st_click_hint:'Tap any staff member to see their daily breakdown.',st_staff_note:'The list covers staff in your departments. Anyone with no rounds appears at the bottom.',tab_staff:'Productivity',tab_users:'Users',
+  tab_new:'New Round',tab_myrounds:'My Rounds',tab_problems:'Issues',tab_all_all:'All Rounds',tab_all_dept:'Department Rounds',tab_dash:'Dashboard',st_title:'Team Productivity',st_sub:'Rounds per staff member, daily rate, and the satisfaction level in their rounds.',st_kpi_staff:'Active staff',st_kpi_rounds:'Total rounds',st_kpi_avg_per:'Avg. rounds per person',st_kpi_top:'Top performer',st_th_name:'Staff member',st_th_rounds:'Rounds',st_th_perday:'Per day',st_th_days:'Active days',st_th_sat:'Avg. satisfaction',st_th_issues:'Issues found',st_th_res:'Resolved',st_th_esc:'Escalated',st_th_last:'Last round',st_none:'No rounds in this period',st_none_sub:'Try a different period or department.',st_inactive:'No rounds this period',st_detail:'Daily breakdown — {name}',st_back:'Back to list',st_day:'Day',st_rounds_day:'Rounds',st_sat_day:'Avg. satisfaction',st_no_days:'No days recorded in this period.',st_click_hint:'Tap any staff member to see their daily breakdown.',st_staff_note:'The list covers staff in your departments. Anyone with no rounds appears at the bottom.',tab_staff:'Productivity',tab_users:'Users',tab_support_queue:'Incoming Issues',
   login_quote:'A patient may forget our names, but never the one who sat with them a minute and asked: how are you today?',login_title:'Ma\'ak',login_sub:'Patient Satisfaction Rounds · Jubail General Hospital',
   email:'Email',password:'Password',login_btn:'Sign in',login_note:'Access is limited to authorized staff. Contact administration for an account.',login_signingin:'Signing in…',
   err_fill_login:'Enter your email and password',kpi_coverage:'Coverage',cov_sub:'{r} rounds of {e} patients',cov_nodata:'Enter patient counts',
@@ -685,16 +710,20 @@ const I18N={
   badge_open:'{n} open',badge_allresolved:'All resolved',badge_noissues:'No issues',details_btn:'Details',
   btn_delete_round:'🗑 Delete round',err_noperm_delete:'Deleting is restricted to the owner account',confirm_delete_round:'Permanently delete this round?\n\n{info}\n\nThis cannot be undone.',toast_round_deleted:'Round deleted',err_delete_round:'Delete failed — check your permission and connection',rd_title:'Round Details',by_word:'by',back:'← Back',kpi_avgsat:'Avg. Satisfaction',kpi_overall:'Overall Rating',kpi_issues:'Issues',sec_ratings:'Ratings',lbl_liked:'Highlights',lbl_sugg:'Suggestions',exc_service:'🌟 Exceptional service: {name}',sec_issues_plans:'Issues & Action Plans',issue_word:'Issue',lbl_desc:'Description',lbl_tech_plan:"Technician's plan",lbl_esc_reason:'Escalation reason',lbl_mgr_plan:"Manager's plan",
   pr_title:'Issues',pr_sub:'Escalated issues need an action plan. Resolved ones are shown for follow-up. Any manager can write the plan and close.',kpi_needaction:'Needs action',kpi_escalated:'Escalated',kpi_resolved:'Resolved',kpi_inscope:'in your scope',
-  esc_alert:'New escalation in {dept}',esc_alert_more:' (and {n} more)',esc_banner:'You have {n} new escalation(s) to handle',esc_banner_go:'View issues',
+  esc_alert:'New escalation in {dept}',sup_alert:'{n} new issue(s) arrived for your department',esc_alert_more:' (and {n} more)',esc_banner:'You have {n} new escalation(s) to handle',esc_banner_go:'View issues',
   wa_share:'WhatsApp',wa_share_title:'Send WhatsApp alert',wa_prefill:"🔔 New escalation — Ma'ak\nDepartment: {dept}\nIssue: {issue}\nEscalated by: {by}\nTime: {time}\nPlease open the system and follow up.",wa_pick:'Choose a manager to alert on WhatsApp:',wa_no_numbers:'No managers in this scope have a phone number. Add their numbers from the Users page.',wa_open:'Open WhatsApp',wa_cancel:'Cancel',wa_phone_label:'Mobile number (for WhatsApp alerts)',wa_phone_ph:'e.g. 966555123456',
   sec_needaction:'Needs Action ({n})',no_esc_title:'No escalated issues',no_esc_sub:'All under control. New escalations appear here.',esc_by:'escalated by',lbl_patient_desc:"Patient's description",lbl_tech_note:"Technician's note",ap_label:'Action Plan',ap_ph:"What's the corrective action, and who is responsible?",btn_save_close:'✔ Save plan & close issue',sec_resolved:'Resolved ({n})',by_the_plan:'Action plan',
   err_noperm_close:"You don't have permission to close issues",err_write_plan:'Write the action plan before closing',toast_issue_closed:'Issue closed',
+  err_noperm:"You don't have permission for this",cancel:'Cancel',
+  ext_btn:'Escalate to support dept',ext_title:'Escalate to a support department',ext_help:'Pick the right department and write a note explaining what is needed. They will see the issue and respond.',ext_pick_dept:'Support department',ext_note_label:'Note for the department',ext_note_ph:'What exactly is needed?',ext_confirm:'Escalate',ext_done:'Escalated to the support department',ext_sent_to:'Escalated to',ext_returned_from:'Returned by',ext_from_mgr:'Escalated by',ext_resolved_by_support:'Resolved by {d}',
+  sup_queue_sub:'Issues escalated to your department. Write the resolution and close, or return to nursing with a note.',sup_kpi_open:'Needs action',sup_kpi_open_sub:'new incoming',sup_kpi_closed:'Resolved',sup_kpi_closed_sub:'closed',sup_sec_open:'Incoming — needs action ({n})',sup_sec_closed:'Resolved ({n})',sup_none_title:'No incoming issues',sup_none_sub:'Issues escalated to your department will appear here.',sup_st_incoming:'⬆ Incoming',sup_plan_label:'Resolution',sup_plan_ph:'What action was taken? (or write the reason if returning it)',sup_add_photo:'Add photo',sup_resolve_btn:'✔ Save & close',sup_return_btn:'Return to nursing',sup_closed_ok:'Issue resolved and closed',sup_returned_ok:'Issue returned to nursing',sup_the_plan:'Resolution',sup_need_return_note:'Write the reason in the plan box',
+  photo_remove:'Remove photo',photo_err:'Could not load the image',photo_add:'Add photo',
   sat_vs_target:'{mark} {n}% · target {tg}%',under_target:'{n} department(s) below the {tg}% target',all_on_target:'All departments met the {tg}% target ✔',sec_repeat:'Recurring issues',repeat_hint:'An item failing {n}+ times in the same department points to a system problem, not a one-off — worth an improvement project.',repeat_none:'No item recurred {n} times in a single department this period.',repeat_count:'Occurrences',repeat_open:'Still open',sec_comments:'Patient comments',comments_none:'No written comments in this period.',comments_count:'{n} comments',dash_title:'Patient Satisfaction Dashboard',dash_sub:'Satisfaction metrics and issue status by time period.',f_period:'Period',p_daily:'Daily',p_weekly:'Weekly',p_monthly:'Monthly',p_quarterly:'Quarterly',p_yearly:'Yearly',all_my_depts:'All my departments',
   nodata_title:'No data',nodata_sub:'No rounds recorded in your scope yet.',kpi_avgsat_period:'Avg. Satisfaction ({period})',sat_pct:'{n}% satisfaction',no_rounds_word:'No rounds',kpi_roundscount:'Rounds',in_current_period:'in current period',kpi_flagged_issues:'Flagged issues',open_word:'open: {n}',kpi_resolve_rate:'Resolution rate',resolved_of:'{a} of {b} resolved',
   sec_trend:'Satisfaction Trend Across Periods',sec_strengths:'Strengths & Weaknesses by Item',sec_issue_status:'Issue Status (current period)',bar_resolved:'Resolved',bar_escalated:'Escalated',bar_open:'Open',sec_by_dept:'By Department (all periods)',no_rounds_period:'No rounds in this period.',no_rounds_yet:'No rounds recorded yet.',rounds_unit:'rounds',
   pl_daily:'Today',pl_weekly:'This week',pl_monthly:'This month',pl_quarterly:'This quarter',pl_yearly:'This year',week_prefix:'Wk',quarter_prefix:'Q',
   um_title:'User Management',um_sub:"Create staff accounts and set each person's role and department. No one can access the system unless you create them here.",loading:'Loading…',add_staff:'Add New Staff',f_title:'Job title',f_title_ph:'e.g. Nurse · Patient care technician · Quality coordinator',th_title:'Job title',no_title:'—',f_name:'Name',f_name_ph:'Full name',f_temp_pass:'Temporary password',f_pass_ph:'At least 6 characters',f_role:'Role',f_dept_allowed:'Departments allowed to view',depts_hint:'Check the departments this account can view, or choose "All Departments".',create_account:'➕ Create Account',creating:'Creating…',accounts_word:'Accounts ({n})',th_name:'Name',th_email:'Email',th_role:'Role',th_dept2:'Department',no_users:'No users yet',you_label:'You',revoke_access:'Revoke access',users_note:'Note: "Revoke access" blocks the staff member from signing in immediately. To permanently delete the account, remove it from Firebase Console → Authentication.',
-  btn_edit:'Edit',edit_title:'Edit account details',save_changes:'💾 Save changes',btn_cancel:'Cancel',toast_user_updated:'Account updated',self_role_note:"You can't change your own role.",admin_all_note:'An administration account always sees every department.',th_status:'Status',st_active:'Active',st_disabled:'Disabled',btn_disable:'Disable access',btn_enable:'Re-enable',confirm_disable:'Disable access for {name}? They won\'t be able to sign in, and you can re-enable them anytime.',toast_disabled:'Account disabled',toast_enabled:'Account re-enabled',err_email_active:'This email already has an active account in the list below',toast_access_restored:'Existing account restored and re-enabled',err_restore_pass:'This email already has an account in the sign-in system. Enter its original password to restore it, or delete the account from Firebase Console → Authentication and try again.',hint_disabled_note:'A disabled account is kept — re-enable it with one click instead of creating it again.',err_fill_user:'Complete name, email, and password',err_pass_short:'Password must be at least 6 characters',err_pick_dept:'Choose at least one department or "All Departments"',toast_account_created:'Account created',confirm_revoke:"Revoke access for {name}? They won't be able to sign in afterwards.",err_cant_revoke_self:"You can't revoke your own access",toast_revoked:'Access revoked',err_delete:'Failed to delete',um_locked_title:'Not authorized',um_locked_sub:'This page is for administration only.',
+  btn_edit:'Edit',edit_title:'Edit account details',save_changes:'💾 Save changes',btn_cancel:'Cancel',toast_user_updated:'Account updated',self_role_note:"You can't change your own role.",admin_all_note:'An administration account always sees every department.',director_all_note:'The nursing director sees all departments, rounds, and reports automatically (without user management).',f_support_dept:'Support department',support_dept_hint:'This account will only see issues escalated to this department.',err_pick_support:'Choose the support department',th_status:'Status',st_active:'Active',st_disabled:'Disabled',btn_disable:'Disable access',btn_enable:'Re-enable',confirm_disable:'Disable access for {name}? They won\'t be able to sign in, and you can re-enable them anytime.',toast_disabled:'Account disabled',toast_enabled:'Account re-enabled',err_email_active:'This email already has an active account in the list below',toast_access_restored:'Existing account restored and re-enabled',err_restore_pass:'This email already has an account in the sign-in system. Enter its original password to restore it, or delete the account from Firebase Console → Authentication and try again.',hint_disabled_note:'A disabled account is kept — re-enable it with one click instead of creating it again.',err_fill_user:'Complete name, email, and password',err_pass_short:'Password must be at least 6 characters',err_pick_dept:'Choose at least one department or "All Departments"',toast_account_created:'Account created',confirm_revoke:"Revoke access for {name}? They won't be able to sign in afterwards.",err_cant_revoke_self:"You can't revoke your own access",toast_revoked:'Access revoked',err_delete:'Failed to delete',um_locked_title:'Not authorized',um_locked_sub:'This page is for administration only.',
   sc_5:'Excellent',sc_4:'Very good',sc_3:'Good',sc_2:'Fair',sc_1:'Poor',
   q_q3:'Nursing staff introducing themselves',q_q4:'Explaining and asking permission before tests and procedures (blood draw, vitals, medication…)',q_q5:'Courtesy and attentiveness of the nursing team',q_q6:'Speed of response to the call bell',q_q7:'Attention to your special or personal needs',q_q8:'Keeping you informed about what is happening'
  }
@@ -713,7 +742,7 @@ function applyLang(){
 }
 function toggleLang(){LANG=(LANG==='ar')?'en':'ar';saveLang();applyLang();}
 
-let db=null, auth=null, cloud=false, roundsSubbed=false;
+let db=null, auth=null, storage=null, cloud=false, roundsSubbed=false;
 
 /* ---- data layer (cloud only) ---- */
 function saveLocal(){try{localStorage.setItem(LS_ROUNDS,JSON.stringify(ROUNDS));}catch(e){}}
@@ -803,6 +832,7 @@ async function initDB(attempt){
   try{
     if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);
     db=firebase.firestore(); auth=firebase.auth();
+    try{ if(firebase.storage)storage=firebase.storage(); }catch(eS){ console.warn('storage unavailable',eS); }
     // keep working when the ward WiFi drops — writes queue locally and sync on reconnect
     try{ await db.enablePersistence({synchronizeTabs:true}); }
     catch(e0){ console.warn('offline cache unavailable:',e0&&e0.code); }
@@ -870,8 +900,8 @@ function subscribeRounds(){
     PENDING=snap.docs.filter(d=>d.metadata&&d.metadata.hasPendingWrites).length;
     setStatus(true);
   };
-  if(seesAllDepts(USER)){
-    // full access → one listener, no filter
+  if(seesAllDepts(USER)||isSupportDept(USER)){
+    // full access (admin/director/sup-all) OR support dept (its queue can be on any ward) → one listener, no filter
     roundsUnsubs.push(db.collection(RC).onSnapshot(snap=>{meta(snap);onData(snap.docs.map(d=>d.data()));},errH));
   }else{
     // scoped roles → one listener per allowed department (matches security rules)
@@ -902,6 +932,7 @@ let ESC_SEEN=null;          // Set of escalated problem ids already known this s
 let ESC_NEW=0;              // count of unseen new escalations (drives the pulsing badge)
 function escKey(p){return p.id||((p.round&&p.round.id)+'|'+(p.qkey||''));}
 function checkNewEscalations(){
+  if(isSupportDept(USER)){checkNewSupport();return;}
   if(!canManageProblems(USER))return;              // only managers get alerts
   const cur=escalatedInScope();
   const curIds=cur.map(escKey);
@@ -927,6 +958,19 @@ function notifyEscalation(list){
   const more=list.length>1?t('esc_alert_more',{n:num(list.length-1)}):'';
   toast('🔔 '+t('esc_alert',{dept:dep})+more,'esc');
   showEscBanner(list.length);
+}
+// support-side: alert when a new problem arrives in this support dept's open queue
+function checkNewSupport(){
+  const cur=supportQueue().filter(p=>p.extStatus==='open');
+  const curIds=cur.map(escKey);
+  if(ESC_SEEN===null){ESC_SEEN=new Set(curIds);ESC_NEW=0;return;}
+  const fresh=cur.filter(p=>{const k=escKey(p);if(ESC_SEEN.has(k))return false;ESC_SEEN.add(k);return true;});
+  if(fresh.length){
+    ESC_NEW+=fresh.length;
+    playAlertSound();
+    toast('🔔 '+t('sup_alert',{n:num(fresh.length)}),'esc');
+    showEscBanner(fresh.length);
+  }
 }
 function playAlertSound(){
   try{
@@ -1133,6 +1177,12 @@ function buildTabs(){
   }else if(r==='sup'){
     TABS=[{id:'problems',lbl:t('tab_problems'),ic:'alert',badge:()=>escalatedInScope().length},
           {id:'all',lbl:t('tab_all_all'),ic:'list'},{id:'staff',lbl:t('tab_staff'),ic:'people'},{id:'dash',lbl:t('tab_dash'),ic:'chart'}];
+  }else if(r==='director'){ // nursing director: sees everything EXCEPT users management
+    TABS=[{id:'dash',lbl:t('tab_dash'),ic:'chart'},
+          {id:'problems',lbl:t('tab_problems'),ic:'alert',badge:()=>escalatedInScope().length},
+          {id:'all',lbl:t('tab_all_all'),ic:'list'},{id:'staff',lbl:t('tab_staff'),ic:'people'}];
+  }else if(r==='support'){ // support department: only its incoming escalations
+    TABS=[{id:'support',lbl:t('tab_support_queue'),ic:'alert',badge:()=>supportQueue().filter(p=>p.extStatus!=='closed').length}];
   }else{ // admin
     TABS=[{id:'dash',lbl:t('tab_dash'),ic:'chart'},
           {id:'problems',lbl:t('tab_problems'),ic:'alert',badge:()=>escalatedInScope().length},
@@ -1154,14 +1204,14 @@ function boot(){
   const deptTxt=seesAllDepts(USER)?t('all_departments'):(isMultiDept(USER)?t('n_departments',{n:num(userDepts(USER).length)}):deptLabel(USER.dept||''));
   $('#userchip').innerHTML=`<span class="av">${esc(initials(USER.name))}</span>
      <span>${esc(USER.name)}<span class="role"> · ${roleLabel(USER.role)}${deptTxt?' · '+esc(deptTxt):''}</span></span>`;
-  if(!current)current = USER.role==='tech'?'new' : (USER.role==='admin'?'dash':'problems');
+  if(!current)current = USER.role==='tech'?'new' : (USER.role==='support'?'support' : ((USER.role==='admin'||USER.role==='director')?'dash':'problems'));
   render();
   // preload the staff directory quietly so managers' WhatsApp lookup works
   if(!staffLoaded&&cloud&&canManageProblems(USER)){loadStaff().catch(()=>{});}
 }
 function render(){
   buildTabs();
-  const v={new:viewNew,myrounds:viewMyRounds,all:viewAll,problems:viewProblems,dash:viewDash,staff:viewStaff,users:viewUsers}[current];
+  const v={new:viewNew,myrounds:viewMyRounds,all:viewAll,problems:viewProblems,dash:viewDash,staff:viewStaff,users:viewUsers,support:viewSupport}[current];
   $('#app').innerHTML='';
   if(v)v(); else if(TABS[0]){current=TABS[0].id;render();}
   labelCells();
@@ -1428,6 +1478,9 @@ function renderProbDetail(p){
     box.innerHTML=`<div style="background:var(--amber-soft);border-radius:11px;padding:13px 15px">
       <label class="fld" style="color:#8a5f0e">${t('esc_reason_label')}</label>
       <textarea data-f="escalatedTo" data-id="${p.id}" placeholder="${t('esc_reason_ph')}">${esc(p.escalatedTo)}</textarea>
+      <div id="tphoto_${p.id}" style="margin-top:8px">${p.photo?`<img src="${esc(p.photo)}" class="ev-photo" alt=""><button type="button" class="btn btn-outline btn-sm" style="margin-inline-start:8px" onclick="clearTechPhoto('${p.id}')">${t('photo_remove')}</button>`:''}</div>
+      ${p.photo?'':`<label class="photo-btn" for="tfile_${p.id}">📷 ${t('photo_add')}</label>
+      <input type="file" id="tfile_${p.id}" accept="image/*" capture="environment" style="display:none" onchange="onTechPhoto('${p.id}',this)">`}
     </div>`;
   }else{box.innerHTML='';}
   box.querySelectorAll('textarea').forEach(t=>t.oninput=e=>{
@@ -1453,16 +1506,20 @@ function updateProbSummary(){
   el.innerHTML=t('sum_resolved')+`: <b style="color:var(--green)">${arNum(res)}</b> · `+t('sum_escalated')+`: <b style="color:var(--amber)">${arNum(esc2)}</b>`+
     (undecided?` · <span style="color:var(--coral)">`+t('sum_remaining',{n:arNum(undecided)})+`</span>`:'');
 }
-function commitRound(){
+async function commitRound(){
   const undecided=draft.problems.filter(p=>p.status==='open').length;
   if(undecided){toast(t('err_decide'),'err');return;}
-  // finalize resolved problems metadata
-  draft.problems.forEach(p=>{
+  const rid=uid();
+  // finalize resolved problems metadata + upload any attached photos to Storage
+  for(const p of draft.problems){
     if(p.status==='resolved'){p.handledBy=USER.name;p.resolvedTs=new Date().toISOString();}
     if(p.status==='escalated'){p.escalatedBy=USER.name;p.escalatedTs=new Date().toISOString();}
-  });
+    if(p.photo&&/^data:/.test(p.photo)){
+      try{p.photo=await uploadPhoto(p.photo,'escalations/'+rid+'/'+p.id);}catch(e){/* keep inline */}
+    }
+  }
   const round={
-    id:uid(),ts:new Date().toISOString(),
+    id:rid,ts:new Date().toISOString(),
     dept:draft.dept,room:draft.room.trim(),pname:(draft.pname||'').trim(),mrn:(draft.mrn||'').trim(),ptype:draft.ptype,tech:USER.name,techUid:USER.uid||'',techTitle:USER.title||'',
     ratings:{...draft.ratings},liked:draft.liked.trim(),suggestions:draft.suggestions.trim(),nurse:draft.nurse.trim(),
     problems:draft.problems
@@ -1621,11 +1678,14 @@ function viewProblems(){
         </div>
         ${item.note?`<div class="hint" style="color:var(--text);margin-bottom:6px"><b>${t('lbl_patient_desc')}:</b> ${esc(item.note)}</div>`:''}
         ${item.escalatedTo?`<div style="background:var(--amber-soft);border-radius:10px;padding:10px 13px;margin-bottom:12px"><b style="color:#8a5f0e">${t('lbl_tech_note')}:</b> ${esc(item.escalatedTo)}</div>`:''}
+        ${item.photo?`<div style="margin-bottom:12px"><img src="${esc(item.photo)}" class="ev-photo" onclick="viewPhoto('${esc(item.photo)}')" alt=""></div>`:''}
+        ${extBanner(item)}
         <label class="fld req" style="color:var(--ink)">${t('ap_label')}</label>
         <textarea id="sup_${item.id}" placeholder="${t('ap_ph')}"></textarea>
         <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
           <button class="btn btn-green btn-sm" onclick="resolveProblem('${r.id}','${item.id}')">${t('btn_save_close')}</button>
           <button class="btn btn-wa btn-sm" onclick="openWhatsAppFor('${r.id}','${item.id}')">${waIcon()} ${t('wa_share')}</button>
+          ${canEscalateExternal(USER)?`<button class="btn btn-outline btn-sm" onclick="openExtDialog('${r.id}','${item.id}')">🛠️ ${t('ext_btn')}</button>`:''}
         </div>
       </div>`;
     });
@@ -1692,6 +1752,257 @@ function resolveProblem(roundId,probId){
   const p=r.problems.find(x=>x.id===probId);if(!p)return;
   p.actionSup=plan;p.supName=USER.name;p.supRole=USER.role;p.status='resolved';p.resolvedTs=new Date().toISOString();
   DB.save(r);toast(t('toast_issue_closed'),'ok');render();
+}
+
+/* ============ EXTERNAL ESCALATION (to support departments) ============ */
+/* A problem can be routed to a support dept. Fields on the problem:
+   extDept   = support dept (ar key) it is routed to
+   extNote   = manager's note when escalating
+   extBy/extTs = who/when escalated externally
+   extStatus = 'open' (waiting on support) | 'closed' (support resolved) | 'returned' (sent back to nursing)
+   extPlan/extName/extTs2/extPhoto = support's resolution
+   returnNote/returnBy/returnTs = support's note when returning to nursing */
+
+// banner shown on a manager's pending card if it was sent out / came back
+function extBanner(p){
+  if(p.extStatus==='open'){
+    return `<div style="background:var(--teal-soft);border-radius:10px;padding:10px 13px;margin-bottom:12px">
+      <b style="color:var(--ink)">🛠️ ${t('ext_sent_to')}:</b> ${esc(supportLabel(p.extDept))}
+      <div class="hint">${t('by_word')} ${esc(p.extBy||'')} · ${fmtDate(p.extTs)}</div>
+      ${p.extNote?`<div class="hint" style="color:var(--text);margin-top:4px">${esc(p.extNote)}</div>`:''}</div>`;
+  }
+  if(p.extStatus==='returned'){
+    return `<div style="background:var(--amber-soft);border-radius:10px;padding:10px 13px;margin-bottom:12px">
+      <b style="color:#8a5f0e">↩️ ${t('ext_returned_from')}:</b> ${esc(supportLabel(p.extDept))}
+      <div class="hint" style="color:var(--text);margin-top:4px">${esc(p.returnNote||'')}</div>
+      <div class="hint">${t('by_word')} ${esc(p.returnBy||'')} · ${fmtDate(p.returnTs)}</div></div>`;
+  }
+  return '';
+}
+
+let extCtx=null;
+function openExtDialog(roundId,probId){
+  if(!canEscalateExternal(USER)){toast(t('err_noperm'),'err');return;}
+  extCtx={roundId,probId};
+  const opts=SUPPORT_DEPTS.map(d=>`<option value="${esc(d.ar)}">${esc(LANG==='en'?d.en:d.ar)}</option>`).join('');
+  const ov=document.createElement('div');ov.className='rub-overlay';ov.id='extOverlay';
+  ov.onclick=e=>{if(e.target===ov)closeExtDialog();};
+  ov.innerHTML=`<div class="rub-box" style="max-width:460px">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:4px">
+      <b style="font-size:16px;color:var(--ink-deep)">🛠️ ${t('ext_title')}</b>
+      <button type="button" style="border:0;background:none;font-size:18px;cursor:pointer;color:var(--muted);line-height:1" onclick="closeExtDialog()">✕</button>
+    </div>
+    <div style="padding-top:12px">
+      <p class="hint" style="margin-bottom:12px">${t('ext_help')}</p>
+      <label class="fld req" style="color:var(--ink)">${t('ext_pick_dept')}</label>
+      <select id="extDeptSel" style="margin-bottom:14px">${opts}</select>
+      <label class="fld" style="color:var(--ink)">${t('ext_note_label')}</label>
+      <textarea id="extNote" placeholder="${t('ext_note_ph')}"></textarea>
+      <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
+        <button class="btn btn-outline btn-sm" onclick="closeExtDialog()">${t('cancel')}</button>
+        <button class="btn btn-sm" onclick="doExtEscalate()">🛠️ ${t('ext_confirm')}</button>
+      </div>
+    </div></div>`;
+  ov.style.display='grid';
+  document.body.appendChild(ov);
+}
+function closeExtDialog(){const o=$('#extOverlay');if(o)o.remove();extCtx=null;}
+function doExtEscalate(){
+  if(!extCtx)return;
+  const dept=$('#extDeptSel').value;
+  const note=$('#extNote').value.trim();
+  const r=ROUNDS.find(x=>x.id===extCtx.roundId);if(!r){closeExtDialog();return;}
+  const p=r.problems.find(x=>x.id===extCtx.probId);if(!p){closeExtDialog();return;}
+  p.extDept=dept;p.extNote=note;p.extBy=USER.name;p.extTs=new Date().toISOString();
+  p.extStatus='open';
+  // clear any previous return state
+  p.returnNote='';p.returnBy='';p.returnTs='';
+  DB.save(r);closeExtDialog();toast(t('ext_done'),'ok');render();
+}
+
+/* ---- Support department side ---- */
+// all problems routed to the current support user's dept
+function supportQueue(){
+  if(!isSupportDept(USER))return [];
+  const mine=USER.supportDept;
+  const out=[];
+  ROUNDS.forEach(r=>{(r.problems||[]).forEach(p=>{
+    if(p.extDept===mine && p.extStatus && p.extStatus!=='returned'){
+      out.push(Object.assign({},p,{round:r}));
+    }
+  });});
+  // open first (needs action), then closed
+  return out.sort((a,b)=>{
+    const ao=a.extStatus==='open'?0:1, bo=b.extStatus==='open'?0:1;
+    if(ao!==bo)return ao-bo;
+    return new Date(b.extTs||0)-new Date(a.extTs||0);
+  });
+}
+
+function viewSupport(){
+  clearEscNew();
+  const app=$('#app');
+  const q=supportQueue();
+  const open=q.filter(p=>p.extStatus==='open');
+  const closed=q.filter(p=>p.extStatus==='closed');
+  app.innerHTML=`<div class="page-head"><div><h2>🛠️ ${esc(supportLabel(USER.supportDept))}</h2>
+    <p>${t('sup_queue_sub')}</p></div></div>`;
+  app.innerHTML+=`<div class="kpis" style="margin-bottom:22px">
+    <div class="kpi warn"><div class="lbl">${t('sup_kpi_open')}</div><div class="val">${num(open.length)}</div><div class="sub">${t('sup_kpi_open_sub')}</div></div>
+    <div class="kpi good"><div class="lbl">${t('sup_kpi_closed')}</div><div class="val">${num(closed.length)}</div><div class="sub">${t('sup_kpi_closed_sub')}</div></div>
+  </div>`;
+
+  app.innerHTML+=`<div class="section-title">${t('sup_sec_open',{n:num(open.length)})}</div>`;
+  if(!open.length){app.innerHTML+=emptyCard('✅',t('sup_none_title'),t('sup_none_sub'));}
+  else{
+    let html='';
+    open.forEach(item=>{
+      const r=item.round;
+      html+=`<div class="card card-pad" style="margin-bottom:14px">
+        <div class="row-between" style="margin-bottom:10px">
+          <div><span class="prob-src">${esc(probLabel(item))}</span>
+            <div class="hint">${esc(deptLabel(r.dept))} · ${t('room_word')} ${esc(r.room)} · ${fmtDate(item.extTs)}</div></div>
+          <span class="status st-esc">${t('sup_st_incoming')}</span>
+        </div>
+        ${item.note?`<div class="hint" style="color:var(--text);margin-bottom:6px"><b>${t('lbl_patient_desc')}:</b> ${esc(item.note)}</div>`:''}
+        <div style="background:var(--teal-soft);border-radius:10px;padding:10px 13px;margin-bottom:6px">
+          <b style="color:var(--ink)">${t('ext_from_mgr')}:</b> ${esc(item.extBy||'')}
+          ${item.extNote?`<div class="hint" style="color:var(--text);margin-top:4px">${esc(item.extNote)}</div>`:''}</div>
+        ${item.photo?`<div style="margin:8px 0"><img src="${esc(item.photo)}" class="ev-photo" onclick="viewPhoto('${esc(item.photo)}')" alt=""></div>`:''}
+        <label class="fld req" style="color:var(--ink);margin-top:8px">${t('sup_plan_label')}</label>
+        <textarea id="sp_${item.id}" placeholder="${t('sup_plan_ph')}"></textarea>
+        <div id="spphoto_${item.id}" style="margin-top:8px"></div>
+        <label class="photo-btn" for="spfile_${item.id}">📷 ${t('sup_add_photo')}</label>
+        <input type="file" id="spfile_${item.id}" accept="image/*" capture="environment" style="display:none" onchange="onSupportPhoto('${item.id}',this)">
+        <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-green btn-sm" onclick="supportResolve('${r.id}','${item.id}')">${t('sup_resolve_btn')}</button>
+          <button class="btn btn-outline btn-sm" onclick="supportReturn('${r.id}','${item.id}')">↩️ ${t('sup_return_btn')}</button>
+        </div>
+      </div>`;
+    });
+    app.innerHTML+=html;
+  }
+
+  if(closed.length){
+    app.innerHTML+=`<div class="section-title">${t('sup_sec_closed',{n:num(closed.length)})}</div>`;
+    let html='';
+    closed.slice(0,60).forEach(item=>{
+      const r=item.round;
+      html+=`<div class="prob"><div class="prob-head">
+          <span class="prob-src">${esc(probLabel(item))}</span>
+          <span class="tag">${esc(deptLabel(r.dept))} · ${t('room_word')} ${esc(r.room)}</span>
+          <div style="flex:1"></div><span class="status st-res">${t('st_resolved')}</span></div>
+        <div class="prob-body">
+          ${item.note?`<div class="hint" style="color:var(--text);margin-bottom:6px"><b>${t('lbl_desc')}:</b> ${esc(item.note)}</div>`:''}
+          ${item.extPlan?`<div style="background:var(--green-soft);border-radius:10px;padding:10px 13px"><b style="color:#146b48">${t('sup_the_plan')}:</b> ${esc(item.extPlan)}<div class="hint">${t('by_word')} ${esc(item.extName||'')} · ${fmtDate(item.extTs2)}</div></div>`:''}
+          ${item.extPhoto?`<div style="margin-top:8px"><img src="${esc(item.extPhoto)}" class="ev-photo" onclick="viewPhoto('${esc(item.extPhoto)}')" alt=""></div>`:''}
+        </div></div>`;
+    });
+    app.innerHTML+=html;
+  }
+}
+
+async function supportResolve(roundId,probId){
+  if(!isSupportDept(USER)){toast(t('err_noperm'),'err');return;}
+  const plan=$('#sp_'+probId).value.trim();
+  if(!plan){toast(t('err_write_plan'),'err');return;}
+  const r=ROUNDS.find(x=>x.id===roundId);if(!r)return;
+  const p=r.problems.find(x=>x.id===probId);if(!p)return;
+  p.extPlan=plan;p.extName=USER.name;p.extTs2=new Date().toISOString();p.extStatus='closed';
+  if(supPhotoBuf[probId]){
+    let ph=supPhotoBuf[probId];
+    if(/^data:/.test(ph)){try{ph=await uploadPhoto(ph,'ext_resolutions/'+roundId+'/'+probId);}catch(e){}}
+    p.extPhoto=ph;delete supPhotoBuf[probId];
+  }
+  // closing externally also resolves the underlying problem for nursing views
+  p.status='resolved';p.resolvedTs=p.resolvedTs||new Date().toISOString();
+  p.actionSup=p.actionSup||(t('ext_resolved_by_support',{d:supportLabel(p.extDept)})+' — '+plan);
+  p.supName=p.supName||USER.name;p.supRole=p.supRole||'support';
+  DB.save(r);toast(t('sup_closed_ok'),'ok');render();
+}
+function supportReturn(roundId,probId){
+  if(!isSupportDept(USER)){toast(t('err_noperm'),'err');return;}
+  const note=$('#sp_'+probId).value.trim();
+  if(!note){toast(t('sup_need_return_note'),'err');return;}
+  const r=ROUNDS.find(x=>x.id===roundId);if(!r)return;
+  const p=r.problems.find(x=>x.id===probId);if(!p)return;
+  p.extStatus='returned';p.returnNote=note;p.returnBy=USER.name;p.returnTs=new Date().toISOString();
+  // problem goes back to nursing as escalated (needs manager action again)
+  p.status='escalated';
+  DB.save(r);toast(t('sup_returned_ok'),'ok');render();
+}
+
+/* ---- photo handling (client-side compress; Firebase Storage upload wired in DB layer) ---- */
+const supPhotoBuf={}; // probId -> dataURL/URL for support close
+function viewPhoto(src){
+  const ov=document.createElement('div');ov.className='rub-overlay';ov.id='photoOverlay';
+  ov.onclick=()=>ov.remove();
+  ov.innerHTML=`<div style="max-width:640px;width:100%">
+    <img src="${esc(src)}" style="width:100%;border-radius:10px;display:block"></div>`;
+  ov.style.display='grid';
+  document.body.appendChild(ov);
+}
+function onSupportPhoto(probId,inp){
+  const f=inp.files&&inp.files[0];if(!f)return;
+  compressImage(f).then(url=>{
+    supPhotoBuf[probId]=url;
+    const box=$('#spphoto_'+probId);
+    if(box)box.innerHTML=`<img src="${url}" class="ev-photo" alt=""><button class="btn btn-outline btn-sm" style="margin-inline-start:8px" onclick="clearSupportPhoto('${probId}')">${t('photo_remove')}</button>`;
+  }).catch(()=>toast(t('photo_err'),'err'));
+}
+function clearSupportPhoto(probId){delete supPhotoBuf[probId];const b=$('#spphoto_'+probId);if(b)b.innerHTML='';}
+function onTechPhoto(probId,inp){
+  const f=inp.files&&inp.files[0];if(!f)return;
+  compressImage(f).then(url=>{
+    const p=draft&&draft.problems&&draft.problems.find(x=>x.id===probId);if(p)p.photo=url;
+    renderProbDetail(p);
+  }).catch(()=>toast(t('photo_err'),'err'));
+}
+function clearTechPhoto(probId){
+  const p=draft&&draft.problems&&draft.problems.find(x=>x.id===probId);if(p)delete p.photo;
+  renderProbDetail(p);
+}
+
+// compress an image File to a JPEG data URL (fallback storage when Firebase Storage isn't wired)
+function compressImage(file,maxDim=1280,quality=.72){
+  return new Promise((res,rej)=>{
+    const img=new Image();const url=URL.createObjectURL(file);
+    img.onload=()=>{
+      let{width:w,height:h}=img;
+      if(w>h&&w>maxDim){h=Math.round(h*maxDim/w);w=maxDim;}
+      else if(h>=w&&h>maxDim){w=Math.round(w*maxDim/h);h=maxDim;}
+      const c=document.createElement('canvas');c.width=w;c.height=h;
+      c.getContext('2d').drawImage(img,0,0,w,h);
+      URL.revokeObjectURL(url);
+      res(c.toDataURL('image/jpeg',quality));
+    };
+    img.onerror=()=>{URL.revokeObjectURL(url);rej(new Error('img'));};
+    img.src=url;
+  });
+}
+// turn a data URL into a Blob for Storage upload
+function dataURLtoBlob(dataURL){
+  const [head,body]=dataURL.split(',');
+  const mime=(head.match(/:(.*?);/)||[])[1]||'image/jpeg';
+  const bin=atob(body);const len=bin.length;const arr=new Uint8Array(len);
+  for(let i=0;i<len;i++)arr[i]=bin.charCodeAt(i);
+  return new Blob([arr],{type:mime});
+}
+/* Upload a compressed image to Firebase Storage and return its download URL.
+   Falls back to the inline data URL when Storage isn't available (offline/local mode),
+   so photos always work — they just live in the DB instead of Storage in that case. */
+async function uploadPhoto(dataURL,pathPrefix){
+  if(!(storage&&cloud))return dataURL;   // local/offline → keep inline
+  try{
+    const blob=dataURLtoBlob(dataURL);
+    const name=pathPrefix+'/'+Date.now()+'_'+Math.random().toString(36).slice(2,8)+'.jpg';
+    const ref=storage.ref().child(name);
+    await ref.put(blob,{contentType:'image/jpeg'});
+    return await ref.getDownloadURL();
+  }catch(e){
+    console.warn('photo upload failed, keeping inline',e);
+    return dataURL;   // graceful fallback
+  }
 }
 
 /* ================= DASHBOARD ================= */
@@ -2738,7 +3049,7 @@ function renderUsers(){
     </div>
     <div style="margin-top:14px"><label class="fld req">${t('f_role')}</label>
       <select id="nu_role" onchange="toggleDeptField()" style="max-width:320px">
-        ${['tech','head','sup','admin'].map(r=>`<option value="${r}">${roleLabel(r)}</option>`).join('')}
+        ${['tech','head','sup','director','admin','support'].map(r=>`<option value="${r}">${roleLabel(r)}</option>`).join('')}
       </select></div>
     <div id="nu_deptWrap" style="margin-top:14px"></div>
     <div style="margin-top:16px"><button class="btn btn-primary btn-sm" id="addUserBtn" onclick="addUser()">${t('create_account')}</button></div>
@@ -2785,7 +3096,7 @@ function renderEditForm(box,u){
     </div>
     <div style="margin-top:14px"><label class="fld req">${t('f_role')}</label>
       <select id="nu_role" onchange="toggleDeptField()" style="max-width:320px"${self?' disabled':''}>
-        ${['tech','head','sup','admin'].map(r=>`<option value="${r}"${u.role===r?' selected':''}>${roleLabel(r)}</option>`).join('')}
+        ${['tech','head','sup','director','admin','support'].map(r=>`<option value="${r}"${u.role===r?' selected':''}>${roleLabel(r)}</option>`).join('')}
       </select>
       ${self?`<p class="hint">${t('self_role_note')}</p>`:''}</div>
     <div id="nu_deptWrap" style="margin-top:14px"></div>
@@ -2795,7 +3106,7 @@ function renderEditForm(box,u){
     </div>
     <p class="hint" id="userMsg" style="min-height:16px;font-weight:700"></p>
   </div>`;
-  toggleDeptField({dept:u.dept,depts:(u.depts==null&&(u.role==='sup'||u.role==='admin'))?['*']:u.depts,role:u.role});
+  toggleDeptField({dept:u.dept,depts:(u.depts==null&&(u.role==='sup'||u.role==='admin'))?['*']:u.depts,supportDept:u.supportDept,role:u.role});
 }
 async function saveEdit(){
   const u=USERS.find(x=>x.uid===editUid);if(!u)return;
@@ -2807,12 +3118,18 @@ async function saveEdit(){
   const DEL=(typeof firebase!=='undefined'&&firebase.firestore)?firebase.firestore.FieldValue.delete():null;
   const phone=normPhone(($('#nu_phone')&&$('#nu_phone').value)||'');
   if(phone)upd.phone=phone; else if(DEL)upd.phone=DEL;
-  if(role==='tech'||role==='head'){
-    upd.dept=$('#nu_dept').value; if(DEL)upd.depts=DEL;
+  if(role==='director'){
+    if(DEL){upd.dept=DEL;upd.depts=DEL;upd.supportDept=DEL;}
+  }else if(role==='support'){
+    const sd=$('#nu_supdept')?$('#nu_supdept').value:null;
+    if(!sd){msg(t('err_pick_support'));return;}
+    upd.supportDept=sd; if(DEL){upd.dept=DEL;upd.depts=DEL;}
+  }else if(role==='tech'||role==='head'){
+    upd.dept=$('#nu_dept').value; if(DEL){upd.depts=DEL;upd.supportDept=DEL;}
   }else{
     const checked=[...document.querySelectorAll('#nu_depts input:checked')].map(i=>i.value);
     if(!checked.length){msg(t('err_pick_dept'));return;}
-    upd.depts=checked.includes('*')?['*']:checked; if(DEL)upd.dept=DEL;
+    upd.depts=checked.includes('*')?['*']:checked; if(DEL){upd.dept=DEL;upd.supportDept=DEL;}
   }
   const b=$('#saveUserBtn');if(b){b.disabled=true;b.textContent=t('creating');}
   try{
@@ -2827,7 +3144,16 @@ function toggleDeptField(pre){
   const r=role.value;
   const curDept=pre&&pre.dept?pre.dept:null;
   const curDepts=pre&&pre.depts?pre.depts:null;
-  if(r==='tech'||r==='head'){
+  const curSup=pre&&pre.supportDept?pre.supportDept:null;
+  if(r==='director'){
+    // nursing director sees everything; no department selection needed
+    wrap.innerHTML=`<p class="hint">${t('director_all_note')}</p>`;
+  }else if(r==='support'){
+    // support dept account belongs to exactly one external department
+    wrap.innerHTML=`<label class="fld req">${t('f_support_dept')}</label>
+      <select id="nu_supdept" style="max-width:460px">${SUPPORT_DEPTS.map(d=>`<option value="${esc(d.ar)}"${curSup===d.ar?' selected':''}>${esc(LANG==='en'?d.en:d.ar)}</option>`).join('')}</select>
+      <p class="hint">${t('support_dept_hint')}</p>`;
+  }else if(r==='tech'||r==='head'){
     wrap.innerHTML=`<label class="fld req">${t('f_dept')}</label>
       <select id="nu_dept" style="max-width:460px">${DEPTS.map(d=>`<option value="${esc(d.ar)}"${curDept===d.ar?' selected':''}>${esc(deptLabel(d.ar))}</option>`).join('')}</select>`;
   }else{
@@ -2852,8 +3178,13 @@ async function addUser(){
   const msg=m=>{const e=$('#userMsg');if(e){e.style.color='var(--coral)';e.textContent=m;}};
   if(!name||!email||!pass){msg(t('err_fill_user'));return;}
   if(pass.length<6){msg(t('err_pass_short'));return;}
-  let profDept=null,profDepts=null;
-  if(role==='tech'||role==='head'){profDept=$('#nu_dept').value;}
+  let profDept=null,profDepts=null,profSupport=null;
+  if(role==='director'){
+    // sees all; no dept fields
+  }else if(role==='support'){
+    profSupport=$('#nu_supdept')?$('#nu_supdept').value:null;
+    if(!profSupport){msg(t('err_pick_support'));return;}
+  }else if(role==='tech'||role==='head'){profDept=$('#nu_dept').value;}
   else{
     const checked=[...document.querySelectorAll('#nu_depts input:checked')].map(i=>i.value);
     if(!checked.length){msg(t('err_pick_dept'));return;}
@@ -2867,7 +3198,9 @@ async function addUser(){
   const phone=normPhone(($('#nu_phone')&&$('#nu_phone').value)||'');
   const prof={name,email,role,title:jobTitle,active:true,createdAt:new Date().toISOString(),createdBy:USER.email||''};
   if(phone)prof.phone=phone;
-  if(profDept!=null)prof.dept=profDept; else prof.depts=profDepts;
+  if(role==='support'){prof.supportDept=profSupport;}
+  else if(role==='director'){/* no dept fields */}
+  else if(profDept!=null)prof.dept=profDept; else prof.depts=profDepts;
   try{
     const sec=firebase.apps.find(a=>a.name==='sec')||firebase.initializeApp(firebaseConfig,'sec');
     let uid=null,restored=false;
