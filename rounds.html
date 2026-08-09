@@ -630,7 +630,7 @@ const I18N={
   nr_title:'جولة جديدة',nr_sub:'قيّمي كل بند من ١ (ضعيف) إلى ٥ (ممتاز). أي بند بتقييم ٢ أو أقل يُرصد كمشكلة تلقائياً.',
   sec_round_info:'بيانات الجولة',f_dept:'القسم',f_pname:'اسم المريض',f_pname_ph:'اختياري',f_mrn:'رقم الملف',f_mrn_ph:'اختياري',th_pname:'اسم المريض',th_mrn:'رقم الملف',optional_word:'(اختياري)',f_room:'رقم الغرفة',f_room_ph:'مثال: ٢١٤',f_asked:'تم سؤال',opt_patient:'مريض',opt_companion:'مرافق',
   sec_eval:'تقييم خدمات التمريض',sec_overall:'التقييم العام والملاحظات',q12:'التقييم العام لخدمات مستشفى الجبيل العام',
-  f_liked:'أبرز الجوانب التي أعجبتك أو لم تعجبك',f_liked_ph:'ملاحظات المريض...',f_sugg:'ملاحظات ومقترحات لتحسين الخدمة',f_sugg_ph:'مقترحات...',f_nurse:'اسم ممرض/ة قدّم خدمة استثنائية',f_nurse_ph:'اسم الممرض/ة (اختياري)',
+  f_liked:'أبرز الجوانب التي أعجبتك أو لم تعجبك',f_liked_ph:'ملاحظات المريض...',f_sugg:'ملاحظات ومقترحات لتحسين الخدمة',f_sugg_ph:'مقترحات...',f_nurse:'اسم ممرض/ة قدّم خدمة استثنائية',f_nurse_ph:'اسم الممرض/ة (اختياري)',extiss_title:'مشكلة خارج التمريض (لقسم مساند)',extiss_help:'لو المريض ذكر شكوى ما تخص التمريض (نظافة، أكل، صيانة، تغذية...) سجّليها هنا. بتوصل للمنجرز وهم يوجّهونها للقسم المساند المناسب.',extiss_add:'إضافة مشكلة خارج التمريض',extiss_ph:'اكتبي شكوى المريض بالتفصيل...',extiss_remove:'حذف',extiss_label:'مشكلة خارج التمريض',extiss_will_route:'⬆ للمنجرز',extiss_desc:'وصف الشكوى',
   next_review:'التالي: مراجعة المشاكل ←',live_notstarted:'لم يبدأ التقييم بعد',live_avg:'متوسط الرضا',live_flagged:'{n} مشكلة مرصودة',live_noflag:'لا مشاكل مرصودة ✅',
   rubric_help:'؟',rubric_title:'معايير التقييم',rubric_pick:'اختاري درجة لعرض المعيار',rubric_intro:'المعيار لكل درجة:',flag_note:'⚠️ رُصدت كمشكلة — بتنحل أو تُصعّد في الخطوة التالية',
   ps_title:'مراجعة المشاكل ومعالجتها',room_word:'غرفة',back_eval:'→ رجوع للتقييم',
@@ -696,7 +696,7 @@ const I18N={
   nr_title:'New Round',nr_sub:'Rate each item from 1 (Poor) to 5 (Excellent). Any item rated 2 or below is automatically flagged as an issue.',
   sec_round_info:'Round Details',f_dept:'Department',f_pname:'Patient name',f_pname_ph:'Optional',f_mrn:'File no.',f_mrn_ph:'Optional',th_pname:'Patient name',th_mrn:'File no.',optional_word:'(optional)',f_room:'Room Number',f_room_ph:'e.g. 214',f_asked:'Surveyed',opt_patient:'Patient',opt_companion:'Companion',
   sec_eval:'Nursing Services Evaluation',sec_overall:'Overall Rating & Comments',q12:'Overall rating of Jubail General Hospital services',
-  f_liked:'Aspects you liked or disliked',f_liked_ph:"Patient's remarks...",f_sugg:'Comments & suggestions to improve the service',f_sugg_ph:'Suggestions...',f_nurse:'Name of a nurse who gave exceptional service',f_nurse_ph:"Nurse's name (optional)",
+  f_liked:'Aspects you liked or disliked',f_liked_ph:"Patient's remarks...",f_sugg:'Comments & suggestions to improve the service',f_sugg_ph:'Suggestions...',f_nurse:'Name of a nurse who gave exceptional service',f_nurse_ph:"Nurse's name (optional)",extiss_title:'Non-nursing issue (for a support dept)',extiss_help:"If the patient raised a complaint outside nursing (cleaning, food, maintenance, nutrition...), record it here. It goes to the managers, who route it to the right support department.",extiss_add:'Add non-nursing issue',extiss_ph:"Describe the patient's complaint...",extiss_remove:'Remove',extiss_label:'Non-nursing issue',extiss_will_route:'⬆ To managers',extiss_desc:'Complaint description',
   next_review:'Next: Review Issues →',live_notstarted:'Evaluation not started yet',live_avg:'Satisfaction average',live_flagged:'{n} issue(s) flagged',live_noflag:'No issues flagged ✅',
   rubric_help:'?',rubric_title:'Scoring guide',rubric_pick:'Pick a score to see its criterion',rubric_intro:'Criterion for each score:',flag_note:'⚠️ Flagged as an issue — resolve or escalate it in the next step',
   ps_title:'Review & Handle Issues',room_word:'Room',back_eval:'← Back to evaluation',
@@ -1280,7 +1280,7 @@ function labelCells(root){
 
 /* ================= NEW ROUND ================= */
 let draft=null;
-function newDraft(){return{dept:(USER&&USER.dept&&USER.dept!=='all')?USER.dept:'',room:'',pname:'',mrn:'',ptype:'',ratings:{},liked:'',suggestions:'',nurse:'',problems:[]};}
+function newDraft(){return{dept:(USER&&USER.dept&&USER.dept!=='all')?USER.dept:'',room:'',pname:'',mrn:'',ptype:'',ratings:{},liked:'',suggestions:'',nurse:'',problems:[],extIssues:[]};}
 function viewNew(){
   if(!draft)draft=newDraft();
   const app=$('#app');
@@ -1342,6 +1342,16 @@ function viewNew(){
       <input type="text" id="nurse" value="${esc(draft.nurse)}" placeholder="${t('f_nurse_ph')}">
     </div>
 
+    <div class="ext-issues-box" style="margin-top:18px;background:#fbfdfd;border:1px solid var(--line);border-radius:12px;padding:15px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+        <span style="font-size:17px">🛠️</span>
+        <b style="color:var(--ink-deep);font-size:15px">${t('extiss_title')}</b>
+      </div>
+      <p class="hint" style="margin-bottom:12px">${t('extiss_help')}</p>
+      <div id="extIssueList"></div>
+      <button type="button" class="btn btn-outline btn-sm" onclick="addExtIssue()">➕ ${t('extiss_add')}</button>
+    </div>
+
     <div class="divider"></div>
     <div class="row-between">
       <div class="hint" id="liveScore"></div>
@@ -1360,7 +1370,32 @@ function viewNew(){
 
   renderQuestions();
   renderScale('overallScale','overall');
+  renderExtIssues();
   updateLive();
+}
+/* ---- non-nursing (support-department) issues the rounds conductor records from patient complaints ---- */
+function addExtIssue(){
+  if(!draft.extIssues)draft.extIssues=[];
+  draft.extIssues.push({id:uid(),note:''});
+  renderExtIssues();
+  // focus the new textarea
+  setTimeout(()=>{const els=document.querySelectorAll('#extIssueList textarea');if(els.length)els[els.length-1].focus();},30);
+}
+function removeExtIssue(id){
+  draft.extIssues=(draft.extIssues||[]).filter(x=>x.id!==id);
+  renderExtIssues();
+}
+function renderExtIssues(){
+  const box=$('#extIssueList');if(!box)return;
+  const list=draft.extIssues||[];
+  box.innerHTML=list.map(x=>`
+    <div class="ext-issue-row" style="display:flex;gap:8px;align-items:flex-start;margin-bottom:10px">
+      <textarea data-eid="${x.id}" placeholder="${t('extiss_ph')}" style="flex:1;margin:0">${esc(x.note)}</textarea>
+      <button type="button" class="btn btn-outline btn-sm" style="padding:8px 11px" onclick="removeExtIssue('${x.id}')" title="${t('extiss_remove')}">✕</button>
+    </div>`).join('');
+  box.querySelectorAll('textarea').forEach(ta=>ta.oninput=e=>{
+    const it=(draft.extIssues||[]).find(x=>x.id===e.target.dataset.eid);if(it)it.note=e.target.value;
+  });
 }
 function paintSeg(id,el){document.querySelectorAll('#'+id+' .seg-opt').forEach(o=>o.classList.remove('on'));el.classList.add('on');}
 function arNum(n){return num(n);}
@@ -1441,6 +1476,7 @@ function goProblems(){
   if(answered<QRATED.length){toast(t('err_rateall'),'err');return;}
   // (re)build auto problems from low ratings, keep existing decisions
   const prev={};draft.problems.forEach(p=>{if(p.qkey)prev[p.qkey]=p;});
+  const prevExt={};draft.problems.forEach(p=>{if(p.external&&p.extSrcId)prevExt[p.extSrcId]=p;});
   draft.problems=[];
   QRATED.forEach(q=>{
     if(draft.ratings[q.k]<=THRESHOLD){
@@ -1449,6 +1485,13 @@ function goProblems(){
       // refresh score in case changed
       draft.problems[draft.problems.length-1].score=draft.ratings[q.k];
     }
+  });
+  // add non-nursing issues (patient complaints for support depts) — always escalated to managers
+  (draft.extIssues||[]).forEach(x=>{
+    if(!(x.note||'').trim())return;   // skip empty rows
+    const old=prevExt[x.id];
+    if(old){ old.note=x.note.trim(); draft.problems.push(old); }
+    else{ draft.problems.push({id:uid(),extSrcId:x.id,external:true,label:t('extiss_label'),note:x.note.trim(),score:null,status:'escalated',actionTech:'',actionSup:'',escalatedTo:'',handledBy:''}); }
   });
   renderProblemStep();
 }
@@ -1473,6 +1516,24 @@ function renderProblemStep(){
   let html='<div class="card card-pad">';
   html+=`<div class="hint" style="margin-bottom:16px">`+t('ps_intro',{n:'<b style="color:var(--coral)">'+arNum(probs.length)+'</b>'})+`</div>`;
   probs.forEach((p,i)=>{
+    if(p.external){
+      html+=`<div class="prob" id="prob_${p.id}" style="border-color:#c9a86a">
+        <div class="prob-head" style="background:#fdf7ec">
+          <span class="pill">${arNum(i+1)}</span>
+          <span class="prob-src">🛠️ ${t('extiss_label')}</span>
+          <div style="flex:1"></div>
+          <span class="status st-esc">${t('extiss_will_route')}</span>
+        </div>
+        <div class="prob-body">
+          <label class="fld">${t('extiss_desc')}</label>
+          <textarea data-f="note" data-id="${p.id}" placeholder="${t('extiss_ph')}">${esc(p.note)}</textarea>
+          <div id="tphoto_${p.id}" style="margin-top:8px">${p.photo?`<img src="${esc(p.photo)}" class="ev-photo" alt=""><button type="button" class="btn btn-outline btn-sm" style="margin-inline-start:8px" onclick="clearTechPhoto('${p.id}')">${t('photo_remove')}</button>`:''}</div>
+          ${p.photo?'':`<label class="photo-btn" for="tfile_${p.id}">📷 ${t('photo_add')}</label>
+          <input type="file" id="tfile_${p.id}" accept="image/*" capture="environment" style="display:none" onchange="onTechPhoto('${p.id}',this)">`}
+        </div>
+      </div>`;
+      return;
+    }
     html+=`<div class="prob" id="prob_${p.id}">
       <div class="prob-head">
         <span class="pill">${arNum(i+1)}</span>
