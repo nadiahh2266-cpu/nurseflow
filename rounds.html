@@ -311,6 +311,9 @@ tbody tr:hover{background:#f8fbfb}
   background:linear-gradient(90deg,var(--amber),#f0b03e);color:#3a2a05;font-weight:800;font-size:14px;
   padding:12px 18px;cursor:pointer;transform:translateY(-100%);transition:transform .35s;box-shadow:0 6px 20px rgba(0,0,0,.18)}
 .esc-banner.show{transform:translateY(0)}
+.notif-ask{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:215;display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:center;
+  background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 16px;box-shadow:0 10px 30px rgba(35,53,88,.22);max-width:92%;font-size:14px;color:var(--text)}
+@media(max-width:520px){.notif-ask{left:12px;right:12px;transform:none;flex-direction:column;align-items:stretch;text-align:center}}
 .esc-banner .eb-ic{font-size:18px;animation:bellShake 1s ease-in-out infinite}
 .esc-banner .eb-go{background:rgba(0,0,0,.14);border-radius:6px;padding:3px 10px;font-size:12.5px}
 @keyframes bellShake{0%,100%{transform:rotate(0)}20%{transform:rotate(-14deg)}40%{transform:rotate(12deg)}60%{transform:rotate(-8deg)}80%{transform:rotate(6deg)}}
@@ -524,6 +527,8 @@ const USE_FIREBASE = firebaseConfig.projectId && !firebaseConfig.projectId.inclu
    ملاحظة: الحماية الحقيقية في قواعد Firestore — لازم تحطين نفس المعرّف هناك.
    ======================================================================== */
 const OWNER_UID='tddkmx91NtY9rR8aHDsDSk2aZWD2';
+// small bell icon (data URI) used for system notifications
+const NOTIF_ICON='data:image/svg+xml;base64,'+btoa('<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96"><rect width="96" height="96" rx="20" fill="#4A6591"/><path d="M48 26a12 12 0 0 0-12 12c0 14-6 18-6 18h36s-6-4-6-18a12 12 0 0 0-12-12z" fill="#fff"/><path d="M42 68a6 6 0 0 0 12 0" fill="#fff"/></svg>');
 
 /* ===== إعدادات المتابعة — عدّليها متى ما تغيّرت سياستكم =====
    SAT_TARGET  : هدف الرضا بالنسبة المئوية (٥/٥ = ١٠٠٪، فـ ٩٠٪ تعني متوسط ٤.٥)
@@ -642,7 +647,7 @@ const I18N={
   badge_open:'{n} مفتوحة',badge_allresolved:'كلها محلولة',badge_noissues:'لا مشاكل',details_btn:'تفاصيل',
   btn_delete_round:'🗑 حذف الجولة',err_noperm_delete:'الحذف مقصور على حساب المالك',confirm_delete_round:'حذف هذه الجولة نهائياً؟\n\n{info}\n\nما يمكن التراجع عن الحذف.',toast_round_deleted:'تم حذف الجولة',err_delete_round:'تعذّر الحذف — تأكدي من صلاحيتك والاتصال',rd_title:'تفاصيل الجولة',by_word:'بواسطة',back:'→ رجوع',kpi_avgsat:'متوسط الرضا',kpi_overall:'التقييم العام',kpi_issues:'المشاكل',sec_ratings:'التقييمات',lbl_liked:'أبرز الجوانب',lbl_sugg:'مقترحات',exc_service:'🌟 خدمة استثنائية: {name}',sec_issues_plans:'المشاكل وخطط العمل',issue_word:'مشكلة',lbl_desc:'الوصف',lbl_tech_plan:'خطة القائم بالجولة',lbl_esc_reason:'سبب التصعيد',lbl_mgr_plan:'خطة المسؤول',
   pr_title:'المشاكل',pr_sub:'المشاكل المصعّدة تحتاج خطة عمل. المحلولة معروضة للمتابعة. أي مسؤول يقدر يكتب الخطة ويقفل.',kpi_needaction:'تحتاج إجراء',kpi_escalated:'مصعّدة',kpi_resolved:'تم حلها',kpi_inscope:'في نطاقك',
-  esc_alert:'تصعيد جديد في {dept}',sup_alert:'وصلك {n} مشكلة جديدة لقسمك',esc_alert_more:' (و{n} غيره)',esc_banner:'عندك {n} تصعيد جديد يحتاج إجراء',esc_banner_go:'عرض المشاكل',
+  esc_alert:'تصعيد جديد في {dept}',sup_alert:'وصلك {n} مشكلة جديدة لقسمك',notif_esc_title:'معك · تصعيد جديد',notif_sup_title:'معك · مشكلة واردة',notif_ask:'تبين تنبيهات تطلع على جوالك عند أي تصعيد جديد؟',notif_enable:'تفعيل التنبيهات',notif_later:'لاحقاً',notif_on:'تم تفعيل التنبيهات',esc_alert_more:' (و{n} غيره)',esc_banner:'عندك {n} تصعيد جديد يحتاج إجراء',esc_banner_go:'عرض المشاكل',
   wa_share:'واتساب',wa_share_title:'إرسال تنبيه واتساب',wa_prefill:'🔔 تصعيد جديد — نظام معك\nالقسم: {dept}\nالمشكلة: {issue}\nصعّدها: {by}\nالوقت: {time}\nيرجى فتح النظام ومتابعة المشكلة.',wa_pick:'اختر المسؤول لإرسال التنبيه له عبر واتساب:',wa_no_numbers:'ما فيه مسؤولين لهم رقم جوال في هذا النطاق. أضيفي أرقامهم من صفحة المستخدمين.',wa_open:'فتح واتساب',wa_cancel:'إلغاء',wa_phone_label:'رقم الجوال (لتنبيهات واتساب)',wa_phone_ph:'مثال: 0555123456',
   sec_needaction:'تحتاج إجراء ({n})',no_esc_title:'ما فيه مشاكل مصعّدة',no_esc_sub:'كل شي تحت السيطرة. المصعّد الجديد بيظهر هنا.',esc_by:'صعّدها',lbl_patient_desc:'وصف المريض',lbl_tech_note:'ملاحظة القائم بالجولة',ap_label:'خطة العمل (Action Plan)',ap_ph:'وش الإجراء التصحيحي؟ ومين المسؤول عن التنفيذ؟',btn_save_close:'✔ حفظ الخطة وإقفال المشكلة',sec_resolved:'تم حلها ({n})',by_the_plan:'خطة العمل',
   err_noperm_close:'لا تملكين صلاحية إقفال المشاكل',err_write_plan:'اكتبي خطة العمل قبل الإقفال',toast_issue_closed:'تم إقفال المشكلة',
@@ -708,7 +713,7 @@ const I18N={
   badge_open:'{n} open',badge_allresolved:'All resolved',badge_noissues:'No issues',details_btn:'Details',
   btn_delete_round:'🗑 Delete round',err_noperm_delete:'Deleting is restricted to the owner account',confirm_delete_round:'Permanently delete this round?\n\n{info}\n\nThis cannot be undone.',toast_round_deleted:'Round deleted',err_delete_round:'Delete failed — check your permission and connection',rd_title:'Round Details',by_word:'by',back:'← Back',kpi_avgsat:'Avg. Satisfaction',kpi_overall:'Overall Rating',kpi_issues:'Issues',sec_ratings:'Ratings',lbl_liked:'Highlights',lbl_sugg:'Suggestions',exc_service:'🌟 Exceptional service: {name}',sec_issues_plans:'Issues & Action Plans',issue_word:'Issue',lbl_desc:'Description',lbl_tech_plan:"Technician's plan",lbl_esc_reason:'Escalation reason',lbl_mgr_plan:"Manager's plan",
   pr_title:'Issues',pr_sub:'Escalated issues need an action plan. Resolved ones are shown for follow-up. Any manager can write the plan and close.',kpi_needaction:'Needs action',kpi_escalated:'Escalated',kpi_resolved:'Resolved',kpi_inscope:'in your scope',
-  esc_alert:'New escalation in {dept}',sup_alert:'{n} new issue(s) arrived for your department',esc_alert_more:' (and {n} more)',esc_banner:'You have {n} new escalation(s) to handle',esc_banner_go:'View issues',
+  esc_alert:'New escalation in {dept}',sup_alert:'{n} new issue(s) arrived for your department',notif_esc_title:"Ma'ak · New escalation",notif_sup_title:"Ma'ak · Incoming issue",notif_ask:'Get alerts on your phone when a new escalation arrives?',notif_enable:'Enable alerts',notif_later:'Later',notif_on:'Alerts enabled',esc_alert_more:' (and {n} more)',esc_banner:'You have {n} new escalation(s) to handle',esc_banner_go:'View issues',
   wa_share:'WhatsApp',wa_share_title:'Send WhatsApp alert',wa_prefill:"🔔 New escalation — Ma'ak\nDepartment: {dept}\nIssue: {issue}\nEscalated by: {by}\nTime: {time}\nPlease open the system and follow up.",wa_pick:'Choose a manager to alert on WhatsApp:',wa_no_numbers:'No managers in this scope have a phone number. Add their numbers from the Users page.',wa_open:'Open WhatsApp',wa_cancel:'Cancel',wa_phone_label:'Mobile number (for WhatsApp alerts)',wa_phone_ph:'e.g. 966555123456',
   sec_needaction:'Needs Action ({n})',no_esc_title:'No escalated issues',no_esc_sub:'All under control. New escalations appear here.',esc_by:'escalated by',lbl_patient_desc:"Patient's description",lbl_tech_note:"Technician's note",ap_label:'Action Plan',ap_ph:"What's the corrective action, and who is responsible?",btn_save_close:'✔ Save plan & close issue',sec_resolved:'Resolved ({n})',by_the_plan:'Action plan',
   err_noperm_close:"You don't have permission to close issues",err_write_plan:'Write the action plan before closing',toast_issue_closed:'Issue closed',
@@ -955,6 +960,50 @@ function notifyEscalation(list){
   const more=list.length>1?t('esc_alert_more',{n:num(list.length-1)}):'';
   toast('🔔 '+t('esc_alert',{dept:dep})+more,'esc');
   showEscBanner(list.length);
+  browserNotify(t('notif_esc_title'), t('esc_alert',{dept:dep})+more);
+}
+
+/* ---- Browser (system) notifications — free, work while the app is open in the background ---- */
+// who should be offered / receive browser notifications
+function notifEligible(u){ return !!u && (canManageProblems(u) || isSupportDept(u)); }
+
+// show a system notification if the user has granted permission
+function browserNotify(title, body){
+  try{
+    if(!('Notification' in window))return;
+    if(Notification.permission!=='granted')return;
+    const n=new Notification(title, {
+      body: body,
+      tag: 'maak-esc',            // collapse repeats into one
+      renotify: true,
+      icon: NOTIF_ICON, badge: NOTIF_ICON
+    });
+    n.onclick=()=>{ try{ window.focus(); }catch(e){} clearEscNew(); current= isSupportDept(USER)?'support':'problems'; render(); n.close(); };
+  }catch(e){}
+}
+
+// small in-app card asking permission the first time (browsers require a user gesture/opt-in)
+function maybeAskNotif(){
+  if(!notifEligible(USER))return;
+  if(!('Notification' in window))return;
+  if(Notification.permission!=='default')return;      // already granted or blocked → nothing to ask
+  if(localStorage.getItem('maak_notif_asked')==='1')return; // don't nag every load
+  const bar=document.createElement('div');
+  bar.id='notifAsk'; bar.className='notif-ask';
+  bar.innerHTML=`<span>🔔 ${t('notif_ask')}</span>
+    <span style="display:flex;gap:8px">
+      <button class="btn btn-sm" id="notifYes">${t('notif_enable')}</button>
+      <button class="btn btn-outline btn-sm" id="notifNo">${t('notif_later')}</button>
+    </span>`;
+  document.body.appendChild(bar);
+  $('#notifYes').onclick=()=>{
+    localStorage.setItem('maak_notif_asked','1');
+    Notification.requestPermission().then(p=>{
+      bar.remove();
+      if(p==='granted')toast('🔔 '+t('notif_on'),'ok');
+    });
+  };
+  $('#notifNo').onclick=()=>{ localStorage.setItem('maak_notif_asked','1'); bar.remove(); };
 }
 // support-side: alert when a new problem arrives in this support dept's open queue
 function checkNewSupport(){
@@ -967,6 +1016,7 @@ function checkNewSupport(){
     playAlertSound();
     toast('🔔 '+t('sup_alert',{n:num(fresh.length)}),'esc');
     showEscBanner(fresh.length);
+    browserNotify(t('notif_sup_title'), t('sup_alert',{n:num(fresh.length)}));
   }
 }
 function playAlertSound(){
@@ -1205,6 +1255,7 @@ function boot(){
   render();
   // preload the staff directory quietly so managers' WhatsApp lookup works
   if(!staffLoaded&&cloud&&canManageProblems(USER)){loadStaff().catch(()=>{});}
+  maybeAskNotif();   // offer browser notifications to managers & support depts
 }
 function render(){
   buildTabs();
