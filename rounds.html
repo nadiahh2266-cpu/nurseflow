@@ -11,14 +11,12 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 <script>
 /* Mobile networks often drop one of the three SDK files. Re-fetch whatever is missing. */
 window.__fbParts=[
   ['app','https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js'],
   ['auth','https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js'],
-  ['firestore','https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js'],
-  ['storage','https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js']
+  ['firestore','https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js']
 ];
 window.__fbMissing=function(){
   if(!window.firebase)return ['app','auth','firestore'];
@@ -742,7 +740,7 @@ function applyLang(){
 }
 function toggleLang(){LANG=(LANG==='ar')?'en':'ar';saveLang();applyLang();}
 
-let db=null, auth=null, storage=null, cloud=false, roundsSubbed=false;
+let db=null, auth=null, cloud=false, roundsSubbed=false;
 
 /* ---- data layer (cloud only) ---- */
 function saveLocal(){try{localStorage.setItem(LS_ROUNDS,JSON.stringify(ROUNDS));}catch(e){}}
@@ -832,7 +830,6 @@ async function initDB(attempt){
   try{
     if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);
     db=firebase.firestore(); auth=firebase.auth();
-    try{ if(firebase.storage)storage=firebase.storage(); }catch(eS){ console.warn('storage unavailable',eS); }
     // keep working when the ward WiFi drops — writes queue locally and sync on reconnect
     try{ await db.enablePersistence({synchronizeTabs:true}); }
     catch(e0){ console.warn('offline cache unavailable:',e0&&e0.code); }
@@ -1963,8 +1960,9 @@ function clearTechPhoto(probId){
   renderProbDetail(p);
 }
 
-// compress an image File to a JPEG data URL (fallback storage when Firebase Storage isn't wired)
-function compressImage(file,maxDim=1280,quality=.72){
+// compress an image File to a small JPEG data URL suitable for inline DB storage
+// (kept well under Firestore's 1 MB/document limit even with a few photos per round)
+function compressImage(file,maxDim=900,quality=.55){
   return new Promise((res,rej)=>{
     const img=new Image();const url=URL.createObjectURL(file);
     img.onload=()=>{
@@ -1980,29 +1978,10 @@ function compressImage(file,maxDim=1280,quality=.72){
     img.src=url;
   });
 }
-// turn a data URL into a Blob for Storage upload
-function dataURLtoBlob(dataURL){
-  const [head,body]=dataURL.split(',');
-  const mime=(head.match(/:(.*?);/)||[])[1]||'image/jpeg';
-  const bin=atob(body);const len=bin.length;const arr=new Uint8Array(len);
-  for(let i=0;i<len;i++)arr[i]=bin.charCodeAt(i);
-  return new Blob([arr],{type:mime});
-}
-/* Upload a compressed image to Firebase Storage and return its download URL.
-   Falls back to the inline data URL when Storage isn't available (offline/local mode),
-   so photos always work — they just live in the DB instead of Storage in that case. */
+/* Photos are stored inline (compressed) inside the round document — no Firebase Storage needed.
+   Kept as a thin async wrapper so callers stay unchanged if Storage is added later. */
 async function uploadPhoto(dataURL,pathPrefix){
-  if(!(storage&&cloud))return dataURL;   // local/offline → keep inline
-  try{
-    const blob=dataURLtoBlob(dataURL);
-    const name=pathPrefix+'/'+Date.now()+'_'+Math.random().toString(36).slice(2,8)+'.jpg';
-    const ref=storage.ref().child(name);
-    await ref.put(blob,{contentType:'image/jpeg'});
-    return await ref.getDownloadURL();
-  }catch(e){
-    console.warn('photo upload failed, keeping inline',e);
-    return dataURL;   // graceful fallback
-  }
+  return dataURL;   // free mode: keep the compressed image inline in the DB
 }
 
 /* ================= DASHBOARD ================= */
