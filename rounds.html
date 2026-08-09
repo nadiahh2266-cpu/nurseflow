@@ -975,8 +975,9 @@ function normPhone(raw){
 }
 // managers in scope of a given department who have a phone number
 function managersForDept(dept){
-  const dir=(typeof USERS!=='undefined'&&USERS&&USERS.length)?USERS
+  const base=(typeof USERS!=='undefined'&&USERS&&USERS.length)?USERS
            :(typeof STAFF!=='undefined'&&STAFF?STAFF:[]);
+  const dir=base.concat(typeof MGRDIR!=='undefined'?MGRDIR:[]);
   const seen={};
   dir.filter(u=>u.active!==false && ['head','sup','admin'].includes(u.role)
     && u.phone && u.uid!==(USER&&USER.uid)
@@ -1156,8 +1157,8 @@ function boot(){
      <span>${esc(USER.name)}<span class="role"> · ${roleLabel(USER.role)}${deptTxt?' · '+esc(deptTxt):''}</span></span>`;
   if(!current)current = USER.role==='tech'?'new' : (USER.role==='admin'?'dash':'problems');
   render();
-  // preload the staff directory quietly so WhatsApp manager lookup works for everyone
-  if(!staffLoaded&&cloud){loadStaff().catch(()=>{});}
+  // preload the staff directory quietly so managers' WhatsApp lookup works
+  if(!staffLoaded&&cloud&&canManageProblems(USER)){loadStaff().catch(()=>{});}
 }
 function render(){
   buildTabs();
@@ -1468,17 +1469,10 @@ function commitRound(){
     problems:draft.problems
   };
   DB.save(round);
-  const escd=draft.problems.filter(p=>p.status==='escalated');
-  const esc2=escd.length;
+  const esc2=draft.problems.filter(p=>p.status==='escalated').length;
   draft=null;
   toast(t('toast_saved')+(esc2?t('toast_saved_esc',{n:arNum(esc2)}):''),'ok');
   current='myrounds';render();
-  // offer to alert a manager on WhatsApp about the first escalation
-  if(esc2){
-    const first={...escd[0],round};
-    const mgrs=managersForDept(round.dept);
-    if(mgrs.length)setTimeout(()=>waPicker(mgrs,waMessage(first)),400);
-  }
 }
 
 /* ================= ROUNDS LISTS ================= */
@@ -2309,6 +2303,20 @@ async function loadStaff(){
     }
   }catch(e){console.error(e);STAFF=[];}   // no directory access → derive names from rounds only
   staffLoaded=true;
+  loadManagerDir();   // also fetch fellow managers (for WhatsApp recipients)
+}
+// managers may lack a 'dept' field (sup/admin), so fetch them by role for the WhatsApp picker
+let MGRDIR=[];
+async function loadManagerDir(){
+  if(!cloud||!canManageProblems(USER))return;
+  try{
+    const seen={};
+    for(const role of ['head','sup','admin']){
+      const snap=await db.collection(UC).where('role','==',role).get();
+      snap.docs.forEach(x=>{const u={uid:x.id,...x.data()};if(u.phone)seen[x.id]=u;});
+    }
+    MGRDIR=Object.values(seen);
+  }catch(e){/* rules may block; picker falls back to STAFF */}
 }
 
 function stRange(period){
