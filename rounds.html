@@ -304,6 +304,24 @@ tbody tr:hover{background:#f8fbfb}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 #toast.ok{background:var(--green)}
 #toast.err{background:var(--coral)}
+#toast.esc{background:var(--amber);color:#3a2a05}
+.tab .badge.pulse{animation:badgePulse 1.1s ease-in-out infinite}
+@keyframes badgePulse{0%,100%{box-shadow:0 0 0 0 rgba(224,82,58,.55)}50%{box-shadow:0 0 0 6px rgba(224,82,58,0)}}
+.esc-banner{position:fixed;top:0;left:0;right:0;z-index:210;display:flex;align-items:center;justify-content:center;gap:12px;
+  background:linear-gradient(90deg,var(--amber),#f0b03e);color:#3a2a05;font-weight:800;font-size:14px;
+  padding:12px 18px;cursor:pointer;transform:translateY(-100%);transition:transform .35s;box-shadow:0 6px 20px rgba(0,0,0,.18)}
+.esc-banner.show{transform:translateY(0)}
+.esc-banner .eb-ic{font-size:18px;animation:bellShake 1s ease-in-out infinite}
+.esc-banner .eb-go{background:rgba(0,0,0,.14);border-radius:6px;padding:3px 10px;font-size:12.5px}
+@keyframes bellShake{0%,100%{transform:rotate(0)}20%{transform:rotate(-14deg)}40%{transform:rotate(12deg)}60%{transform:rotate(-8deg)}80%{transform:rotate(6deg)}}
+.btn-wa{background:#25D366;color:#fff;border:0}
+.btn-wa:hover{background:#1eb658}
+.wa-list{display:flex;flex-direction:column;gap:9px}
+.wa-item{display:flex;align-items:center;gap:12px;padding:11px 13px;border:1px solid var(--line);border-radius:11px;text-decoration:none;color:var(--text);transition:.15s;background:var(--bg)}
+.wa-item:hover{border-color:#25D366;background:#f0fbf4}
+.wa-av{width:38px;height:38px;border-radius:50%;background:var(--teal-soft);color:var(--ink-deep);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;flex:0 0 auto}
+.wa-meta{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}
+.wa-go{color:#1eb658;font-weight:800;font-size:13px;white-space:nowrap}
 
 .section-title{font-size:16px;font-weight:800;color:var(--ink);margin:26px 0 14px;display:flex;align-items:center;gap:9px}
 .section-title::before{content:"";width:4px;height:18px;background:var(--teal);border-radius:4px}
@@ -606,6 +624,8 @@ const I18N={
   badge_open:'{n} مفتوحة',badge_allresolved:'كلها محلولة',badge_noissues:'لا مشاكل',details_btn:'تفاصيل',
   btn_delete_round:'🗑 حذف الجولة',err_noperm_delete:'الحذف مقصور على حساب المالك',confirm_delete_round:'حذف هذه الجولة نهائياً؟\n\n{info}\n\nما يمكن التراجع عن الحذف.',toast_round_deleted:'تم حذف الجولة',err_delete_round:'تعذّر الحذف — تأكدي من صلاحيتك والاتصال',rd_title:'تفاصيل الجولة',by_word:'بواسطة',back:'→ رجوع',kpi_avgsat:'متوسط الرضا',kpi_overall:'التقييم العام',kpi_issues:'المشاكل',sec_ratings:'التقييمات',lbl_liked:'أبرز الجوانب',lbl_sugg:'مقترحات',exc_service:'🌟 خدمة استثنائية: {name}',sec_issues_plans:'المشاكل وخطط العمل',issue_word:'مشكلة',lbl_desc:'الوصف',lbl_tech_plan:'خطة القائم بالجولة',lbl_esc_reason:'سبب التصعيد',lbl_mgr_plan:'خطة المسؤول',
   pr_title:'المشاكل',pr_sub:'المشاكل المصعّدة تحتاج خطة عمل. المحلولة معروضة للمتابعة. أي مسؤول يقدر يكتب الخطة ويقفل.',kpi_needaction:'تحتاج إجراء',kpi_escalated:'مصعّدة',kpi_resolved:'تم حلها',kpi_inscope:'في نطاقك',
+  esc_alert:'تصعيد جديد في {dept}',esc_alert_more:' (و{n} غيره)',esc_banner:'عندك {n} تصعيد جديد يحتاج إجراء',esc_banner_go:'عرض المشاكل',
+  wa_share:'واتساب',wa_share_title:'إرسال تنبيه واتساب',wa_prefill:'🔔 تصعيد جديد — نظام معك\nالقسم: {dept}\nالمشكلة: {issue}\nصعّدها: {by}\nالوقت: {time}\nيرجى فتح النظام ومتابعة المشكلة.',wa_pick:'اختر المسؤول لإرسال التنبيه له عبر واتساب:',wa_no_numbers:'ما فيه مسؤولين لهم رقم جوال في هذا النطاق. أضيفي أرقامهم من صفحة المستخدمين.',wa_open:'فتح واتساب',wa_cancel:'إلغاء',wa_phone_label:'رقم الجوال (لتنبيهات واتساب)',wa_phone_ph:'مثال: 0555123456',
   sec_needaction:'تحتاج إجراء ({n})',no_esc_title:'ما فيه مشاكل مصعّدة',no_esc_sub:'كل شي تحت السيطرة. المصعّد الجديد بيظهر هنا.',esc_by:'صعّدها',lbl_patient_desc:'وصف المريض',lbl_tech_note:'ملاحظة القائم بالجولة',ap_label:'خطة العمل (Action Plan)',ap_ph:'وش الإجراء التصحيحي؟ ومين المسؤول عن التنفيذ؟',btn_save_close:'✔ حفظ الخطة وإقفال المشكلة',sec_resolved:'تم حلها ({n})',by_the_plan:'خطة العمل',
   err_noperm_close:'لا تملكين صلاحية إقفال المشاكل',err_write_plan:'اكتبي خطة العمل قبل الإقفال',toast_issue_closed:'تم إقفال المشكلة',
   sat_vs_target:'{mark} {n}٪ · الهدف {tg}٪',under_target:'{n} قسم تحت هدف {tg}٪',all_on_target:'كل الأقسام حققت هدف {tg}٪ ✔',sec_repeat:'مشاكل متكررة',repeat_hint:'تكرّر البند {n} مرات فأكثر في نفس القسم يشير إلى خلل نظام لا حادثة فردية — تستحق مشروع تحسين.',repeat_none:'ما فيه بند تكرر {n} مرات في قسم واحد خلال هذه الفترة.',repeat_count:'مرات التكرار',repeat_open:'ما زالت مفتوحة',sec_comments:'ملاحظات المرضى',comments_none:'ما فيه ملاحظات مكتوبة في هذه الفترة.',comments_count:'{n} ملاحظة',dash_title:'داشبورد رضا المرضى',dash_sub:'مؤشرات الرضا وحالة المشاكل حسب الفترة الزمنية.',f_period:'الفترة',p_daily:'يومي',p_weekly:'أسبوعي',p_monthly:'شهري',p_quarterly:'ربع سنوي',p_yearly:'سنوي',all_my_depts:'كل أقسامي',
@@ -666,6 +686,8 @@ const I18N={
   badge_open:'{n} open',badge_allresolved:'All resolved',badge_noissues:'No issues',details_btn:'Details',
   btn_delete_round:'🗑 Delete round',err_noperm_delete:'Deleting is restricted to the owner account',confirm_delete_round:'Permanently delete this round?\n\n{info}\n\nThis cannot be undone.',toast_round_deleted:'Round deleted',err_delete_round:'Delete failed — check your permission and connection',rd_title:'Round Details',by_word:'by',back:'← Back',kpi_avgsat:'Avg. Satisfaction',kpi_overall:'Overall Rating',kpi_issues:'Issues',sec_ratings:'Ratings',lbl_liked:'Highlights',lbl_sugg:'Suggestions',exc_service:'🌟 Exceptional service: {name}',sec_issues_plans:'Issues & Action Plans',issue_word:'Issue',lbl_desc:'Description',lbl_tech_plan:"Technician's plan",lbl_esc_reason:'Escalation reason',lbl_mgr_plan:"Manager's plan",
   pr_title:'Issues',pr_sub:'Escalated issues need an action plan. Resolved ones are shown for follow-up. Any manager can write the plan and close.',kpi_needaction:'Needs action',kpi_escalated:'Escalated',kpi_resolved:'Resolved',kpi_inscope:'in your scope',
+  esc_alert:'New escalation in {dept}',esc_alert_more:' (and {n} more)',esc_banner:'You have {n} new escalation(s) to handle',esc_banner_go:'View issues',
+  wa_share:'WhatsApp',wa_share_title:'Send WhatsApp alert',wa_prefill:"🔔 New escalation — Ma'ak\nDepartment: {dept}\nIssue: {issue}\nEscalated by: {by}\nTime: {time}\nPlease open the system and follow up.",wa_pick:'Choose a manager to alert on WhatsApp:',wa_no_numbers:'No managers in this scope have a phone number. Add their numbers from the Users page.',wa_open:'Open WhatsApp',wa_cancel:'Cancel',wa_phone_label:'Mobile number (for WhatsApp alerts)',wa_phone_ph:'e.g. 966555123456',
   sec_needaction:'Needs Action ({n})',no_esc_title:'No escalated issues',no_esc_sub:'All under control. New escalations appear here.',esc_by:'escalated by',lbl_patient_desc:"Patient's description",lbl_tech_note:"Technician's note",ap_label:'Action Plan',ap_ph:"What's the corrective action, and who is responsible?",btn_save_close:'✔ Save plan & close issue',sec_resolved:'Resolved ({n})',by_the_plan:'Action plan',
   err_noperm_close:"You don't have permission to close issues",err_write_plan:'Write the action plan before closing',toast_issue_closed:'Issue closed',
   sat_vs_target:'{mark} {n}% · target {tg}%',under_target:'{n} department(s) below the {tg}% target',all_on_target:'All departments met the {tg}% target ✔',sec_repeat:'Recurring issues',repeat_hint:'An item failing {n}+ times in the same department points to a system problem, not a one-off — worth an improvement project.',repeat_none:'No item recurred {n} times in a single department this period.',repeat_count:'Occurrences',repeat_open:'Still open',sec_comments:'Patient comments',comments_none:'No written comments in this period.',comments_count:'{n} comments',dash_title:'Patient Satisfaction Dashboard',dash_sub:'Satisfaction metrics and issue status by time period.',f_period:'Period',p_daily:'Daily',p_weekly:'Weekly',p_monthly:'Monthly',p_quarterly:'Quarterly',p_yearly:'Yearly',all_my_depts:'All my departments',
@@ -869,10 +891,139 @@ function subscribeRounds(){
 function onData(rounds){
   ROUNDS=rounds.slice().sort((a,b)=>new Date(b.ts)-new Date(a.ts));
   if(!USER)return;
+  checkNewEscalations();
   buildTabs();
   const ae=document.activeElement;
   const typing=ae&&/INPUT|TEXTAREA|SELECT/.test(ae.tagName||'');
   if(current!=='new'&&current!=='users'&&!typing)render();
+}
+
+/* ===== escalation alerts for managers (in-system) ===== */
+let ESC_SEEN=null;          // Set of escalated problem ids already known this session
+let ESC_NEW=0;              // count of unseen new escalations (drives the pulsing badge)
+function escKey(p){return p.id||((p.round&&p.round.id)+'|'+(p.qkey||''));}
+function checkNewEscalations(){
+  if(!canManageProblems(USER))return;              // only managers get alerts
+  const cur=escalatedInScope();
+  const curIds=cur.map(escKey);
+  if(ESC_SEEN===null){                             // first load → seed silently, no alert
+    ESC_SEEN=new Set(curIds); ESC_NEW=0; return;
+  }
+  const fresh=cur.filter(p=>{
+    const k=escKey(p);
+    if(ESC_SEEN.has(k))return false;
+    ESC_SEEN.add(k);
+    // don't alert the manager about an escalation they raised themselves
+    return (p.escalatedBy||'')!==USER.name;
+  });
+  if(fresh.length){
+    ESC_NEW+=fresh.length;
+    notifyEscalation(fresh);
+  }
+}
+function notifyEscalation(list){
+  playAlertSound();
+  const one=list[0];
+  const dep=one.round?deptLabel(one.round.dept):'';
+  const more=list.length>1?t('esc_alert_more',{n:num(list.length-1)}):'';
+  toast('🔔 '+t('esc_alert',{dept:dep})+more,'esc');
+  showEscBanner(list.length);
+}
+function playAlertSound(){
+  try{
+    const AC=window.AudioContext||window.webkitAudioContext; if(!AC)return;
+    const ac=new AC();
+    // two soft rising beeps
+    [0,0.18].forEach((off,i)=>{
+      const o=ac.createOscillator(),g=ac.createGain();
+      o.type='sine'; o.frequency.value=i?880:660;
+      o.connect(g);g.connect(ac.destination);
+      const s=ac.currentTime+off;
+      g.gain.setValueAtTime(0,s);
+      g.gain.linearRampToValueAtTime(0.18,s+0.02);
+      g.gain.exponentialRampToValueAtTime(0.001,s+0.16);
+      o.start(s);o.stop(s+0.17);
+    });
+  }catch(e){}
+}
+function showEscBanner(n){
+  let b=$('#escBanner');
+  if(!b){
+    b=document.createElement('div'); b.id='escBanner'; b.className='esc-banner';
+    b.onclick=()=>{clearEscNew();current='problems';render();b.remove();};
+    document.body.appendChild(b);
+  }
+  b.innerHTML=`<span class="eb-ic">🔔</span><span>${t('esc_banner',{n:num(ESC_NEW)})}</span><span class="eb-go">${t('esc_banner_go')} ›</span>`;
+  b.classList.add('show');
+}
+function clearEscNew(){
+  ESC_NEW=0;
+  const b=$('#escBanner'); if(b)b.classList.remove('show');
+}
+
+/* ===== WhatsApp alert (free wa.me link) ===== */
+// normalize a phone to international digits for wa.me (default country = Saudi 966)
+function normPhone(raw){
+  let d=(raw||'').replace(/[^\d+]/g,'');
+  if(!d)return '';
+  if(d[0]==='+')d=d.slice(1);
+  if(d.startsWith('00'))d=d.slice(2);
+  if(d.startsWith('966'))return d;
+  if(d[0]==='0')return '966'+d.slice(1);      // 05xxxxxxxx → 9665xxxxxxxx
+  if(d.length===9&&d[0]==='5')return '966'+d;  // 5xxxxxxxx
+  return d;                                    // already international / other country
+}
+// managers in scope of a given department who have a phone number
+function managersForDept(dept){
+  const dir=(typeof USERS!=='undefined'&&USERS&&USERS.length)?USERS
+           :(typeof STAFF!=='undefined'&&STAFF?STAFF:[]);
+  const seen={};
+  dir.filter(u=>u.active!==false && ['head','sup','admin'].includes(u.role)
+    && u.phone && u.uid!==(USER&&USER.uid)
+    && userDepts(u).some(d=>d==='*'||d===dept))
+    .forEach(u=>{seen[u.uid]=u;});
+  return Object.values(seen);
+}
+function waMessage(item){
+  const r=item.round||{};
+  return t('wa_prefill',{
+    dept:deptLabel(r.dept||''),
+    issue:probLabel(item),
+    by:item.escalatedBy||r.tech||'',
+    time:fmtDate(r.ts||new Date().toISOString())
+  });
+}
+function waLink(phone,msg){return 'https://wa.me/'+phone+'?text='+encodeURIComponent(msg);}
+function waIcon(){return '<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" style="vertical-align:-2px"><path d="M17.5 14.4c-.3-.1-1.7-.8-1.9-.9-.3-.1-.5-.1-.6.1-.2.3-.7.9-.8 1-.2.2-.3.2-.6.1-.3-.1-1.2-.5-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6.1-.1.3-.3.4-.5.1-.1.2-.3.3-.4.1-.2 0-.3 0-.5s-.6-1.5-.9-2.1c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.5.1-.7.3-.3.3-1 .9-1 2.3s1 2.7 1.2 2.9c.1.2 2 3.1 4.9 4.3.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.5-.1 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3zM12 2C6.5 2 2 6.5 2 12c0 1.8.5 3.4 1.3 4.9L2 22l5.3-1.4c1.4.8 3 1.2 4.7 1.2 5.5 0 10-4.5 10-10S17.5 2 12 2zm0 18c-1.5 0-3-.4-4.3-1.2l-.3-.2-3.1.8.8-3-.2-.3C4.4 15.3 4 13.7 4 12c0-4.4 3.6-8 8-8s8 3.6 8 8-3.6 8-8 8z"/></svg>';}
+function openWhatsAppFor(roundId,probId){
+  const r=ROUNDS.find(x=>x.id===roundId); if(!r)return;
+  const item={...(r.problems||[]).find(p=>p.id===probId),round:r};
+  const mgrs=managersForDept(r.dept);
+  const msg=waMessage(item);
+  if(mgrs.length===1){ window.open(waLink(mgrs[0].phone,msg),'_blank'); return; }
+  // 0 or many → show a small picker (0 shows a hint to add numbers)
+  waPicker(mgrs,msg);
+}
+function waPicker(mgrs,msg){
+  const ov=document.createElement('div'); ov.className='rub-overlay'; ov.id='waPick';
+  ov.onclick=e=>{if(e.target===ov)ov.remove();};
+  const body = mgrs.length
+    ? `<p class="hint" style="margin:0 0 12px">${t('wa_pick')}</p>
+       <div class="wa-list">${mgrs.map(m=>`
+         <a class="wa-item" href="${waLink(m.phone,msg)}" target="_blank" onclick="document.getElementById('waPick').remove()">
+           <span class="wa-av">${esc(initials(m.name))}</span>
+           <span class="wa-meta"><b>${esc(m.name)}</b><span class="hint">${roleLabel(m.role)} · <span dir="ltr">${esc(m.phone)}</span></span></span>
+           <span class="wa-go">${t('wa_open')} ›</span>
+         </a>`).join('')}</div>`
+    : `<p class="hint" style="margin:0">${t('wa_no_numbers')}</p>`;
+  ov.innerHTML=`<div class="rub-box" style="max-width:440px">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:4px">
+      <b style="font-size:16px;color:var(--ink-deep)">${t('wa_share_title')}</b>
+      <button type="button" style="border:0;background:none;font-size:18px;cursor:pointer;color:var(--muted);line-height:1" onclick="document.getElementById('waPick').remove()">✕</button>
+    </div>
+    <div style="padding-top:12px">${body}</div></div>`;
+  ov.style.display='grid';
+  document.body.appendChild(ov);
 }
 function toast(msg,type=''){const t=$('#toast');t.textContent=msg;t.className='show '+type;setTimeout(()=>t.className='',2600);}
 function esc(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
@@ -911,7 +1062,8 @@ function escalatedInScope(){return scopedProblems().filter(p=>p.status==='escala
 
 /* ---- scoring ---- */
 function roundAvg(r){
-  const vals=QRATED.map(q=>r.ratings[q.k]).filter(v=>v);
+  const rt=r.ratings||{};
+  const vals=QRATED.map(q=>rt[q.k]).filter(v=>v);
   if(!vals.length)return null;
   return vals.reduce((a,b)=>a+b,0)/vals.length;
 }
@@ -992,8 +1144,9 @@ function buildTabs(){
     const b=document.createElement('button');
     b.className='tab'+(tb.id===current?' active':'');
     const bc=tb.badge?tb.badge():0;
-    b.innerHTML=icon(tb.ic)+' '+tb.lbl+(bc>0?` <span class="badge">${bc}</span>`:'');
-    b.onclick=()=>{current=tb.id;render();};
+    const pulse=(tb.id==='problems'&&ESC_NEW>0)?' pulse':'';
+    b.innerHTML=icon(tb.ic)+' '+tb.lbl+(bc>0?` <span class="badge${pulse}">${bc}</span>`:'');
+    b.onclick=()=>{if(tb.id==='problems')clearEscNew();current=tb.id;render();};
     wrap.appendChild(b);
   });
 }
@@ -1003,6 +1156,8 @@ function boot(){
      <span>${esc(USER.name)}<span class="role"> · ${roleLabel(USER.role)}${deptTxt?' · '+esc(deptTxt):''}</span></span>`;
   if(!current)current = USER.role==='tech'?'new' : (USER.role==='admin'?'dash':'problems');
   render();
+  // preload the staff directory quietly so WhatsApp manager lookup works for everyone
+  if(!staffLoaded&&cloud){loadStaff().catch(()=>{});}
 }
 function render(){
   buildTabs();
@@ -1313,10 +1468,17 @@ function commitRound(){
     problems:draft.problems
   };
   DB.save(round);
-  const esc2=draft.problems.filter(p=>p.status==='escalated').length;
+  const escd=draft.problems.filter(p=>p.status==='escalated');
+  const esc2=escd.length;
   draft=null;
   toast(t('toast_saved')+(esc2?t('toast_saved_esc',{n:arNum(esc2)}):''),'ok');
   current='myrounds';render();
+  // offer to alert a manager on WhatsApp about the first escalation
+  if(esc2){
+    const first={...escd[0],round};
+    const mgrs=managersForDept(round.dept);
+    if(mgrs.length)setTimeout(()=>waPicker(mgrs,waMessage(first)),400);
+  }
 }
 
 /* ================= ROUNDS LISTS ================= */
@@ -1394,7 +1556,7 @@ function openRound(id){
       <div class="kpi ${r.problems.length?'warn':'good'}"><div class="lbl">${t('kpi_issues')}</div><div class="val">${arNum(r.problems.length)}</div></div>
     </div>
     <div class="section-title">${t('sec_ratings')}</div>`;
-  QRATED.forEach(q=>{const v=r.ratings[q.k];html+=qbarHTML(qLabel(q),v);});
+  QRATED.forEach(q=>{const v=(r.ratings||{})[q.k];html+=qbarHTML(qLabel(q),v);});
   if(r.liked)html+=`<div style="margin-top:6px"><label class="fld">${t('lbl_liked')}</label><div class="hint" style="color:var(--text)">${esc(r.liked)}</div></div>`;
   if(r.suggestions)html+=`<div style="margin-top:12px"><label class="fld">${t('lbl_sugg')}</label><div class="hint" style="color:var(--text)">${esc(r.suggestions)}</div></div>`;
   if(r.nurse)html+=`<div style="margin-top:12px"><span class="tag">${t('exc_service',{name:esc(r.nurse)})}</span></div>`;
@@ -1429,6 +1591,7 @@ function problemFullCard(p,r){
 
 /* ================= PROBLEMS (managers) ================= */
 function viewProblems(){
+  clearEscNew();
   const app=$('#app');
   const all=scopedProblems();
   const pending=all.filter(p=>p.status==='escalated')
@@ -1467,7 +1630,10 @@ function viewProblems(){
         ${item.escalatedTo?`<div style="background:var(--amber-soft);border-radius:10px;padding:10px 13px;margin-bottom:12px"><b style="color:#8a5f0e">${t('lbl_tech_note')}:</b> ${esc(item.escalatedTo)}</div>`:''}
         <label class="fld req" style="color:var(--ink)">${t('ap_label')}</label>
         <textarea id="sup_${item.id}" placeholder="${t('ap_ph')}"></textarea>
-        <div style="margin-top:12px"><button class="btn btn-green btn-sm" onclick="resolveProblem('${r.id}','${item.id}')">${t('btn_save_close')}</button></div>
+        <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-green btn-sm" onclick="resolveProblem('${r.id}','${item.id}')">${t('btn_save_close')}</button>
+          <button class="btn btn-wa btn-sm" onclick="openWhatsAppFor('${r.id}','${item.id}')">${waIcon()} ${t('wa_share')}</button>
+        </div>
       </div>`;
     });
     app.innerHTML+=html;
@@ -1599,7 +1765,7 @@ function questionBars(rounds){
   if(!rounds.length)return '<div class="hint">'+t('no_rounds_period')+'</div>';
   const tg=SAT_TARGET/100*5;
   return QRATED.map((q,i)=>{
-    const vals=rounds.map(r=>r.ratings[q.k]).filter(v=>v);
+    const vals=rounds.map(r=>(r.ratings||{})[q.k]).filter(v=>v);
     const a=vals.length?vals.reduce((x,y)=>x+y,0)/vals.length:0;
     const below=a<tg;
     const col=below?'var(--coral)':'var(--green)';
@@ -2047,7 +2213,7 @@ function probStatusBar(lbl,n,total,col){
 function questionAverages(rounds){
   if(!rounds.length)return '<div class="hint">'+t('no_rounds_period')+'</div>';
   return QRATED.map(q=>{
-    const vals=rounds.map(r=>r.ratings[q.k]).filter(v=>v);
+    const vals=rounds.map(r=>(r.ratings||{})[q.k]).filter(v=>v);
     const a=vals.length?vals.reduce((x,y)=>x+y,0)/vals.length:0;
     const col=a>=4?'var(--green)':a>=3?'var(--amber)':'var(--coral)';
     const lb=qLabel(q);
@@ -2504,7 +2670,7 @@ async function exportCSV(){ // kept name: called from the toolbar button
   section(t('xl_by_q'));
   tableHead([t('xl_item'),t('xl_avg_short'),'']);
   QRATED.forEach(q=>{
-    const vals=list.map(r=>r.ratings[q.k]).filter(v=>v);
+    const vals=list.map(r=>(r.ratings||{})[q.k]).filter(v=>v);
     const a=vals.length?vals.reduce((x,y)=>x+y,0)/vals.length:0;
     dataRow([qLabel(q),a?Number(a.toFixed(2)):'—',''],2);
   });
@@ -2553,9 +2719,15 @@ function renderUsers(){
       <div><label class="fld req">${t('email')}</label><input type="text" id="nu_email" placeholder="name@example.com" autocomplete="off"></div>
       <div><label class="fld req">${t('f_temp_pass')}</label><input type="text" id="nu_pass" placeholder="${t('f_pass_ph')}" autocomplete="off"></div>
     </div>
-    <div style="margin-top:14px;max-width:460px">
-      <label class="fld">${t('f_title')} <span class="hint" style="font-weight:600">${t('optional_word')}</span></label>
-      <input type="text" id="nu_title" placeholder="${t('f_title_ph')}">
+    <div class="grid2" style="margin-top:14px">
+      <div>
+        <label class="fld">${t('f_title')} <span class="hint" style="font-weight:600">${t('optional_word')}</span></label>
+        <input type="text" id="nu_title" placeholder="${t('f_title_ph')}">
+      </div>
+      <div>
+        <label class="fld">${t('wa_phone_label')} <span class="hint" style="font-weight:600">${t('optional_word')}</span></label>
+        <input type="tel" id="nu_phone" placeholder="${t('wa_phone_ph')}" dir="ltr">
+      </div>
     </div>
     <div style="margin-top:14px"><label class="fld req">${t('f_role')}</label>
       <select id="nu_role" onchange="toggleDeptField()" style="max-width:320px">
@@ -2600,6 +2772,10 @@ function renderEditForm(box,u){
       <div><label class="fld">${t('f_title')} <span class="hint" style="font-weight:600">${t('optional_word')}</span></label>
         <input type="text" id="nu_title" value="${esc(u.title||'')}" placeholder="${t('f_title_ph')}"></div>
     </div>
+    <div style="margin-top:14px;max-width:320px">
+      <label class="fld">${t('wa_phone_label')} <span class="hint" style="font-weight:600">${t('optional_word')}</span></label>
+      <input type="tel" id="nu_phone" value="${esc(u.phone||'')}" placeholder="${t('wa_phone_ph')}" dir="ltr">
+    </div>
     <div style="margin-top:14px"><label class="fld req">${t('f_role')}</label>
       <select id="nu_role" onchange="toggleDeptField()" style="max-width:320px"${self?' disabled':''}>
         ${['tech','head','sup','admin'].map(r=>`<option value="${r}"${u.role===r?' selected':''}>${roleLabel(r)}</option>`).join('')}
@@ -2622,6 +2798,8 @@ async function saveEdit(){
   if(!name){msg(t('err_fill_user'));return;}
   const upd={name,role,title:($('#nu_title')&&$('#nu_title').value.trim())||''};
   const DEL=(typeof firebase!=='undefined'&&firebase.firestore)?firebase.firestore.FieldValue.delete():null;
+  const phone=normPhone(($('#nu_phone')&&$('#nu_phone').value)||'');
+  if(phone)upd.phone=phone; else if(DEL)upd.phone=DEL;
   if(role==='tech'||role==='head'){
     upd.dept=$('#nu_dept').value; if(DEL)upd.depts=DEL;
   }else{
@@ -2679,7 +2857,9 @@ async function addUser(){
 
   const btn=$('#addUserBtn');btn.disabled=true;btn.textContent=t('creating');
   const jobTitle=($('#nu_title')&&$('#nu_title').value.trim())||'';
+  const phone=normPhone(($('#nu_phone')&&$('#nu_phone').value)||'');
   const prof={name,email,role,title:jobTitle,active:true,createdAt:new Date().toISOString(),createdBy:USER.email||''};
+  if(phone)prof.phone=phone;
   if(profDept!=null)prof.dept=profDept; else prof.depts=profDepts;
   try{
     const sec=firebase.apps.find(a=>a.name==='sec')||firebase.initializeApp(firebaseConfig,'sec');
