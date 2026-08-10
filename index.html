@@ -20,6 +20,12 @@
   --off:#10b981;--off-bg:rgba(16,185,129,.1);
   --red:#ef4444;--green:#10b981;--orange:#f97316;
   --official:#06b6d4;--official-bg:rgba(6,182,212,.1);
+  --amber:#f59e0b;--amber-lt:rgba(245,158,11,.1);
+  --navy:#1e3a5f;
+  --green-lt:rgba(16,185,129,.1);
+  --blue-lt:rgba(59,130,246,.1);
+  --purple-lt:rgba(139,92,246,.1);
+  --red-lt:rgba(239,68,68,.1);
   --sidebar:220px;
 }
 [data-theme=light]{
@@ -1724,13 +1730,13 @@ function updateBadges(){
   if(ab){var n2=nurses.filter(function(n3){return ALL_ST[n3.id]&&ALL_ST[n3.id].status==='reviewed';}).length;ab.textContent=n2;ab.style.display=n2?'inline-flex':'none';}
 }
 
-function toggleTheme(){
+window.toggleTheme=function(){
   var isL=document.documentElement.getAttribute('data-theme')==='light';
   if(isL){document.documentElement.removeAttribute('data-theme');localStorage.setItem('nf-theme','dark');document.getElementById('theme-btn').textContent='\uD83C\uDF19';}
   else{document.documentElement.setAttribute('data-theme','light');localStorage.setItem('nf-theme','light');document.getElementById('theme-btn').textContent='\u2600\uFE0F';}
 }
 
-function toggleLang(){
+window.toggleLang=function(){
   LANG=LANG==='ar'?'en':'ar';
   localStorage.setItem('nf-lang',LANG);
   document.documentElement.dir=LANG==='ar'?'rtl':'ltr';
