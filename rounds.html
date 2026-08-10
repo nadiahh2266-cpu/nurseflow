@@ -317,6 +317,14 @@ tbody tr:hover{background:#f8fbfb}
   background:linear-gradient(90deg,var(--amber),#f0b03e);color:#3a2a05;font-weight:800;font-size:14px;
   padding:12px 18px;cursor:pointer;transform:translateY(-100%);transition:transform .35s;box-shadow:0 6px 20px rgba(0,0,0,.18)}
 .esc-banner.show{transform:translateY(0)}
+.ext-examples{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:14px}
+.ext-ex-title{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:9px}
+.ext-ex-grid{display:grid;gap:8px}
+.ext-ex{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;line-height:1.5}
+.ext-ex-dep{flex:none;min-width:130px;font-weight:700;color:var(--ink-deep)}
+.ext-ex-txt{color:var(--text)}
+.ext-ex-note{margin-top:10px;padding-top:9px;border-top:1px dashed var(--line);font-size:12.5px;color:var(--muted);line-height:1.6}
+@media(max-width:560px){.ext-ex{flex-direction:column;gap:2px}.ext-ex-dep{min-width:0}}
 .notif-ask{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:215;display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:center;
   background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 16px;box-shadow:0 10px 30px rgba(35,53,88,.22);max-width:92%;font-size:14px;color:var(--text)}
 @media(max-width:520px){.notif-ask{left:12px;right:12px;transform:none;flex-direction:column;align-items:stretch;text-align:center}}
@@ -636,7 +644,7 @@ const I18N={
   nr_title:'جولة جديدة',nr_sub:'قيّمي كل بند من ١ (ضعيف) إلى ٥ (ممتاز). أي بند بتقييم ٢ أو أقل يُرصد كمشكلة تلقائياً.',
   sec_round_info:'بيانات الجولة',f_dept:'القسم',f_pname:'اسم المريض',f_pname_ph:'اختياري',f_mrn:'رقم الملف',f_mrn_ph:'اختياري',th_pname:'اسم المريض',th_mrn:'رقم الملف',optional_word:'(اختياري)',f_room:'رقم الغرفة',f_room_ph:'مثال: ٢١٤',f_asked:'تم سؤال',opt_patient:'مريض',opt_companion:'مرافق',
   sec_eval:'تقييم خدمات التمريض',sec_overall:'التقييم العام والملاحظات',q12:'التقييم العام لخدمات مستشفى الجبيل العام',
-  f_liked:'أبرز الجوانب التي أعجبتك أو لم تعجبك',f_liked_ph:'ملاحظات المريض...',f_sugg:'ملاحظات ومقترحات لتحسين الخدمة',f_sugg_ph:'مقترحات...',f_nurse:'اسم ممرض/ة قدّم خدمة استثنائية',f_nurse_ph:'اسم الممرض/ة (اختياري)',extiss_title:'مشكلة خارج التمريض (لقسم مساند)',extiss_help:'لو المريض ذكر شكوى ما تخص التمريض (نظافة، أكل، صيانة، تغذية...) سجّليها هنا. بتوصل للمنجرز وهم يوجّهونها للقسم المساند المناسب.',extiss_add:'إضافة مشكلة خارج التمريض',extiss_ph:'اكتبي شكوى المريض بالتفصيل...',extiss_remove:'حذف',extiss_label:'مشكلة خارج التمريض',extiss_will_route:'⬆ للمنجرز',extiss_desc:'وصف الشكوى',
+  f_liked:'أبرز الجوانب التي أعجبتك أو لم تعجبك',f_liked_ph:'ملاحظات المريض...',f_sugg:'ملاحظات ومقترحات لتحسين الخدمة',f_sugg_ph:'مقترحات...',f_nurse:'اسم ممرض/ة قدّم خدمة استثنائية',f_nurse_ph:'اسم الممرض/ة (اختياري)',extiss_title:'مشكلة خارج التمريض (لقسم مساند)',extiss_help:'لو المريض ذكر شكوى ما تخص التمريض (نظافة، أكل، صيانة، تغذية...) سجّليها هنا. بتوصل للمنجرز وهم يوجّهونها للقسم المساند المناسب.',extiss_add:'إضافة مشكلة خارج التمريض',extiss_ph:'اكتبي شكوى المريض بالتفصيل...',extiss_remove:'حذف',extiss_label:'مشكلة خارج التمريض',extiss_will_route:'⬆ للمنجرز',extiss_desc:'وصف الشكوى',extiss_ex_title:'أمثلة توضّح المقصود:',extiss_ex_laundry:'ملاءات أو أغطية غير نظيفة · مناشف ناقصة · تأخر تبديل المفارش',extiss_ex_food:'الأكل بارد أو متأخر · وجبة غلط · لا تناسب حالة المريض الصحية',extiss_ex_maint:'مكيف/إضاءة خربانة · حمّام معطّل · تسريب ماء',extiss_ex_social:'يحتاج مساعدة اجتماعية',extiss_ex_docs_dep:'الأطباء',extiss_ex_docs:'الطبيب ما زار المريض · تأخر في القرار الطبي',extiss_ex_note:'💡 القاعدة: لو الشكوى تخص أسئلة التمريض الستة فوق (تعريف الطاقم، لطفهم، سرعة الجرس...) سجّليها في التقييم فوق مو هنا. هنا فقط للشكاوى اللي قسم ثاني غير التمريض يحلها.',
   next_review:'التالي: مراجعة المشاكل ←',live_notstarted:'لم يبدأ التقييم بعد',live_avg:'متوسط الرضا',live_flagged:'{n} مشكلة مرصودة',live_noflag:'لا مشاكل مرصودة ✅',
   rubric_help:'؟',rubric_title:'معايير التقييم',rubric_pick:'اختاري درجة لعرض المعيار',rubric_intro:'المعيار لكل درجة:',flag_note:'⚠️ رُصدت كمشكلة — بتنحل أو تُصعّد في الخطوة التالية',
   ps_title:'مراجعة المشاكل ومعالجتها',room_word:'غرفة',back_eval:'→ رجوع للتقييم',
@@ -702,7 +710,7 @@ const I18N={
   nr_title:'New Round',nr_sub:'Rate each item from 1 (Poor) to 5 (Excellent). Any item rated 2 or below is automatically flagged as an issue.',
   sec_round_info:'Round Details',f_dept:'Department',f_pname:'Patient name',f_pname_ph:'Optional',f_mrn:'File no.',f_mrn_ph:'Optional',th_pname:'Patient name',th_mrn:'File no.',optional_word:'(optional)',f_room:'Room Number',f_room_ph:'e.g. 214',f_asked:'Surveyed',opt_patient:'Patient',opt_companion:'Companion',
   sec_eval:'Nursing Services Evaluation',sec_overall:'Overall Rating & Comments',q12:'Overall rating of Jubail General Hospital services',
-  f_liked:'Aspects you liked or disliked',f_liked_ph:"Patient's remarks...",f_sugg:'Comments & suggestions to improve the service',f_sugg_ph:'Suggestions...',f_nurse:'Name of a nurse who gave exceptional service',f_nurse_ph:"Nurse's name (optional)",extiss_title:'Non-nursing issue (for a support dept)',extiss_help:"If the patient raised a complaint outside nursing (cleaning, food, maintenance, nutrition...), record it here. It goes to the managers, who route it to the right support department.",extiss_add:'Add non-nursing issue',extiss_ph:"Describe the patient's complaint...",extiss_remove:'Remove',extiss_label:'Non-nursing issue',extiss_will_route:'⬆ To managers',extiss_desc:'Complaint description',
+  f_liked:'Aspects you liked or disliked',f_liked_ph:"Patient's remarks...",f_sugg:'Comments & suggestions to improve the service',f_sugg_ph:'Suggestions...',f_nurse:'Name of a nurse who gave exceptional service',f_nurse_ph:"Nurse's name (optional)",extiss_title:'Non-nursing issue (for a support dept)',extiss_help:"If the patient raised a complaint outside nursing (cleaning, food, maintenance, nutrition...), record it here. It goes to the managers, who route it to the right support department.",extiss_add:'Add non-nursing issue',extiss_ph:"Describe the patient's complaint...",extiss_remove:'Remove',extiss_label:'Non-nursing issue',extiss_will_route:'⬆ To managers',extiss_desc:'Complaint description',extiss_ex_title:'Examples of what this means:',extiss_ex_laundry:'Dirty sheets/covers · missing towels · linen not changed',extiss_ex_food:'Food cold or late · wrong meal · unsuitable for the patient',extiss_ex_maint:'Broken AC/lighting · faulty bed or bathroom · water leak',extiss_ex_social:'Needs social support · admission/discharge issue · help for patient or family',extiss_ex_docs_dep:'Physicians (Surgery/Medicine/Ob-Gyn/Peds)',extiss_ex_docs:'Doctor did not visit · delayed medical decision · needs clarification from the doctor',extiss_ex_note:'💡 Rule: if the complaint is about the six nursing questions above (introductions, kindness, call-bell speed...), record it in the rating above, not here. This is only for complaints another department — not nursing — resolves.',
   next_review:'Next: Review Issues →',live_notstarted:'Evaluation not started yet',live_avg:'Satisfaction average',live_flagged:'{n} issue(s) flagged',live_noflag:'No issues flagged ✅',
   rubric_help:'?',rubric_title:'Scoring guide',rubric_pick:'Pick a score to see its criterion',rubric_intro:'Criterion for each score:',flag_note:'⚠️ Flagged as an issue — resolve or escalate it in the next step',
   ps_title:'Review & Handle Issues',room_word:'Room',back_eval:'← Back to evaluation',
@@ -1354,6 +1362,17 @@ function viewNew(){
         <b style="color:var(--ink-deep);font-size:15px">${t('extiss_title')}</b>
       </div>
       <p class="hint" style="margin-bottom:12px">${t('extiss_help')}</p>
+      <div class="ext-examples">
+        <div class="ext-ex-title">${t('extiss_ex_title')}</div>
+        <div class="ext-ex-grid">
+          <div class="ext-ex"><span class="ext-ex-dep">🧺 ${supportLabel('المغسلة')}</span><span class="ext-ex-txt">${t('extiss_ex_laundry')}</span></div>
+          <div class="ext-ex"><span class="ext-ex-dep">🍽️ ${supportLabel('التغذية')}</span><span class="ext-ex-txt">${t('extiss_ex_food')}</span></div>
+          <div class="ext-ex"><span class="ext-ex-dep">🔧 ${supportLabel('الصيانة العامة')}</span><span class="ext-ex-txt">${t('extiss_ex_maint')}</span></div>
+          <div class="ext-ex"><span class="ext-ex-dep">🧍 ${supportLabel('الأخصائي الاجتماعي')}</span><span class="ext-ex-txt">${t('extiss_ex_social')}</span></div>
+          <div class="ext-ex"><span class="ext-ex-dep">🩺 ${t('extiss_ex_docs_dep')}</span><span class="ext-ex-txt">${t('extiss_ex_docs')}</span></div>
+        </div>
+        <div class="ext-ex-note">${t('extiss_ex_note')}</div>
+      </div>
       <div id="extIssueList"></div>
       <button type="button" class="btn btn-outline btn-sm" onclick="addExtIssue()">➕ ${t('extiss_add')}</button>
     </div>
