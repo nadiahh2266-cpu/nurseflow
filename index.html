@@ -516,18 +516,16 @@ select.form-input{cursor:pointer}
 <div class="toast" id="toast"></div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, signOut, sendPasswordResetEmail, onAuthStateChanged, updatePassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, getDocs, setDoc, deleteDoc, addDoc, collection } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-const firebaseConfig={apiKey:"AIzaSyDC2cmBlwZDoOdCJXgQ7dc9X6MBqmlMf5w",authDomain:"nurseflow-jhn.firebaseapp.com",projectId:"nurseflow-jhn",storageBucket:"nurseflow-jhn.firebasestorage.app",messagingSenderId:"1005946269057",appId:"1:1005946269057:web:42e579c1bbcb67d4d28c80"};
-const app=initializeApp(firebaseConfig);
-const auth=getAuth(app);
-const db=getFirestore(app);
-async function fsGet(col,id){var s=await getDoc(doc(db,col,id));return s.exists()?{id:s.id,...s.data()}:null;}
-async function fsGetAll(col){var s=await getDocs(collection(db,col));return s.docs.map(function(d){return{id:d.id,...d.data()};});}
-async function fsSet(col,id,data){await setDoc(doc(db,col,id),data,{merge:true});}
-async function fsAdd(col,data){return await addDoc(collection(db,col),data);}
-async function fsDel(col,id){await deleteDoc(doc(db,col,id));}
+import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import{getAuth,signInWithEmailAndPassword,signOut,sendPasswordResetEmail,onAuthStateChanged,updatePassword}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import{getFirestore,doc,getDoc,getDocs,setDoc,deleteDoc,addDoc,collection}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+const app=initializeApp({apiKey:"AIzaSyDC2cmBlwZDoOdCJXgQ7dc9X6MBqmlMf5w",authDomain:"nurseflow-jhn.firebaseapp.com",projectId:"nurseflow-jhn",storageBucket:"nurseflow-jhn.firebasestorage.app",messagingSenderId:"1005946269057",appId:"1:1005946269057:web:42e579c1bbcb67d4d28c80"});
+const auth=getAuth(app),db=getFirestore(app);
+async function fsGet(c,i){const s=await getDoc(doc(db,c,i));return s.exists()?{id:s.id,...s.data()}:null;}
+async function fsGetAll(c){const s=await getDocs(collection(db,c));return s.docs.map(d=>({id:d.id,...d.data()}));}
+async function fsSet(c,i,d){await setDoc(doc(db,c,i),d,{merge:true});}
+async function fsAdd(c,d){return addDoc(collection(db,c),d);}
+async function fsDel(c,i){await deleteDoc(doc(db,c,i));}
 
 
 var ME=null,MONTH=new Date(),selDay=null,selShift=null;
@@ -560,29 +558,19 @@ function toast(msg,type){
   t.textContent=msg;t.className='toast '+(type||'ti')+' show';
   setTimeout(function(){t.classList.remove('show');},3000);
 }
-function showApp_OLD(){
-  document.getElementById('login').style.display='none';
-  document.getElementById('app').style.display='block';
-  document.getElementById('u-av').textContent=ME.name.slice(0,2);
-  document.getElementById('u-nm').textContent=ME.name;
-  document.getElementById('u-rl').textContent=ME.role;
-  buildNav();
-  setTimeout(checkDeadline,1000);
-}
 
-var PG_TITLES_AR={
-  'pg-dash':'\u0627\u0644\u0631\u0626\u064a\u0633\u064a\u0629',
-  'pg-my':'\u062c\u062f\u0648\u0644\u064a',
-  'pg-team':'\u0627\u0644\u062c\u062f\u0648\u0644 \u0627\u0644\u0643\u0627\u0645\u0644',
-  'pg-swap':'\u062a\u0628\u0627\u062f\u0644 \u0627\u0644\u0634\u0641\u062a',
-  'pg-review':'\u0627\u0644\u0645\u0631\u0627\u062c\u0639\u0629',
-  'pg-approve':'\u0627\u0644\u0645\u0648\u0627\u0641\u0642\u0629',
-  'pg-overview':'\u0627\u0644\u062a\u063a\u0637\u064a\u0629',
-  'pg-report':'\u0627\u0644\u062a\u0642\u0631\u064a\u0631',
-  'pg-upload':'\u0631\u0641\u0639 \u0627\u0644\u0645\u0648\u0638\u0641\u064a\u0646',
-  'pg-admin':'\u0627\u0644\u0625\u062f\u0627\u0631\u0629'
-};
-var PG_TITLES_EN={'pg-dash':'Dashboard','pg-my':'My Schedule','pg-team':'Full Schedule','pg-swap':'Shift Swap','pg-review':'Review','pg-approve':'Approval','pg-overview':'Coverage','pg-report':'Report','pg-upload':'Upload Staff','pg-admin':'Admin','pg-leave':'Leave Plans','pg-ai':'AI Schedule'};
+// ── THEME INIT ──
+(function(){
+  var t=localStorage.getItem('nf-theme');
+  if(t==='light')document.documentElement.setAttribute('data-theme','light');
+})();
+
+// ── AUTH ──
+
+
+
+
+
 
 function getSbIcon(id){
   var icons={'pg-dash':'\uD83C\uDFE0','pg-my':'\uD83D\uDCC5','pg-team':'\uD83D\uDC65','pg-swap':'\uD83D\uDD04','pg-review':'\uD83D\uDD0D','pg-approve':'\u2705','pg-overview':'\uD83D\uDCCA','pg-report':'\uD83D\uDCCB','pg-upload':'\uD83D\uDCE4','pg-admin':'\uD83D\uDD11'};
@@ -594,7 +582,7 @@ function buildNav(){
   var T=LANG==='ar';
   var tabs={
     nurse:[['\uD83C\uDFE0 '+(T?'\u0627\u0644\u0631\u0626\u064a\u0633\u064a\u0629':'Dashboard'),'pg-dash'],['\uD83D\uDCC5 '+(T?'\u062c\u062f\u0648\u0644\u064a':'My Schedule'),'pg-my'],['\uD83D\uDD04 '+(T?'\u062a\u0628\u0627\u062f\u0644 \u0627\u0644\u0634\u0641\u062a':'Shift Swap'),'pg-swap']],
-    head_nurse:[['\uD83C\uDFE0 '+(T?'\u0627\u0644\u0631\u0626\u064a\u0633\u064a\u0629':'Dashboard'),'pg-dash'],['\uD83D\uDD0D '+(T?'\u0627\u0644\u0645\u0631\u0627\u062c\u0639\u0629':'Review'),'pg-review',1],['\uD83D\uDCCB '+(T?'\u0627\u0644\u062a\u0642\u0631\u064a\u0631':'Report'),'pg-report'],['\uD83D\uDCC5 '+(T?'\u0627\u0644\u062c\u062f\u0648\u0644':'Schedule'),'pg-team'],['\uD83D\uDCCA '+(T?'\u0627\u0644\u062a\u063a\u0637\u064a\u0629':'Coverage'),'pg-overview']],
+    head_nurse:[['\uD83C\uDFE0 '+(T?'\u0627\u0644\u0631\u0626\u064a\u0633\u064a\u0629':'Dashboard'),'pg-dash'],['\uD83D\uDD0D '+(T?'\u0627\u0644\u0645\u0631\u0627\u062c\u0639\u0629':'Review'),'pg-review',1],['\u23F0 '+(T?'\u0648\u0636\u0639 \u0627\u0644\u062c\u062f\u0648\u0644':'Mode'),'pg-mode'],['\uD83D\uDCCB '+(T?'\u0627\u0644\u062a\u0642\u0631\u064a\u0631':'Report'),'pg-report'],['\uD83D\uDCC5 '+(T?'\u0627\u0644\u062c\u062f\u0648\u0644':'Schedule'),'pg-team'],['\uD83D\uDCCA '+(T?'\u0627\u0644\u062a\u063a\u0637\u064a\u0629':'Coverage'),'pg-overview']],
     manager:[['\uD83C\uDFE0 '+(T?'\u0627\u0644\u0631\u0626\u064a\u0633\u064a\u0629':'Dashboard'),'pg-dash'],['\u2705 '+(T?'\u0627\u0644\u0645\u0648\u0627\u0641\u0642\u0629':'Approval'),'pg-approve',1],['\uD83D\uDCCB '+(T?'\u0627\u0644\u062a\u0642\u0631\u064a\u0631':'Report'),'pg-report'],['\uD83D\uDCCA '+(T?'\u0627\u0644\u062a\u063a\u0637\u064a\u0629':'Coverage'),'pg-overview'],['\uD83D\uDCC5 '+(T?'\u0627\u0644\u062c\u062f\u0648\u0644':'Schedule'),'pg-team']],
     admin:[['\uD83C\uDFE0 '+(T?'\u0627\u0644\u0631\u0626\u064a\u0633\u064a\u0629':'Dashboard'),'pg-dash'],['\uD83D\uDD11 '+(T?'\u0627\u0644\u0625\u062f\u0627\u0631\u0629':'Admin'),'pg-admin'],['\uD83D\uDCE4 '+(T?'\u0631\u0641\u0639 \u0645\u0648\u0638\u0641\u064a\u0646':'Upload'),'pg-upload'],['\u2705 '+(T?'\u0627\u0644\u0645\u0648\u0627\u0641\u0642\u0629':'Approval'),'pg-approve',1],['\uD83D\uDCCB '+(T?'\u0627\u0644\u062a\u0642\u0631\u064a\u0631':'Report'),'pg-report'],['\uD83D\uDCCA '+(T?'\u0627\u0644\u062a\u063a\u0637\u064a\u0629':'Coverage'),'pg-overview'],['\uD83D\uDCC5 '+(T?'\u0627\u0644\u062c\u062f\u0648\u0644':'Schedule'),'pg-team']]
   };
@@ -646,6 +634,8 @@ function render(){
   else if(id==='pg-admin')renderAdmin();
   else if(id==='pg-leave')renderLeave();
   else if(id==='pg-ai')renderAI();
+  else if(id==='pg-roles')window.renderRoles();
+  else if(id==='pg-mode')window.renderMode();
   updateBadges();
 }
 
@@ -863,7 +853,6 @@ function buildShiftOpts(ds){
 
 window.closeModal=function(){document.getElementById('smodal').style.display='none';}
 
-var selFlag=null;
 window.pickShift=function(k,flag){
   selShift=k;
   selFlag=flag!==undefined?flag:null;
@@ -951,6 +940,7 @@ window.hnOk=function(uid){
     toast(LANG==='ar'?'\u0623\u0631\u0633\u0644 \u0644\u0644\u0645\u062f\u064a\u0631 \u2713':'Sent to Manager \u2713','ts');
   });
 }
+
 window.hnNo=function(uid){
   var note=prompt(LANG==='ar'?'\u0633\u0628\u0628 \u0627\u0644\u0631\u0641\u0636 (\u0627\u062e\u062a\u064a\u0627\u0631\u064a):':'Rejection reason (optional):','');
   fsSet('schedule_status',uid,{status:'rejected',reviewed_by:ME.id,notes:note||null}).then(function(){
@@ -958,12 +948,14 @@ window.hnNo=function(uid){
     toast(LANG==='ar'?'\u0631\u062c\u0639 \u0644\u0644\u0645\u0645\u0631\u0636\u0629':'Returned','ti');
   });
 }
+
 window.mgOk=function(uid){
   fsSet('schedule_status',uid,{status:'approved',approved_by:ME.id,approved_at:new Date().toISOString()}).then(function(){
     fsGetAll('schedule_status').then(function(rd){ALL_ST={};(rd||[]).forEach(function(x){ALL_ST[x.nurse_id]=x;});render();});
     toast('\u2705 '+(LANG==='ar'?'\u062a\u0645\u062a \u0627\u0644\u0645\u0648\u0627\u0641\u0642\u0629':'Approved'),'ts');
   });
 }
+
 window.mgNo=function(uid){
   var note=prompt(LANG==='ar'?'\u0633\u0628\u0628 \u0627\u0644\u0631\u0641\u0636:':'Rejection reason:','');
   fsSet('schedule_status',uid,{status:'rejected',approved_by:ME.id,notes:note||null}).then(function(){
@@ -1181,77 +1173,6 @@ window.copySchedule=function(){
   });
 }
 
-window.renderUpload=function(){
-  var pg=document.getElementById('pg-upload'),T=LANG==='ar';if(!pg)return;
-  pg.innerHTML='<div class="phdr"><div><div class="ptitle">\uD83D\uDCE4 '+(T?'\u0631\u0641\u0639 \u0645\u0648\u0638\u0641\u064a\u0646 \u0645\u0646 Excel':'Upload Staff from Excel')+'<\/div><\/div><\/div>'
-    +'<div class="balcard"><div class="baltitle">\u2B07\uFE0F '+(T?'\u062a\u062d\u0645\u064a\u0644 \u0642\u0627\u0644\u0628 Excel':'Download Template')+'<\/div><button class="btn-sub" onclick="downloadTemplate()">'+(T?'\u062a\u062d\u0645\u064a\u0644 \u0627\u0644\u0642\u0627\u0644\u0628':'Download Template')+'<\/button><\/div>'
-    +'<div class="balcard"><div class="baltitle">\uD83D\uDCC1 '+(T?'\u0631\u0641\u0639 \u0627\u0644\u0645\u0644\u0641':'Upload File')+'<\/div>'
-    +'<div class="upload-area" onclick="document.getElementById(\'xl-input\').click()"><input type="file" id="xl-input" accept=".xlsx,.xls,.csv" onchange="handleUpload(this)"><div style="font-size:32px;margin-bottom:8px">\uD83D\uDCCA<\/div><div style="font-weight:700">'+(T?'\u0627\u0633\u062d\u0628 \u0645\u0644\u0641 Excel \u0647\u0646\u0627':'Drag Excel file here')+'<\/div><\/div>'
-    +'<div id="upload-progress" style="display:none"><div class="prog-wrap"><div class="prog-fill" id="prog-bar" style="width:0%"><\/div><\/div><div id="prog-text" style="font-size:12px;color:var(--muted)"><\/div><\/div><div id="upload-results"><\/div><\/div>'
-    +'<div class="balcard"><div class="baltitle">\u270F\uFE0F '+(T?'\u062a\u0639\u062f\u064a\u0644 \u0627\u0644\u0645\u0648\u0638\u0641\u064a\u0646':'Edit Staff Roles')+'<\/div>'
-    +'<div class="calwrap twrap"><table><thead><tr><th>'+(T?'\u0627\u0644\u0627\u0633\u0645':'Name')+'<\/th><th>'+(T?'\u0627\u0644\u0642\u0633\u0645':'Dept')+'<\/th><th>'+(T?'\u0627\u0644\u062f\u0648\u0631':'Role')+'<\/th><th><\/th><\/tr><\/thead><tbody>'
-    +Object.values(ALL_P).map(function(u){
-      return '<tr><td>'+u.name+'<\/td><td><input id="ef-'+u.id+'-dept" value="'+(u.dept||'')+'" style="padding:4px 8px;background:var(--s2);border:1px solid var(--b1);border-radius:5px;color:var(--text);font-size:12px;outline:none;width:100px"><\/td>'
-        +'<td><select id="rs-'+u.id+'" style="padding:4px 8px;background:var(--s2);border:1px solid var(--b1);border-radius:5px;color:var(--text);font-size:12px;outline:none"><option value="nurse"'+(u.role==='nurse'?' selected':'')+'>'+(T?'\u0645\u0645\u0631\u0636\u0629':'Nurse')+'<\/option><option value="head_nurse"'+(u.role==='head_nurse'?' selected':'')+'>Head Nurse<\/option><option value="manager"'+(u.role==='manager'?' selected':'')+'>Manager<\/option><option value="admin"'+(u.role==='admin'?' selected':'')+'>Admin<\/option><\/select><\/td>'
-        +'<td><button class="btn-ok" style="padding:5px 10px;font-size:11px" onclick="saveUserEdit(\''+u.id+'\')">'+(T?'\u062d\u0641\u0638':'Save')+'<\/button><\/td><\/tr>';
-    }).join('')+'<\/tbody><\/table><\/div><\/div>';
-}
-
-function downloadTemplate(){
-  var T=LANG==='ar';
-  var ws=XLSX.utils.aoa_to_sheet([[T?'\u0627\u0644\u0627\u0633\u0645':'Name',T?'\u0627\u0644\u0625\u064a\u0645\u064a\u0644':'Email',T?'\u0643\u0644\u0645\u0629 \u0627\u0644\u0633\u0631':'Password',T?'\u0627\u0644\u062f\u0648\u0631':'Role',T?'\u0627\u0644\u0642\u0633\u0645':'Department'],['Example Name','nurse@hospital.com','1234','nurse',T?'\u0637\u0648\u0627\u0631\u0626':'Emergency']]);
-  var wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Staff');
-  XLSX.writeFile(wb,'nurseflow_template.xlsx');
-}
-
-function handleUpload(input){
-  var file=input.files[0];if(!file)return;
-  var reader=new FileReader();
-  reader.onload=function(e){
-    var data=new Uint8Array(e.target.result);
-    var wb=XLSX.read(data,{type:'array'});
-    var ws=wb.Sheets[wb.SheetNames[0]];
-    var rows=XLSX.utils.sheet_to_json(ws,{header:1});
-    if(rows.length<2){toast(LANG==='ar'?'\u0627\u0644\u0645\u0644\u0641 \u0641\u0627\u0631\u063a':'Empty file','tw');return;}
-    processRows(rows.slice(1));
-  };
-  reader.readAsArrayBuffer(file);
-}
-
-function processRows(rows){
-  var T=LANG==='ar';
-  var valid=rows.filter(function(r){return r[0]&&r[1]&&r[2];});
-  if(!valid.length){toast(T?'\u0644\u0627 \u062a\u0648\u062c\u062f \u0628\u064a\u0627\u0646\u0627\u062a':'No valid data','tw');return;}
-  document.getElementById('upload-progress').style.display='block';
-  var results=[],done=0;
-  function updateProgress(){var pct=Math.round(done/valid.length*100);document.getElementById('prog-bar').style.width=pct+'%';document.getElementById('prog-text').textContent=(T?'\u062c\u0627\u0631\u064d \u0627\u0644\u0645\u0639\u0627\u0644\u062c\u0629: ':'Processing: ')+done+'/'+valid.length;}
-  function processNext(idx){
-    if(idx>=valid.length){showResults(results);return;}
-    var row=valid[idx];
-    var name=String(row[0]||'').trim(),email=String(row[1]||'').trim().toLowerCase(),pass=String(row[2]||'1234').trim(),role=String(row[3]||'nurse').trim(),dept=String(row[4]||'').trim();
-    if(!['nurse','head_nurse','manager','admin'].includes(role))role='nurse';
-    fsAdd('user_profiles',{email:email,name:name,role:role,dept:dept}).then(function(r){
-      done++;updateProgress();
-      if(r.error)results.push({name:name,email:email,ok:false,msg:r.error.message});
-      else{results.push({name:name,email:email,ok:true});if(r.data)ALL_P[r.data]={id:r.data,name:name,email:email,role:role,dept:dept};}
-      setTimeout(function(){processNext(idx+1);},200);
-    });
-  }
-  processNext(0);
-}
-
-function showResults(results){
-  var T=LANG==='ar';
-  var ok=results.filter(function(r){return r.ok;}).length;
-  var fail=results.filter(function(r){return !r.ok;});
-  var h='<div class="balcard" style="margin-top:16px"><div class="baltitle">\u2705 '+(T?'\u0627\u0644\u0646\u062a\u0627\u0626\u062c':'Results')+': '+ok+'/'+(ok+fail.length)+'<\/div>';
-  if(fail.length){h+='<div style="margin-top:8px">';fail.forEach(function(f){h+='<div style="font-size:11px;color:var(--muted);padding:4px 0">'+f.email+': '+f.msg+'<\/div>';});h+='<\/div>';}
-  h+='<\/div>';
-  document.getElementById('upload-results').innerHTML=h;
-  document.getElementById('upload-progress').style.display='none';
-  toast((T?'\u062a\u0645\u062a \u0627\u0644\u0645\u0639\u0627\u0644\u062c\u0629: ':'Done: ')+ok+' '+(T?'\u062a\u0645\u062a \u0625\u0636\u0627\u0641\u062a\u0647\u0645':'added'),'ts');
-}
-
 window.saveUserEdit=function(uid){
   var deptEl=document.getElementById('ef-'+uid+'-dept');
   var roleEl=document.getElementById('rs-'+uid);
@@ -1351,12 +1272,6 @@ window.toggleLang=function(){
   document.getElementById('btn-out').textContent=LANG==='ar'?'\u062e\u0631\u0648\u062c':'Sign Out';
   if(ME)render();
 }
-
-// ── INIT ──
-// auth handled by onAuthStateChanged
-
-</script>
-<script>
 
 function renderLeave(){
   var pg=document.getElementById('pg-leave'),T=LANG==='ar';
@@ -1550,8 +1465,7 @@ window.applyAISchedule=function(){
     });
   });
   if(!toUpsert.length){toast(T?'\u0644\u0627 \u0628\u064a\u0627\u0646\u0627\u062a':'No data','tw');return;}
-  Promise.all(toUpsert.map(function(item){return fsSet('schedules',item.nurse_id+'_'+item.date,item);})).then(function(r){
-    if(r.error)return toast(r.error.message,'td');
+  Promise.all(toUpsert.map(function(item){return fsSet('schedules',item.nurse_id+'_'+item.date,item);})).then(function(){var r={};
     toUpsert.forEach(function(x){if(!ALL_S[x.nurse_id])ALL_S[x.nurse_id]={};ALL_S[x.nurse_id][x.date]={shift:x.shift,flag:null};});
     toast((T?'\u062a\u0645 \u062a\u0637\u0628\u064a\u0642 ':'Applied ')+toUpsert.length+(T?' \u064a\u0648\u0645 \u2713':' days'),'ts');
     switchPg('pg-team');
@@ -1580,22 +1494,19 @@ window.forgotPass=async function(){
   catch(e){toast(e.message,'td');}
 };
 async function loadMe(uid){
-  var profile=await fsGet('user_profiles',uid);
-  if(!profile){
-    var all=await fsGetAll('user_profiles');
-    var u=auth.currentUser;
-    profile=all.find(function(p){return p.email&&u&&p.email.trim().toLowerCase()===u.email.toLowerCase();});
-    if(profile)await fsSet('user_profiles',uid,Object.assign({},profile));
+  var p=await fsGet('user_profiles',uid);
+  if(!p){
+    var all=await fsGetAll('user_profiles'),u=auth.currentUser;
+    p=all.find(function(x){return x.email&&u&&x.email.trim().toLowerCase()===u.email.toLowerCase();});
+    if(p)await fsSet('user_profiles',uid,Object.assign({},p));
   }
-  if(!profile){
+  if(!p){
     toast('البروفايل غير موجود','td');
     var btn=document.getElementById('li-btn');
-    if(btn){btn.disabled=false;btn.textContent='دخول';}
-    return;
+    if(btn){btn.disabled=false;btn.textContent='دخول';}return;
   }
-  ME=Object.assign({id:uid},profile);
-  await loadAll();
-  showApp();
+  ME=Object.assign({id:uid},p);
+  await loadAll();showApp();
 }
 async function loadAll(){
   var r=await Promise.all([
@@ -1618,30 +1529,52 @@ function showApp(){
   document.getElementById('u-av').textContent=ME.name?ME.name.slice(0,2):'?';
   document.getElementById('u-nm').textContent=ME.name||'';
   document.getElementById('u-rl').textContent=ME.role||'';
-  buildNav();
-  setTimeout(checkDeadline,1000);
+  buildNav();setTimeout(checkDeadline,800);
+}
+async function checkScheduleMode(){
+  if(!ME||ME.role!=='nurse')return true;
+  var modes=await fsGetAll('schedule_modes');
+  var dm=modes.find(function(m){return m.dept===ME.dept;});
+  if(dm&&dm.mode==='hn_only'){toast(LANG==='ar'?'التعبئة مقفلة':'Schedule locked','tw');return false;}
+  return true;
 }
 
-
-var r={};
-    if(r.error)return toast(r.error.message,'td');
-    toUpsert.forEach(function(x){if(!ALL_S[x.nurse_id])ALL_S[x.nurse_id]={};ALL_S[x.nurse_id][x.date]={shift:x.shift,flag:null};});
-    toast((T?'\u062a\u0645 \u062a\u0637\u0628\u064a\u0642 ':'Applied ')+toUpsert.length+(T?' \u064a\u0648\u0645 \u2713':' days'),'ts');
-    switchPg('pg-team');
+window.renderUpload=function(){
+  var pg=document.getElementById('pg-upload'),T=LANG==='ar';if(!pg)return;
+  var depts=Object.keys(ALL_D);
+  if(!depts.length)depts=Array.from(new Set(Object.values(ALL_P).map(function(p){return p.dept||'';})));
+  var h='<div class="phdr"><div class="ptitle">👤 '+(T?'إدارة الموظفين':'Staff Management')+'</div></div>';
+  h+='<div class="balcard"><div class="baltitle">➕ '+(T?'إضافة موظفة جديدة':'Add New Staff')+'</div>';
+  h+='<div class="form-grid">';
+  h+='<div class="form-group"><label>'+(T?'الاسم':'Name')+'</label><input id="new-name" class="form-input"></div>';
+  h+='<div class="form-group"><label>Email</label><input id="new-email" type="email" class="form-input"></div>';
+  h+='<div class="form-group"><label>'+(T?'كلمة المرور':'Password')+'</label><input id="new-pass" type="password" class="form-input"></div>';
+  h+='<div class="form-group"><label>'+(T?'الدور':'Role')+'</label><select id="new-role" class="form-input"><option value="nurse">Nurse</option><option value="head_nurse">Head Nurse</option><option value="manager">Manager</option><option value="admin">Admin</option></select></div>';
+  h+='<div class="form-group"><label>'+(T?'القسم':'Dept')+'</label><select id="new-dept" class="form-input"><option value="">-</option>';
+  depts.forEach(function(d){h+='<option value="'+d+'">'+d+'</option>';});
+  h+='</select></div>';
+  h+='<div class="form-group"><label>'+(T?'نظام الساعات':'Hours')+'</label><select id="new-shift-type" class="form-input"><option value="">-</option><option value="9h">9h</option><option value="12h">12h</option></select></div>';
+  h+='</div>';
+  h+='<button class="btn-sub" onclick="addNewStaff()" id="add-staff-btn">➕ '+(T?'إضافة':'Add')+'</button>';
+  h+='<div id="add-staff-result" style="margin-top:12px"></div></div>';
+  h+='<div class="balcard"><div class="baltitle">📊 '+(T?'رفع من Excel':'Bulk Upload')+'</div>';
+  h+='<div style="display:flex;gap:10px;flex-wrap:wrap">';
+  h+='<button class="btn-sub" onclick="downloadTemplate()">⬇️ Template</button>';
+  h+='<button class="btn-sub" style="background:var(--s2);color:var(--text);border:1px solid var(--b1);box-shadow:none" onclick="triggerBulk()">📁 '+(T?'رفع':'Upload')+'</button>';
+  h+='<input type="file" id="bulk-file" accept=".xlsx,.xls" style="display:none" onchange="handleBulk(this)">';
+  h+='</div><div id="bulk-result" style="margin-top:10px"></div></div>';
+  h+='<div class="balcard"><div class="baltitle">👥 '+(T?'الموظفون الحاليون':'Current Staff')+'</div>';
+  h+='<div class="calwrap"><table><thead><tr><th>'+(T?'الاسم':'Name')+'</th><th>'+(T?'الدور':'Role')+'</th><th>'+(T?'القسم':'Dept')+'</th><th>Hrs</th><th></th></tr></thead><tbody>';
+  Object.values(ALL_P).forEach(function(u){
+    h+='<tr><td><div class="nrow"><div class="mav">'+(u.name?u.name.slice(0,2):'?')+'</div>'+(u.name||'-')+'</div></td>';
+    h+='<td><select id="es-r-'+u.id+'" class="form-input" style="padding:4px 7px;font-size:11px"><option value="nurse"'+(u.role==='nurse'?' selected':'')+'>Nurse</option><option value="head_nurse"'+(u.role==='head_nurse'?' selected':'')+'>Head Nurse</option><option value="manager"'+(u.role==='manager'?' selected':'')+'>Manager</option><option value="admin"'+(u.role==='admin'?' selected':'')+'>Admin</option></select></td>';
+    h+='<td><input id="es-d-'+u.id+'" value="'+(u.dept||'')+'" class="form-input" style="padding:4px 7px;font-size:11px;width:100px"></td>';
+    h+='<td><select id="es-s-'+u.id+'" class="form-input" style="padding:4px 7px;font-size:11px"><option value="">-</option><option value="9h"'+(u.shift_type==='9h'?' selected':'')+'>9h</option><option value="12h"'+(u.shift_type==='12h'?' selected':'')+'>12h</option></select></td>';
+    h+='<td><button data-uid="'+u.id+'" onclick="saveStaff(this.dataset.uid)" class="btn-sub" style="padding:5px 10px;font-size:11px">'+(T?'حفظ':'Save')+'</button></td></tr>';
   });
-}
-onAuthStateChanged(auth,async function(user){
-  if(user){await loadMe(user.uid);}
-  else{
-    ME=null;
-    document.getElementById('login').style.display='flex';
-    document.getElementById('app').style.display='none';
-  }
-});
-</script>
-</body>
-</html>
-
+  h+='</tbody></table></div></div>';
+  pg.innerHTML=h;
+};
 window.addNewStaff=async function(){
   var T=LANG==='ar';
   var name=document.getElementById('new-name').value.trim();
@@ -1652,174 +1585,158 @@ window.addNewStaff=async function(){
   var shift=document.getElementById('new-shift-type').value;
   if(!name||!email||!pass){toast(T?'أدخلي البيانات':'Fill all fields','tw');return;}
   if(pass.length<6){toast(T?'كلمة المرور 6 أحرف على الأقل':'Min 6 chars','tw');return;}
-  var btn=document.getElementById('add-staff-btn');
-  var res=document.getElementById('add-staff-result');
+  var btn=document.getElementById('add-staff-btn'),res=document.getElementById('add-staff-result');
   btn.disabled=true;btn.innerHTML='<span class="loader"></span>';
   try{
-    var apiKey='AIzaSyDC2cmBlwZDoOdCJXgQ7dc9X6MBqmlMf5w';
-    var r=await fetch('https://identitytoolkit.googleapis.com/v1/accounts:signUp?key='+apiKey,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,password:pass,returnSecureToken:true})});
+    var r=await fetch('https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=AIzaSyDC2cmBlwZDoOdCJXgQ7dc9X6MBqmlMf5w',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,password:pass,returnSecureToken:true})});
     var d=await r.json();
     if(d.error){var msg=d.error.message;if(msg==='EMAIL_EXISTS')msg=T?'الإيميل مستخدم':'Email exists';throw new Error(msg);}
     await fsSet('user_profiles',d.localId,{name:name,email:email,role:role,dept:dept,shift_type:shift,created_by:ME.id,created_at:new Date().toISOString()});
     ALL_P[d.localId]={id:d.localId,name:name,email:email,role:role,dept:dept,shift_type:shift};
-    document.getElementById('new-name').value='';document.getElementById('new-email').value='';document.getElementById('new-pass').value='';
-    res.innerHTML='<div class="alert alert-ok">✅ '+(T?'تم إضافة '+name:'Added '+name)+'</div>';
+    ['new-name','new-email','new-pass'].forEach(function(id){document.getElementById(id).value='';});
+    res.innerHTML='<div class="alert as2">✅ '+(T?'تم إضافة '+name:'Added '+name)+'</div>';
     toast(T?'تم ✓':'Added ✓','ts');window.renderUpload();
-  }catch(e){
-    res.innerHTML='<div class="alert alert-err">❌ '+e.message+'</div>';
-    toast(e.message,'td');
-  }finally{btn.disabled=false;btn.textContent=T?'➕ إضافة':'➕ Add';}
+  }catch(e){res.innerHTML='<div class="alert ae">❌ '+e.message+'</div>';toast(e.message,'td');}
+  finally{btn.disabled=false;btn.textContent='➕ '+(T?'إضافة':'Add');}
 };
-
-window.saveExistingStaff=async function(uid){
-  var T=LANG==='ar';
-  var role=document.getElementById('es-role-'+uid);
-  var dept=document.getElementById('es-dept-'+uid);
-  var shift=document.getElementById('es-shift-'+uid);
-  if(!role||!dept)return;
-  await fsSet('user_profiles',uid,{role:role.value,dept:dept.value.trim(),shift_type:shift?shift.value:''});
-  if(ALL_P[uid]){ALL_P[uid].role=role.value;ALL_P[uid].dept=dept.value.trim();if(shift)ALL_P[uid].shift_type=shift.value;}
+window.saveStaff=async function(uid){
+  var T=LANG==='ar',r=document.getElementById('es-r-'+uid),d=document.getElementById('es-d-'+uid),s=document.getElementById('es-s-'+uid);
+  if(!r||!d)return;
+  var upd={role:r.value,dept:d.value.trim(),shift_type:s?s.value:''};
+  await fsSet('user_profiles',uid,upd);
+  if(ALL_P[uid])Object.assign(ALL_P[uid],upd);
   toast(T?'تم ✓':'Saved ✓','ts');
 };
-
-window.triggerBulkUpload=function(){var el=document.getElementById('bulk-file');if(el)el.click();};
-
-window.handleBulkUpload=async function(input){
-  var T=LANG==='ar';var file=input.files[0];if(!file)return;
+window.triggerBulk=function(){var el=document.getElementById('bulk-file');if(el)el.click();};
+window.handleBulk=async function(input){
+  var T=LANG==='ar',file=input.files[0];if(!file)return;
   var res=document.getElementById('bulk-result');
-  res.innerHTML='<div class="alert alert-info">'+(T?'جارٍ...':'Processing...')+'</div>';
+  res.innerHTML='<div class="alert ai">'+(T?'جارٍ...':'Processing...')+'</div>';
   var reader=new FileReader();
   reader.onload=async function(e){
     try{
       var wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
       var rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1});
-      if(rows.length<2){toast(T?'الملف فارغ':'Empty file','tw');return;}
-      var apiKey='AIzaSyDC2cmBlwZDoOdCJXgQ7dc9X6MBqmlMf5w';
-      var results=[];
       var valid=rows.slice(1).filter(function(r){return r[0]&&r[1]&&r[2];});
+      if(!valid.length){toast(T?'الملف فارغ':'Empty file','tw');return;}
+      var results=[];
       for(var i=0;i<valid.length;i++){
         var row=valid[i];
         var rn=String(row[0]||'').trim(),re2=String(row[1]||'').trim().toLowerCase();
         var rp=String(row[2]||'1234').trim(),rr=String(row[3]||'nurse').trim();
         var rd=String(row[4]||'').trim(),rs=String(row[5]||'').trim();
-        res.innerHTML='<div class="alert alert-info">'+(i+1)+'/'+valid.length+': '+rn+'</div>';
+        res.innerHTML='<div class="alert ai">'+(i+1)+'/'+valid.length+': '+rn+'</div>';
         try{
-          var r2=await fetch('https://identitytoolkit.googleapis.com/v1/accounts:signUp?key='+apiKey,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:re2,password:rp,returnSecureToken:true})});
-          var d2=await r2.json();
-          if(d2.error)throw new Error(d2.error.message);
-          await fsSet('user_profiles',d2.localId,{name:rn,email:re2,role:rr,dept:rd,shift_type:rs,created_by:ME.id,created_at:new Date().toISOString()});
-          ALL_P[d2.localId]={id:d2.localId,name:rn,email:re2,role:rr,dept:rd,shift_type:rs};
+          var resp=await fetch('https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=AIzaSyDC2cmBlwZDoOdCJXgQ7dc9X6MBqmlMf5w',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:re2,password:rp,returnSecureToken:true})});
+          var dd=await resp.json();if(dd.error)throw new Error(dd.error.message);
+          await fsSet('user_profiles',dd.localId,{name:rn,email:re2,role:rr,dept:rd,shift_type:rs,created_by:ME.id,created_at:new Date().toISOString()});
+          ALL_P[dd.localId]={id:dd.localId,name:rn,email:re2,role:rr,dept:rd,shift_type:rs};
           results.push({name:rn,ok:true});
         }catch(err){results.push({name:rn,ok:false,msg:err.message});}
       }
       var ok=results.filter(function(r){return r.ok;}).length;
       var fail=results.filter(function(r){return !r.ok;});
-      var rh='<div class="alert alert-ok">✅ '+ok+(T?' تم':' added')+'</div>';
-      if(fail.length)rh+='<div class="alert alert-err">❌ '+fail.map(function(f){return f.name+': '+f.msg;}).join(' | ')+'</div>';
+      var rh='<div class="alert as2">✅ '+ok+(T?' تم':' added')+'</div>';
+      if(fail.length)rh+='<div class="alert ae">❌ '+fail.map(function(f){return f.name+': '+f.msg;}).join(' | ')+'</div>';
       res.innerHTML=rh;window.renderUpload();
-    }catch(err){res.innerHTML='<div class="alert alert-err">❌ '+err.message+'</div>';}
+    }catch(err){res.innerHTML='<div class="alert ae">❌ '+err.message+'</div>';}
   };
   reader.readAsArrayBuffer(file);
+};
+window.downloadTemplate=function(){
+  var ws=XLSX.utils.aoa_to_sheet([['Name','Email','Password','Role','Department','ShiftType'],['Nurse Name','nurse@hospital.com','Pass1234','nurse','Emergency','9h']]);
+  var wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Staff');
+  XLSX.writeFile(wb,'nurseflow_template.xlsx');
 };
 
 window.renderRoles=function(){
   var pg=document.getElementById('pg-roles'),T=LANG==='ar';if(!pg)return;
   if(ME.role!=='manager'&&ME.role!=='admin'){pg.innerHTML='';return;}
   var myDepts=ME.role==='manager'?(ALL_MD[ME.id]||[]):null;
-  var staff=Object.values(ALL_P).filter(function(p){
-    if(p.role==='admin')return false;
-    if(myDepts)return myDepts.indexOf(p.dept)>=0;
-    return true;
-  });
+  var staff=Object.values(ALL_P).filter(function(p){if(p.role==='admin')return false;if(myDepts)return myDepts.indexOf(p.dept)>=0;return true;});
   var depts=Array.from(new Set(staff.map(function(p){return p.dept||'';})));
   var h='<div class="phdr"><div class="ptitle">👥 '+(T?'إدارة الأدوار':'Role Management')+'</div></div>';
-  h+='<div class="balcard" style="padding:14px"><div style="display:flex;gap:10px;flex-wrap:wrap">';
-  h+='<input id="role-search" oninput="filterRoles()" placeholder="'+(T?'بحث...':'Search...')+'" class="form-input" style="flex:2;min-width:140px">';
-  h+='<select id="role-filter-dept" onchange="filterRoles()" class="form-input" style="flex:1;min-width:110px"><option value="">'+(T?'كل الأقسام':'All Depts')+'</option>';
+  h+='<div class="balcard" style="padding:12px"><div style="display:flex;gap:8px;flex-wrap:wrap">';
+  h+='<input id="rs" oninput="filterRoles()" placeholder="'+(T?'بحث...':'Search...')+'" class="form-input" style="flex:2;min-width:120px">';
+  h+='<select id="rd" onchange="filterRoles()" class="form-input" style="flex:1;min-width:100px"><option value="">'+(T?'كل الأقسام':'All Depts')+'</option>';
   depts.filter(Boolean).forEach(function(d){h+='<option value="'+d+'">'+d+'</option>';});
-  h+='</select>';
-  h+='<select id="role-filter-role" onchange="filterRoles()" class="form-input" style="flex:1;min-width:110px"><option value="">'+(T?'كل الأدوار':'All Roles')+'</option><option value="nurse">Nurse</option><option value="head_nurse">Head Nurse</option><option value="manager">Manager</option></select>';
-  h+='<select id="role-filter-shift" onchange="filterRoles()" class="form-input" style="flex:1;min-width:80px"><option value="">All</option><option value="9h">9h</option><option value="12h">12h</option></select>';
-  h+='</div></div>';
-  h+='<div class="tbl-wrap"><table><thead><tr><th>'+(T?'الاسم':'Name')+'</th><th>'+(T?'القسم':'Dept')+'</th><th>'+(T?'الدور':'Role')+'</th><th>Hrs</th><th></th></tr></thead><tbody id="roles-tbody">';
+  h+='</select><select id="rr" onchange="filterRoles()" class="form-input" style="flex:1;min-width:100px"><option value="">'+(T?'كل الأدوار':'All Roles')+'</option><option value="nurse">Nurse</option><option value="head_nurse">Head Nurse</option><option value="manager">Manager</option></select>';
+  h+='<select id="rsh" onchange="filterRoles()" class="form-input" style="flex:1;min-width:70px"><option value="">All</option><option value="9h">9h</option><option value="12h">12h</option></select></div></div>';
+  h+='<div class="calwrap"><table><thead><tr><th>'+(T?'الاسم':'Name')+'</th><th>'+(T?'القسم':'Dept')+'</th><th>'+(T?'الدور':'Role')+'</th><th>Hrs</th><th></th></tr></thead><tbody id="rtbody">';
   staff.forEach(function(p){
     var canEdit=ME.role==='admin'||(ME.role==='manager'&&(p.role==='nurse'||p.role==='head_nurse'));
-    h+='<tr data-name="'+(p.name||'').toLowerCase()+'" data-dept="'+(p.dept||'')+'" data-role="'+(p.role||'')+'" data-shift="'+(p.shift_type||'')+'">';
+    h+='<tr data-n="'+(p.name||'').toLowerCase()+'" data-d="'+(p.dept||'')+'" data-r="'+(p.role||'')+'" data-s="'+(p.shift_type||'')+'">';
     h+='<td><div class="nrow"><div class="mav">'+(p.name?p.name.slice(0,2):'?')+'</div>'+(p.name||'-')+'</div></td>';
     h+='<td>'+(p.dept||'-')+'</td><td>';
-    if(canEdit){h+='<select id="r-role-'+p.id+'" class="form-input" style="padding:4px 8px;font-size:12px"><option value="nurse"'+(p.role==='nurse'?' selected':'')+'>Nurse</option><option value="head_nurse"'+(p.role==='head_nurse'?' selected':'')+'>Head Nurse</option>'+(ME.role==='admin'?'<option value="manager"'+(p.role==='manager'?' selected':'')+'>Manager</option>':'')+'</select>';}
+    if(canEdit){h+='<select id="rle-r-'+p.id+'" class="form-input" style="padding:4px 7px;font-size:11px"><option value="nurse"'+(p.role==='nurse'?' selected':'')+'>Nurse</option><option value="head_nurse"'+(p.role==='head_nurse'?' selected':'')+'>Head Nurse</option>'+(ME.role==='admin'?'<option value="manager"'+(p.role==='manager'?' selected':'')+'>Manager</option>':'')+'</select>';}
     else{h+='<span class="stpl '+(p.role==='head_nurse'?'st-rv':'st-d')+'">'+p.role+'</span>';}
-    h+='</td><td><select id="r-shift-'+p.id+'" class="form-input" style="padding:4px 8px;font-size:12px"><option value="">-</option><option value="9h"'+(p.shift_type==='9h'?' selected':'')+'>9h</option><option value="12h"'+(p.shift_type==='12h'?' selected':'')+'>12h</option></select></td>';
-    h+='<td><button data-uid="'+p.id+'" onclick="saveRoleEdit(this.dataset.uid)" class="btn btn-primary btn-sm">'+(T?'حفظ':'Save')+'</button></td></tr>';
+    h+='</td><td><select id="rle-s-'+p.id+'" class="form-input" style="padding:4px 7px;font-size:11px"><option value="">-</option><option value="9h"'+(p.shift_type==='9h'?' selected':'')+'>9h</option><option value="12h"'+(p.shift_type==='12h'?' selected':'')+'>12h</option></select></td>';
+    h+='<td><button data-uid="'+p.id+'" onclick="saveRole(this.dataset.uid)" class="btn-sub" style="padding:5px 10px;font-size:11px">'+(T?'حفظ':'Save')+'</button></td></tr>';
   });
   h+='</tbody></table></div>';
   pg.innerHTML=h;
 };
 window.filterRoles=function(){
-  var s=(document.getElementById('role-search')||{}).value||'';
-  var df=(document.getElementById('role-filter-dept')||{}).value||'';
-  var rf=(document.getElementById('role-filter-role')||{}).value||'';
-  var shf=(document.getElementById('role-filter-shift')||{}).value||'';
-  document.querySelectorAll('#roles-tbody tr').forEach(function(row){
-    var show=(!s||row.dataset.name.includes(s.toLowerCase()))&&(!df||row.dataset.dept===df)&&(!rf||row.dataset.role===rf)&&(!shf||row.dataset.shift===shf);
+  var s=(document.getElementById('rs')||{}).value||'',d=(document.getElementById('rd')||{}).value||'';
+  var r=(document.getElementById('rr')||{}).value||'',sh=(document.getElementById('rsh')||{}).value||'';
+  document.querySelectorAll('#rtbody tr').forEach(function(row){
+    var show=(!s||row.dataset.n.includes(s.toLowerCase()))&&(!d||row.dataset.d===d)&&(!r||row.dataset.r===r)&&(!sh||row.dataset.s===sh);
     row.style.display=show?'':'none';
   });
 };
-window.saveRoleEdit=async function(uid){
-  var T=LANG==='ar';
-  var r=document.getElementById('r-role-'+uid);
-  var s=document.getElementById('r-shift-'+uid);
+window.saveRole=async function(uid){
+  var T=LANG==='ar',r=document.getElementById('rle-r-'+uid),s=document.getElementById('rle-s-'+uid);
   var upd={};if(r)upd.role=r.value;if(s)upd.shift_type=s.value;
   await fsSet('user_profiles',uid,upd);
-  if(ALL_P[uid]){if(r)ALL_P[uid].role=r.value;if(s)ALL_P[uid].shift_type=s.value;}
+  if(ALL_P[uid])Object.assign(ALL_P[uid],upd);
   toast(T?'تم ✓':'Saved ✓','ts');
 };
+
 window.renderMode=async function(){
   var pg=document.getElementById('pg-mode'),T=LANG==='ar';if(!pg)return;
   if(ME.role!=='head_nurse'&&ME.role!=='manager'&&ME.role!=='admin'){pg.innerHTML='';return;}
   var modes=await fsGetAll('schedule_modes');
   var modeMap={};modes.forEach(function(m){modeMap[m.dept]=m;});
-  var myDepts=ME.role==='head_nurse'?[ME.dept]:(ME.role==='manager'?(ALL_MD[ME.id]||[]):Object.keys(ALL_D));
+  var myDepts=ME.role==='head_nurse'?[ME.dept]:ME.role==='manager'?(ALL_MD[ME.id]||[]):Object.keys(ALL_D);
   var h='<div class="phdr"><div class="ptitle">⏰ '+(T?'وضع الجدول':'Schedule Mode')+'</div></div>';
   myDepts.forEach(function(dept){
     var mode=modeMap[dept]||{dept:dept,mode:'open'};
     var nurses=Object.values(ALL_P).filter(function(p){return p.role==='nurse'&&p.dept===dept;});
-    var notFilled=nurses.filter(function(n){return !ALL_ST[n.id]||ALL_ST[n.id].status==='draft';});
+    var late=nurses.filter(function(n){return !ALL_ST[n.id]||ALL_ST[n.id].status==='draft';});
     var isOpen=mode.mode==='open';
     h+='<div class="balcard">';
-    h+='<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px">';
-    h+='<div><div class="baltitle" style="margin-bottom:2px">🏥 '+dept+'</div>';
-    h+='<div style="font-size:11px;color:var(--muted)">'+(nurses.length-notFilled.length)+'/'+nurses.length+' '+(T?'عبّوا':'filled')+'</div></div>';
-    h+='<div style="display:flex;gap:8px">';
-    h+='<button data-dept="'+dept+'" data-mode="open" onclick="toggleDeptMode(this.dataset.dept,this.dataset.mode)" class="btn '+(isOpen?'btn-success':'btn-ghost')+' btn-sm">👐 '+(T?'مفتوح':'Open')+'</button>';
-    h+='<button data-dept="'+dept+'" data-mode="hn_only" onclick="toggleDeptMode(this.dataset.dept,this.dataset.mode)" class="btn '+(!isOpen?'btn-primary':'btn-ghost')+' btn-sm">🔒 HN Only</button>';
+    h+='<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px">';
+    h+='<div><div class="baltitle" style="margin-bottom:2px">🏥 '+dept+'</div><div style="font-size:10px;color:var(--muted)">'+(nurses.length-late.length)+'/'+nurses.length+' '+(T?'عبّوا':'filled')+'</div></div>';
+    h+='<div style="display:flex;gap:6px">';
+    h+='<button data-dept="'+dept+'" data-m="open" onclick="setMode(this.dataset.dept,this.dataset.m)" style="padding:6px 12px;border-radius:7px;border:1.5px solid '+(isOpen?'var(--green)':'var(--b1)')+';background:'+(isOpen?'var(--green-lt)':'transparent')+';color:'+(isOpen?'var(--green)':'var(--muted)')+';font-family:Tajawal,sans-serif;font-size:11px;font-weight:700;cursor:pointer">👐 '+(T?'مفتوح':'Open')+'</button>';
+    h+='<button data-dept="'+dept+'" data-m="hn_only" onclick="setMode(this.dataset.dept,this.dataset.m)" style="padding:6px 12px;border-radius:7px;border:1.5px solid '+(!isOpen?'var(--blue)':'var(--b1)')+';background:'+(!isOpen?'var(--blue-lt)':'transparent')+';color:'+(!isOpen?'var(--blue)':'var(--muted)')+';font-family:Tajawal,sans-serif;font-size:11px;font-weight:700;cursor:pointer">🔒 HN Only</button>';
     h+='</div></div>';
-    if(notFilled.length){
-      h+='<div style="margin-bottom:12px"><div class="badge badge-amber" style="margin-bottom:8px">⚠️ '+(T?'لم يعبّوا:':'Not filled:')+'</div>';
-      h+='<div style="display:flex;flex-wrap:wrap;gap:5px">'+notFilled.map(function(n){return'<span class="badge badge-amber">'+n.name+'</span>';}).join('')+'</div></div>';
-      h+='<button data-dept="'+dept+'" onclick="aiScheduleLate(this.dataset.dept)" class="btn btn-ai">🤖 '+(T?'AI تعبئة تلقائية':'AI Fill')+'</button>';
+    if(late.length){
+      h+='<div style="margin-bottom:10px"><div style="font-size:10px;font-weight:700;color:var(--amber);margin-bottom:6px">⚠️ '+(T?'لم يعبّوا:':'Not filled:')+'</div>';
+      h+='<div style="display:flex;flex-wrap:wrap;gap:4px">'+late.map(function(n){return'<span class="badge badge-amber">'+n.name+'</span>';}).join('')+'</div></div>';
+      h+='<button data-dept="'+dept+'" onclick="aiFillLate(this.dataset.dept)" class="btn-sub" style="font-size:11px;padding:7px 13px">🤖 '+(T?'AI تعبئة':'AI Fill')+'</button>';
     }
-    if(isOpen&&nurses.length-notFilled.length>0){
-      h+='<div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--b1)">';
-      h+='<button data-dept="'+dept+'" onclick="aiSuggestFix(this.dataset.dept)" class="btn" style="background:var(--purple-lt);color:var(--purple);border:1px solid var(--purple)">✨ '+(T?'AI مقترحات':'AI Suggestions')+'</button></div>';
+    if(isOpen&&nurses.length-late.length>0){
+      h+='<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--b1)">';
+      h+='<button data-dept="'+dept+'" onclick="aiSuggest(this.dataset.dept)" style="padding:7px 13px;border:none;border-radius:8px;background:var(--purple-lt);color:var(--purple);font-family:Tajawal,sans-serif;font-size:11px;font-weight:700;cursor:pointer">✨ AI Suggestions</button></div>';
     }
-    h+='<div id="mode-result-'+dept.replace(/\s/g,'_')+'"></div></div>';
+    h+='<div id="mr-'+dept.replace(/\s/g,'_')+'"></div></div>';
   });
   pg.innerHTML=h;
 };
-window.toggleDeptMode=async function(dept,mode){
+window.setMode=async function(dept,mode){
   await fsSet('schedule_modes',dept,{dept:dept,mode:mode,updated_by:ME.id,updated_at:new Date().toISOString()});
   toast(LANG==='ar'?(mode==='open'?'فتح ✓':'قفل ✓'):(mode==='open'?'Open':'Locked'),'ts');
   window.renderMode();
 };
-window.aiScheduleLate=async function(dept){
+window.aiFillLate=async function(dept){
   var T=LANG==='ar';
   var nurses=Object.values(ALL_P).filter(function(p){return p.role==='nurse'&&p.dept===dept&&(!ALL_ST[p.id]||ALL_ST[p.id].status==='draft');});
   if(!nurses.length){toast(T?'لا يوجد متأخرات':'No late nurses','ti');return;}
   var y=MONTH.getFullYear(),m=MONTH.getMonth(),days=new Date(y,m+1,0).getDate();
   var dc=ALL_D[dept]||{m:3,e:3,n:3};
   toast(T?'AI يعمل...':'AI working...','ti');
-  var prompt='Fill schedule for '+nurses.length+' late nurses in '+dept+'. Nurses: '+nurses.map(function(n){return n.name+(n.shift_type?' ('+n.shift_type+')':'');}).join(', ')+'. Daily needs: morning='+dc.m+', evening='+dc.e+', night='+dc.n+'. Min 6 rest days. 12h: long_day/long_night. 9h: morning/evening/night. Return ONLY JSON: {"schedule":{"Name":{"1":"shift"}},"summary":"brief"}';
+  var prompt='Fill schedule for '+nurses.length+' late nurses in '+dept+'. Nurses: '+nurses.map(function(n){return n.name+(n.shift_type?' ('+n.shift_type+')':'');}).join(', ')+'. Daily: morning='+dc.m+', evening='+dc.e+', night='+dc.n+'. Min 6 rest days. 12h=long_day/long_night. 9h=morning/evening/night. Return ONLY JSON: {"schedule":{"Name":{"1":"shift"}},"summary":"brief"}';
   try{
     var resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:4000,messages:[{role:'user',content:prompt}]})});
     var data=await resp.json();var text=data.content&&data.content[0]&&data.content[0].text||'';
@@ -1837,9 +1754,8 @@ window.aiScheduleLate=async function(dept){
     toast((T?'تم تعبئة ':'Filled ')+count+(T?' يوم':' days'),'ts');window.renderMode();
   }catch(e){toast(e.message,'td');}
 };
-window.aiSuggestFix=async function(dept){
-  var T=LANG==='ar';
-  var y=MONTH.getFullYear(),m=MONTH.getMonth(),days=new Date(y,m+1,0).getDate();
+window.aiSuggest=async function(dept){
+  var T=LANG==='ar',y=MONTH.getFullYear(),m=MONTH.getMonth(),days=new Date(y,m+1,0).getDate();
   var dc=ALL_D[dept]||{m:3,e:3,n:3};
   var nurses=Object.values(ALL_P).filter(function(p){return p.role==='nurse'&&p.dept===dept;});
   var gaps=[];
@@ -1847,37 +1763,38 @@ window.aiSuggestFix=async function(dept){
     var ds=y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
     ['morning','evening','night'].forEach(function(sh){var cur=shiftCount(dept,ds,sh),cap=shiftCap(dept,sh);if(cap<99&&cur<cap)gaps.push({date:ds,shift:sh,have:cur,need:cap});});
   }
-  var resultDiv=document.getElementById('mode-result-'+dept.replace(/\s/g,'_'));
-  if(!gaps.length){if(resultDiv)resultDiv.innerHTML='<div class="alert alert-ok">✅ '+(T?'التغطية مكتملة':'Coverage complete')+'</div>';return;}
+  var div=document.getElementById('mr-'+dept.replace(/\s/g,'_'));
+  if(!gaps.length){if(div)div.innerHTML='<div class="alert as2" style="margin-top:10px">✅ '+(T?'التغطية مكتملة':'Coverage complete')+'</div>';return;}
   toast(T?'AI يحلل...':'Analyzing...','ti');
   var sched=nurses.slice(0,10).map(function(n){return n.name+'('+n.shift_type+'): '+Object.entries(ALL_S[n.id]||{}).filter(function(e){var dt=new Date(e[0]+'T00:00:00');return dt.getFullYear()===y&&dt.getMonth()===m;}).slice(0,5).map(function(e){return e[0].slice(8)+':'+e[1].shift;}).join(',');}).join('; ');
-  var prompt='Fix coverage gaps in '+dept+'. Gaps: '+JSON.stringify(gaps.slice(0,15))+'. Nurses: '+sched+'. Return ONLY JSON: {"suggestions":[{"nurse":"name","date":"YYYY-MM-DD","from":"shift","to":"shift","reason":"why"}],"summary":"Arabic summary"}';
+  var prompt='Fix gaps in '+dept+'. Gaps: '+JSON.stringify(gaps.slice(0,15))+'. Nurses: '+sched+'. Return ONLY JSON: {"suggestions":[{"nurse":"name","date":"YYYY-MM-DD","from":"shift","to":"shift","reason":"why"}],"summary":"Arabic"}';
   try{
     var resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:2000,messages:[{role:'user',content:prompt}]})});
     var data=await resp.json();var text=data.content&&data.content[0]&&data.content[0].text||'';
     var jm=text.match(/\{[\s\S]*\}/);if(!jm)throw new Error('no json');
     var result=JSON.parse(jm[0]);
-    window._aiSug=window._aiSug||{};window._aiSug[dept]=result.suggestions||[];
-    var rh='<div class="balcard" style="margin-top:12px"><div class="baltitle">✨ AI Suggestions</div>';
-    if(result.summary)rh+='<div class="alert alert-info" style="margin-bottom:10px">'+result.summary+'</div>';
+    window._sug=window._sug||{};window._sug[dept]=result.suggestions||[];
+    var rh='<div class="balcard" style="margin-top:10px"><div class="baltitle">✨ AI</div>';
+    if(result.summary)rh+='<div class="alert ai" style="margin-bottom:8px">'+result.summary+'</div>';
     (result.suggestions||[]).slice(0,8).forEach(function(s,i){
-      rh+='<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--b1);font-size:12px"><span style="font-weight:700">'+s.nurse+'</span><span class="badge badge-blue">'+s.date+'</span><span style="color:var(--red)">'+(s.from||'off')+'</span><span>→</span><span style="color:var(--green)">'+s.to+'</span><span style="flex:1;color:var(--muted);font-size:10px">'+(s.reason||'')+'</span>';
-      rh+='<button data-i="'+i+'" data-dept="'+dept+'" onclick="applySuggestion(parseInt(this.dataset.i),this.dataset.dept)" class="btn btn-primary btn-sm">Apply</button></div>';
+      rh+='<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--b1);font-size:11px"><span style="font-weight:700">'+s.nurse+'</span><span class="badge badge-blue">'+s.date+'</span><span style="color:var(--red)">'+(s.from||'off')+'</span><span>→</span><span style="color:var(--green)">'+s.to+'</span><span style="flex:1;color:var(--muted);font-size:10px">'+(s.reason||'')+'</span>';
+      rh+='<button data-i="'+i+'" data-dept="'+dept+'" onclick="applySug(+this.dataset.i,this.dataset.dept)" class="btn-sub" style="padding:3px 8px;font-size:10px">Apply</button></div>';
     });
-    rh+='<button data-dept="'+dept+'" onclick="applyAllSugg(this.dataset.dept)" class="btn btn-primary" style="margin-top:10px">Apply All</button></div>';
-    if(resultDiv)resultDiv.innerHTML=rh;
+    rh+='<button data-dept="'+dept+'" onclick="applyAllSug(this.dataset.dept)" class="btn-sub" style="margin-top:8px;font-size:11px">Apply All</button></div>';
+    if(div)div.innerHTML=rh;
   }catch(e){toast(e.message,'td');}
 };
-window.applySuggestion=async function(idx,dept){
-  var T=LANG==='ar';var s=((window._aiSug||{})[dept]||[])[idx];if(!s)return;
+window.applySug=async function(i,dept){
+  var T=LANG==='ar',s=((window._sug||{})[dept]||[])[i];if(!s)return;
   var nurse=Object.values(ALL_P).find(function(p){return p.name===s.nurse&&p.dept===dept;});
   if(!nurse)return toast(T?'لم توجد':'Not found','tw');
   await fsSet('schedules',nurse.id+'_'+s.date,{nurse_id:nurse.id,date:s.date,shift:s.to,flag:null});
   if(!ALL_S[nurse.id])ALL_S[nurse.id]={};ALL_S[nurse.id][s.date]={shift:s.to,flag:null};
-  toast(T?'تم ✓':'Applied ✓','ts');window.aiSuggestFix(dept);
+  toast(T?'تم ✓':'Applied ✓','ts');window.aiSuggest(dept);
 };
-window.applyAllSugg=async function(dept){
-  var T=LANG==='ar';var suggestions=((window._aiSug||{})[dept]||[]);
+window.applyAllSug=async function(dept){
+  var T=LANG==='ar';
+  var suggestions=((window._sug||{})[dept]||[]);
   for(var i=0;i<suggestions.length;i++){
     var s=suggestions[i];var nurse=Object.values(ALL_P).find(function(p){return p.name===s.nurse&&p.dept===dept;});
     if(!nurse)continue;
@@ -1886,23 +1803,13 @@ window.applyAllSugg=async function(dept){
   }
   toast(T?'تم الكل ✓':'All Applied ✓','ts');window.renderMode();
 };
-async function checkScheduleMode(){
-  if(!ME||ME.role!=='nurse')return true;
-  var modes=await fsGetAll('schedule_modes');
-  var dm=modes.find(function(m){return m.dept===ME.dept;});
-  if(dm&&dm.mode==='hn_only'){toast(LANG==='ar'?'التعبئة مقفلة':'Schedule locked','tw');return false;}
-  return true;
-}
-
 
 onAuthStateChanged(auth,async function(user){
   if(user){await loadMe(user.uid);}
-  else{
-    ME=null;
-    document.getElementById('login').style.display='flex';
-    document.getElementById('app').style.display='none';
-  }
+  else{ME=null;document.getElementById('login').style.display='flex';document.getElementById('app').style.display='none';}
 });
+
+
 </script>
 </body>
 </html>
